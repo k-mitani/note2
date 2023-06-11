@@ -17,16 +17,20 @@ function dateToText(date: string) {
   return format(d, 'yyyy/MM/dd');
 }
 
-function NoteCard({note}: any) {
+function NoteCard({note, isSelected}: any) {
   var dateText = note.UpdatedAt == null ?
     dateToText(note.CreatedAt) :
-    `${dateToText(note.UpdatedAt)} | ${dateToText(note.CreatedAt)}`;
-
+    `${dateToText(note.UpdatedAt)}`;
+  var text = note.Content.replace(/<("[^"]*"|'[^']*'|[^'">])*>/g, "")
   return (
-    <div className={"border-gray-200 border-b-2"}>
-      <div className="h-32 hover:bg-white hover:border-blue-500 border-gray-100 border-2 p-2">
+    <div className={"border-gray-300 border-b-2"}>
+      <div className={
+        "flex flex-col hover:bg-white hover:border-cyan-400 border-gray-100 border-2 p-2"
+        + (isSelected ? " border-blue-500 bg-white" : "")
+      }>
         <strong className="line-clamp-2">{note.Title}</strong>
-        <div className={"text-xs text-gray-500"}>{dateText}</div>
+        <div className={"mt-2 h-16 line-clamp-3 text-gray-600 text-sm"}>{text}</div>
+        <div className={"mt-2 text-[12px] text-gray-500"}>{dateText}</div>
       </div>
     </div>);
 }
@@ -86,7 +90,7 @@ export default function NoteListView({notes, selectedNote, setSelectedNote}: any
           return (
             <li key={note.name + "-" + i}
                 onMouseDown={() => setSelectedNote(note)}>
-              <NoteCard note={note}></NoteCard>
+              <NoteCard note={note} isSelected={note === selectedNote}></NoteCard>
             </li>);
         })}
       </ ul>
