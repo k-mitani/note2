@@ -1,26 +1,11 @@
 import {format} from "date-fns";
 import React, {useState} from "react";
-
-function parseDate(date: string): Date {
-  const year = parseInt(date.substring(0, 4));
-  const month = parseInt(date.substring(4, 6)) - 1; // 月は0から11で表現されるため、1を引きます
-  const day = parseInt(date.substring(6, 8));
-  const hour = parseInt(date.substring(9, 11));
-  const minute = parseInt(date.substring(11, 13));
-  const second = parseInt(date.substring(13, 15));
-  return new Date(Date.UTC(year, month, day, hour, minute, second))
-}
-
-function dateToText(date: string) {
-  if (date == null) return "";
-  const d = parseDate(date);
-  return format(d, 'yyyy/MM/dd');
-}
+import * as utils from "@/app/utils";
 
 function NoteCard({note, isSelected}: any) {
   var dateText = note.UpdatedAt == null ?
-    dateToText(note.CreatedAt) :
-    `${dateToText(note.UpdatedAt)}`;
+    utils.dateToText(note.CreatedAt) :
+    `${utils.dateToText(note.UpdatedAt)}`;
   var text = note.Content.replace(/<("[^"]*"|'[^']*'|[^'">])*>/g, "")
   return (
     <div className={"border-gray-300 border-b-2"}>
@@ -37,10 +22,10 @@ function NoteCard({note, isSelected}: any) {
 
 
 const orderItems = [
-  ["更新順↓", (a: any, b: any) => parseDate(b.UpdatedAt ?? b.CreatedAt).getTime() - parseDate(a.UpdatedAt ?? a.CreatedAt).getTime()],
-  ["更新順↑", (a: any, b: any) => parseDate(a.UpdatedAt ?? a.CreatedAt).getTime() - parseDate(b.UpdatedAt ?? b.CreatedAt).getTime()],
-  ["作成順↓", (a: any, b: any) => parseDate(b.CreatedAt).getTime() - parseDate(a.CreatedAt).getTime()],
-  ["作成順↑", (a: any, b: any) => parseDate(a.CreatedAt).getTime() - parseDate(b.CreatedAt).getTime()],
+  ["更新順↓", (a: any, b: any) => utils.parseDate(b.UpdatedAt ?? b.CreatedAt).getTime() - utils.parseDate(a.UpdatedAt ?? a.CreatedAt).getTime()],
+  ["更新順↑", (a: any, b: any) => utils.parseDate(a.UpdatedAt ?? a.CreatedAt).getTime() - utils.parseDate(b.UpdatedAt ?? b.CreatedAt).getTime()],
+  ["作成順↓", (a: any, b: any) => utils.parseDate(b.CreatedAt).getTime() - utils.parseDate(a.CreatedAt).getTime()],
+  ["作成順↑", (a: any, b: any) => utils.parseDate(a.CreatedAt).getTime() - utils.parseDate(b.CreatedAt).getTime()],
   ["名前順↓", (a: any, b: any) => a.Title.localeCompare(b.Title)],
   ["名前順↑", (a: any, b: any) => b.Title.localeCompare(a.Title)],
 ];
