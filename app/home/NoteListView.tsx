@@ -1,6 +1,7 @@
 import {format} from "date-fns";
-import React, {useState} from "react";
+import React, {useRef, useState} from "react";
 import * as utils from "@/app/utils";
+import {z} from "zod";
 
 function NoteCard({note, isSelected}: any) {
   var dateText = note.UpdatedAt == null ?
@@ -36,16 +37,36 @@ export default function NoteListView({notes, selectedNote, setSelectedNote}: any
   const orderName = (String)(orderItems[selectedOrder][0]);
   const orderFunc = orderItems[selectedOrder][1];
   notes = notes?.sort(orderFunc);
-
   const [showOrderItems, setShowOrderItems] = useState(false);
+  const refSelectedNoteElement = useRef<Element>(null);
+  const [shouldScroll, setShouldScroll] = useState(false);
 
   function onSelectOrder(i: number) {
     setSelectedOrder(i);
     // setShowOrderItems(false);
   }
 
+  function onKeyDoen(ev: React.KeyboardEvent) {
+    if (ev.key === "ArrowDown") {
+      const nextNote = notes[Math.min(notes.indexOf(selectedNote) + 1, notes.length - 1)];
+      setSelectedNote(nextNote);
+      setShouldScroll(true);
+    } else if (ev.key === "ArrowUp") {
+      const nextNote = notes[Math.max(notes.indexOf(selectedNote) - 1, 0)];
+      setSelectedNote(nextNote);
+      setShouldScroll(true);
+    }
+  }
+
+  if (shouldScroll && refSelectedNoteElement.current != null) {
+    refSelectedNoteElement.current.scrollIntoView({block: "center"});
+    setShouldScroll(false);
+  }
+
   return (
-    <div className='flex-none w-72 h-screen overflow-y-scroll bg-gray-100'>
+    <div className='flex-none w-72 h-screen overflow-y-scroll bg-gray-100'
+         tabIndex={0}
+         onKeyDown={onKeyDoen}>
       <div className={"p-2 border-b-2 border-gray-400"}>
         <h2>ノート一覧 ({noteCount})</h2>
         <span className={""}>
@@ -74,8 +95,10 @@ export default function NoteListView({notes, selectedNote, setSelectedNote}: any
         {notes?.map((note: any, i: number) => {
           return (
             <li key={note.name + "-" + i}
-                onMouseDown={() => setSelectedNote(note)}>
-              <NoteCard note={note} isSelected={note === selectedNote}></NoteCard>
+                onMouseDown={() => setSelectedNote(note)}
+                ref={selectedNote === note ? refSelectedNoteElement : null}
+            >
+              <NoteCard note={note} isSelected={selectedNote === note}></NoteCard>
             </li>);
         })}
       </ ul>
