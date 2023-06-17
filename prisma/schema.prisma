@@ -1,0 +1,35 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Note {
+  id         Int       @id @default(autoincrement())
+  title      String
+  content    String
+  tags       String[]
+  resource   Json?
+  attributes Json?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime? @updatedAt
+
+  folder   Folder? @relation(fields: [folderId], references: [id])
+  folderId Int?
+}
+
+model Folder {
+  id    Int    @id @default(autoincrement())
+  name  String
+  notes Note[]
+
+  childFolders   Folder[] @relation("ParentFolder")
+  parentFolder   Folder?  @relation("ParentFolder", fields: [parentFolderId], references: [id])
+  parentFolderId Int?
+}
