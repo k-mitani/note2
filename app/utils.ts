@@ -10,9 +10,7 @@ export function parseDate(date: string): Date {
   return new Date(Date.UTC(year, month, day, hour, minute, second))
 }
 
-export function dateToText(date: string) {
-  if (date == null) return "";
-  const d = parseDate(date);
-  return format(d, 'yyyy/MM/dd');
+export function dateToText(date: Date) {
+  return format(date, 'yyyy/MM/dd');
 }
 

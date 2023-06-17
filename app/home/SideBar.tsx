@@ -1,11 +1,16 @@
 import {useState} from "react";
 import {falseTag} from "yaml/dist/schema/yaml-1.1/bool";
 import {bool} from "prop-types";
+import {Folder} from "@prisma/client";
 
 /**
  * スタックやノートを表示する。
  */
-export default function SideBar({stacks, selectedNotebook, setSelectedNotebook}: any) {
+export default function SideBar({folders, selectedNotebook, setSelectedNotebook}: {
+  folders: Folder[],
+  selectedNotebook: Folder | null,
+  setSelectedNotebook: (notebook: Folder) => void
+}) {
   const [openState, setOpenState] = useState({} as any);
   return (
     <div className='p-2 flex-none w-72 bg-gray-700 text-white h-screen overflow-y-scroll'>
@@ -21,7 +26,7 @@ export default function SideBar({stacks, selectedNotebook, setSelectedNotebook}:
         </li>
       </ul>
       <ul className='mt-4'>
-        {stacks.map((stack: any) => {
+        {folders.map((stack: any) => {
           return (
             <li key={stack.name} className='notebooks__stack'>
               <strong className={"block hover:bg-gray-500 cursor-pointer"}
@@ -35,7 +40,7 @@ export default function SideBar({stacks, selectedNotebook, setSelectedNotebook}:
               <ul className={[
                 (openState[stack.name] ? "hidden" : ""),
               ].join(" ")}>
-                {stack.notebooks.map((notebook: any) => {
+                {stack.childFolders.map((notebook: any) => {
                   return <li
                     key={stack.name + notebook.name}
                     onClick={() => setSelectedNotebook(notebook)}

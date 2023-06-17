@@ -1,20 +1,21 @@
 import {format} from "date-fns";
-import React, {useRef, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import * as utils from "@/app/utils";
 import {z} from "zod";
+import {Note} from "@prisma/client";
 
-function NoteCard({note, isSelected}: any) {
-  var dateText = note.UpdatedAt == null ?
-    utils.dateToText(note.CreatedAt) :
-    `${utils.dateToText(note.UpdatedAt)}`;
-  var text = note.Content.replace(/<("[^"]*"|'[^']*'|[^'">])*>/g, "")
+function NoteCard({note, isSelected}: {note: Note, isSelected: boolean}) {
+  const dateText = note.updatedAt == null ?
+    `${utils.dateToText(note.createdAt)}` :
+    `${utils.dateToText(note.updatedAt)}`;
+  var text = note.content.replace(/<("[^"]*"|'[^']*'|[^'">])*>/g, "")
   return (
     <div className={"border-gray-300 border-b-2"}>
       <div className={
         "flex flex-col hover:bg-white hover:border-cyan-400 border-gray-100 border-2 p-2"
         + (isSelected ? " border-blue-500 bg-white" : "")
       }>
-        <strong className="line-clamp-2">{note.Title}</strong>
+        <strong className="line-clamp-2">{note.title}</strong>
         <div className={"mt-2 h-16 line-clamp-3 text-gray-600 text-sm"}>{text}</div>
         <div className={"mt-2 text-[12px] text-gray-500"}>{dateText}</div>
       </div>
@@ -23,29 +24,34 @@ function NoteCard({note, isSelected}: any) {
 
 
 const orderItems = [
-  ["更新順↓", (a: any, b: any) => utils.parseDate(b.UpdatedAt ?? b.CreatedAt).getTime() - utils.parseDate(a.UpdatedAt ?? a.CreatedAt).getTime()],
-  ["更新順↑", (a: any, b: any) => utils.parseDate(a.UpdatedAt ?? a.CreatedAt).getTime() - utils.parseDate(b.UpdatedAt ?? b.CreatedAt).getTime()],
-  ["作成順↓", (a: any, b: any) => utils.parseDate(b.CreatedAt).getTime() - utils.parseDate(a.CreatedAt).getTime()],
-  ["作成順↑", (a: any, b: any) => utils.parseDate(a.CreatedAt).getTime() - utils.parseDate(b.CreatedAt).getTime()],
-  ["名前順↓", (a: any, b: any) => a.Title.localeCompare(b.Title)],
-  ["名前順↑", (a: any, b: any) => b.Title.localeCompare(a.Title)],
+  ["更新順↓", (a: Note, b: Note) => (b.updatedAt ?? b.createdAt).getTime() - (a.updatedAt ?? a.createdAt).getTime()],
+  ["更新順↑", (a: Note, b: Note) => (a.updatedAt ?? a.createdAt).getTime() - (b.updatedAt ?? b.createdAt).getTime()],
+  ["作成順↓", (a: Note, b: Note) => b.createdAt.getTime() - a.createdAt.getTime()],
+  ["作成順↑", (a: Note, b: Note) => a.createdAt.getTime() - b.createdAt.getTime()],
+  ["名前順↓", (a: Note, b: Note) => a.title.localeCompare(b.title)],
+  ["名前順↑", (a: Note, b: Note) => b.title.localeCompare(a.title)],
 ];
 
-export default function NoteListView({notes, selectedNote, setSelectedNote}: any) {
+export default function NoteListView({notes, selectedNote, setSelectedNote}: {
+  notes: Note[],
+  selectedNote: Note | null,
+  setSelectedNote: (note: Note | null) => void,
+}) {
   const noteCount = notes?.length ?? 0;
   const [selectedOrder, setSelectedOrder] = useState(0);
   const orderName = (String)(orderItems[selectedOrder][0]);
   const orderFunc = orderItems[selectedOrder][1];
-  notes = notes?.sort(orderFunc);
   const [showOrderItems, setShowOrderItems] = useState(false);
   const refSelectedNoteElement = useRef<Element>(null);
   const [shouldScroll, setShouldScroll] = useState(false);
+  useEffect(() => {
+    if (notes == null) return;
+    console.log("update");
+    notes = notes?.sort(orderFunc);
+  }, [notes, selectedOrder]);
+  if (notes == null) return <div>loading...</div>
 
-  function onSelectOrder(i: number) {
-    setSelectedOrder(i);
-    // setShowOrderItems(false);
-  }
-
+  console.log("draw notelistview");
   function onKeyDoen(ev: React.KeyboardEvent) {
     if (ev.key === "ArrowDown") {
       const nextNote = notes[Math.min(notes.indexOf(selectedNote) + 1, notes.length - 1)];

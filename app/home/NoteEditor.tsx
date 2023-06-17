@@ -2,14 +2,15 @@ import React, {useDebugValue} from "react";
 import Link from "next/link";
 import * as utils from "@/app/utils";
 import {format} from "date-fns";
+import {Note} from "@prisma/client";
 
-export default function NoteEditor({note}: any) {
-  if (note == null) note = {};
+export default function NoteEditor({note}: { note: Note | null }) {
+  if (note == null) return <div className={"bg-white h-screen overflow-y-scroll "}>xx</div>;
 
   let link = null;
   let linkText = null;
-  if (note.Attributes != null) {
-    for (let a of note.Attributes) {
+  if (note.attributes != null) {
+    for (let a of note.attributes) {
       if (a.Item1 === "source-url") {
         // URLのドメイン部だけを取得する。
         link = a.Item2
@@ -17,11 +18,11 @@ export default function NoteEditor({note}: any) {
       }
     }
   }
-  const date = note.UpdatedAt || note.CreatedAt;
-  const timeText = date && format(utils.parseDate(date), "yyyy-MM-dd HH:mm") || "";
+  const date = note.updatedAt || note.createdAt;
+  const timeText = date && format(date, "yyyy-MM-dd HH:mm") || "";
   return <div className={"grow bg-white h-screen overflow-y-scroll "}>
     <div className={"border-b-2 border-gray-200 p-2"}>
-      <input className="text-blue-500 w-full" type="text" value={note.Title}></input>
+      <input className="text-blue-500 w-full" type="text" value={note.title}></input>
       <div>
         <span className="text-xs text-gray-500">{timeText}</span>
         {link && (
@@ -32,7 +33,7 @@ export default function NoteEditor({note}: any) {
       </div>
     </div>
     <div className={"p-2"}>
-      <div dangerouslySetInnerHTML={{__html: note.Content}}>
+      <div dangerouslySetInnerHTML={{__html: note.content}}>
       </div>
     </div>
   </div>

@@ -7,32 +7,42 @@ import {format} from 'date-fns';
 import SideBar from "@/app/home/SideBar";
 import NoteEditor from "@/app/home/NoteEditor";
 import NoteListView from "@/app/home/NoteListView";
+import {Folder, Note} from "@prisma/client";
 
 
 function fetcher(url: string) {
   return fetch(url).then(res => res.json())
 }
 
-function useStacks() {
-  return useSWR('/api/notebooks', fetcher);
+function useFoldersAll() {
+  return useSWR<Folder[]>('/api/rpc/getFoldersAll', fetcher);
 }
 
-function useNotes(stack: string, notebook: string) {
-  return useSWR(`/api/notebooks/${stack}/${notebook}`, fetcher);
+function useNotes(folderId: number | undefined) {
+  return useSWR<Folder>(`/api/rest/folders/${folderId}`, fetcher);
 }
 
 export default function Home() {
-  const {data: stacks, error, isLoading} = useStacks();
-  const [selectedNotebook, setSelectedNotebook] = React.useState(null);
-  const {data: notes} = useNotes(selectedNotebook?.stackName, selectedNotebook?.name);
-  const [selectedNote, setSelectedNote] = React.useState(null);
+  const {data: folders, error, isLoading} = useFoldersAll();
+  const [selectedNotebook, setSelectedNotebook] = React.useState<Folder | null>(null);
+  const {data: notesParent} = useNotes(selectedNotebook?.id);
+  const [selectedNote, setSelectedNote] = React.useState<Note | null>(null);
 
   if (error) return <div>failed to load</div>
   if (isLoading) return <div>loading...</div>
+  if (folders == null) return <div>folders is null</div>
 
+  const notes = notesParent?.notes ?? [];
+  notes.forEach((n: Note) => {
+    n.updatedAt = new Date(n.updatedAt as any);
+    n.createdAt = new Date(n.createdAt as any);
+  });
+
+
+  console.log("draw page");
   return (
     <main className='flex h-screen w-screen bg-red-200'>
-      <SideBar stacks={stacks}
+      <SideBar folders={folders}
                selectedNotebook={selectedNotebook}
                setSelectedNotebook={setSelectedNotebook}
       />
@@ -43,7 +53,6 @@ export default function Home() {
       />
 
       <NoteEditor note={selectedNote}/>
-
     </main>
   )
 }
