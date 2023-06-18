@@ -1,9 +1,41 @@
 import {useState} from "react";
-import {falseTag} from "yaml/dist/schema/yaml-1.1/bool";
-import {bool} from "prop-types";
 import {Folder} from "@prisma/client";
 import {atoms} from "@/app/home/atoms";
 import {useRecoilState} from "recoil";
+import classNames from "classnames";
+
+type FolderAndChild = Folder & { childFolders: FolderAndChild[] };
+
+function Folder({folder, selectedFolder, setSelectedFolder}: {
+  folder: FolderAndChild,
+  selectedFolder: FolderAndChild | undefined,
+  setSelectedFolder: (folder: FolderAndChild) => void,
+}) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  return (
+    <>
+      <strong className={"block hover:bg-gray-500 cursor-pointer"}
+              onClick={() => setIsExpanded(!isExpanded)}>
+        {isExpanded ? "▶" : "▼"}
+        📘{folder.name}
+      </strong>
+      <ul className={classNames({hidden: isExpanded})}>
+        {folder.childFolders.map(subFolder => {
+          return <li
+            key={subFolder.id}
+            onClick={() => setSelectedFolder(subFolder)}
+            className={classNames(
+              "ps-5 cursor-pointer",
+              selectedFolder?.name === subFolder.name ? "bg-gray-500" : "hover:bg-gray-600",
+            )}>
+            {subFolder.name}
+          </li>
+        })}
+      </ul>
+    </>
+  );
+}
+
 
 /**
  * スタックやノートを表示する。
@@ -12,51 +44,24 @@ export default function SideBar({folders}: {
   folders: Folder[],
 }) {
   const [selectedFolder, setSelectedFolder] = useRecoilState(atoms.selectedFolder);
-  const [openState, setOpenState] = useState({} as any);
 
   return (
-    <div className='p-2 flex-none w-72 bg-gray-700 text-white h-screen overflow-y-scroll'>
-      <ul>
+    <div className='p-2 flex-none flex flex-col w-72 bg-gray-700 text-white h-screen'>
+      <ul className="flex-col">
         <li>
-          <button>新規ノートブック</button>
+          <button className="hover:bg-gray-500 w-full text-start">➕新規ノートブック</button>
         </li>
         <li>
-          <button>ショートカット</button>
-        </li>
-        <li>
-          <button>全てのノート</button>
+          <button className="hover:bg-gray-500 w-full text-start">🔖ショートカット</button>
         </li>
       </ul>
-      <ul className='mt-4'>
-        {folders.map((stack: any) => {
-          return (
-            <li key={stack.name} className='notebooks__stack'>
-              <strong className={"block hover:bg-gray-500 cursor-pointer"}
-                      onClick={() => openState[stack.name] ?
-                        setOpenState({...openState, [stack.name]: false}) :
-                        setOpenState({...openState, [stack.name]: true})
-                      }>
-                {openState[stack.name] ? "▶" : "▼"}
-                📘{stack.name}
-              </strong>
-              <ul className={[
-                (openState[stack.name] ? "hidden" : ""),
-              ].join(" ")}>
-                {stack.childFolders.map((notebook: any) => {
-                  return <li
-                    key={stack.name + notebook.name}
-                    onClick={() => setSelectedFolder(notebook)}
-                    className={[
-                      (selectedFolder?.name === notebook.name ? "bg-gray-500" : "hover:bg-gray-600"),
-                      "ps-5",
-                      "cursor-pointer"
-                    ].join(" ")}>
-                    {notebook.name}
-                  </li>
-                })}
-              </ul>
-            </li>
-          );
+      <ul className='mt-4 flex-col overflow-y-scroll'>
+        {folders.map(folder => {
+          return <li key={folder.id}>
+            <Folder folder={folder as any}
+                    selectedFolder={selectedFolder as any}
+                    setSelectedFolder={setSelectedFolder as any}/>
+          </li>
         })}
       </ ul>
     </div>
