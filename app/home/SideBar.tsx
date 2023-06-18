@@ -23,7 +23,7 @@ function Header() {
 
 
 const INDENT_WIDTH = 5;
-const INDENTS = ["ps-0", "ps-5", "ps-10"];
+const INDENTS = ["ps-0", "ps-5", "ps-10", "ps-15", "ps-20", "ps-25"];
 
 function Folder({folder, selectedFolder, setSelectedFolder, indent}: {
   folder: FolderAndChild,

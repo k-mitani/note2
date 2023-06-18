@@ -2,9 +2,10 @@ import {prisma} from '@/lib/prisma';
 import {NextRequest, NextResponse} from "next/server";
 
 export async function DELETE(
+  req: NextRequest,
   {params}: { params: { folderId: string } }
 ) {
-  const folder = prisma.folder.update({
+  const folder = await prisma.folder.update({
     data: {parentFolderId: -1},
     where: {id: parseInt(params.folderId)},
   })
