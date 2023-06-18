@@ -3,6 +3,8 @@ import {Folder} from "@prisma/client";
 import {atoms} from "@/app/home/atoms";
 import {useRecoilState} from "recoil";
 import classNames from "classnames";
+import {mutate} from "swr";
+import {useFoldersAll} from "@/app/home/hooks";
 
 type FolderAndChild = Folder & { childFolders: FolderAndChild[] };
 
@@ -45,6 +47,7 @@ function Folder({folder, selectedFolder, setSelectedFolder, indent}: {
           } as any,
           body: JSON.stringify({name: newName}),
         });
+        await mutate('/api/rpc/getFoldersAll');
       }
     },
     {
@@ -56,7 +59,7 @@ function Folder({folder, selectedFolder, setSelectedFolder, indent}: {
     },
     {
       name: "フォルダー作成", onClick: async () => {
-        const newName = prompt("名前を入力してください", folder.name)
+        const newName = prompt("名前を入力してください", "新しいフォルダー");
         if (newName == null) return;
         await fetch(`/api/rpc/createFolder/${folder.id}`, {
           method: "POST",
@@ -65,6 +68,7 @@ function Folder({folder, selectedFolder, setSelectedFolder, indent}: {
           } as any,
           body: JSON.stringify({name: newName}),
         });
+        await mutate('/api/rpc/getFoldersAll');
       }
     },
     {
@@ -74,6 +78,7 @@ function Folder({folder, selectedFolder, setSelectedFolder, indent}: {
         await fetch(`/api/folders/${folder.id}`, {
           method: "DELETE",
         });
+        await mutate('/api/rpc/getFoldersAll');
       }
     },
   ];
@@ -139,11 +144,11 @@ function Folder({folder, selectedFolder, setSelectedFolder, indent}: {
 /**
  * スタックやノートを表示する。
  */
-export default function SideBar({folders}: {
-  folders: Folder[],
-}) {
+export default function SideBar() {
+  const {data} = useFoldersAll();
   const [selectedFolder, setSelectedFolder] = useRecoilState(atoms.selectedFolder);
 
+  const {folders, trash} = data ?? {folders: [], trash: null};
   return (
     <div className='p-0.5 flex-none flex flex-col w-72 bg-gray-700 text-white h-screen'>
       {/*固定ヘッダー*/}

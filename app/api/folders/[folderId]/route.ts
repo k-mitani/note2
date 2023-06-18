@@ -1,17 +1,16 @@
-import {PrismaClient} from "@prisma/client";
+import {prisma} from '@/lib/prisma';
 import {NextRequest, NextResponse} from "next/server";
 
-const prisma = new PrismaClient();
-
-export  async function DELETE(
+export async function DELETE(
   {params}: { params: { folderId: string } }
 ) {
   const folder = prisma.folder.update({
-    data: { parentFolderId: -1 },
+    data: {parentFolderId: -1},
     where: {id: parseInt(params.folderId)},
   })
   return NextResponse.json(folder);
 }
+
 export async function GET(
   _req: NextRequest,
   {params}: { params: { folderId: string } }
@@ -28,28 +27,3 @@ export async function GET(
   })
   return NextResponse.json(folder);
 }
-
-
-// export async function GET() {
-//   const folders = await prisma.folder.findMany({
-//     where: {parentFolderId: null},
-//     include: {
-//       childFolders: {
-//         include: {
-//           notes: {
-//             select: {
-//               id: true,
-//               title: true,
-//               tags: true,
-//               attributes: true,
-//               createdAt: true,
-//               updatedAt: true,
-//               folderId: true,
-//             },
-//           }
-//         }
-//       },
-//     }
-//   });
-//   return NextResponse.json(folders);
-// }

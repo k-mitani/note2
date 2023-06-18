@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useContext} from "react";
+import React from "react";
 import useSWR from "swr";
 import SideBar from "@/app/home/SideBar";
 import NoteEditor from "@/app/home/NoteEditor";
@@ -8,25 +8,8 @@ import NoteListView from "@/app/home/NoteListView";
 import {Folder, Note} from "@prisma/client";
 import {RecoilRoot, useRecoilState} from "recoil";
 import {atoms} from "@/app/home/atoms";
+import {useFolderAndNotes, useFoldersAll} from "@/app/home/hooks";
 
-function fetcher(url: string) {
-  return fetch(url).then(res => res.json())
-}
-
-function useFoldersAll() {
-  return useSWR<Folder[]>('/api/rpc/getFoldersAll', fetcher);
-}
-
-function useFolderAndNotes(folderId: number | undefined) {
-  const swr = useSWR<Folder & { notes: Note[] }>(`/api/folders/${folderId}`, fetcher);
-  if (swr.data != null) {
-    swr.data.notes.forEach((n: Note) => {
-      if (n != null && !(n.updatedAt instanceof Date)) n.updatedAt = new Date(n.updatedAt as any);
-      if (!(n.createdAt instanceof Date)) n.createdAt = new Date(n.createdAt as any);
-    });
-  }
-  return swr;
-}
 
 function HomeInternal() {
   // State
@@ -45,7 +28,7 @@ function HomeInternal() {
   const notes = notesParent?.notes ?? [];
   return (
     <main className='flex h-screen w-screen bg-red-200'>
-      <SideBar folders={folders}/>
+      <SideBar />
 
       <NoteListView notes={notes}/>
 
