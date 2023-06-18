@@ -1,19 +1,19 @@
 import {format} from "date-fns";
-import React, {useEffect, useRef, useState} from "react";
+import React, {useEffect, useMemo, useRef, useState} from "react";
 import * as utils from "@/app/utils";
 import {z} from "zod";
 import {Note} from "@prisma/client";
+import {useRecoilState, useRecoilValue} from "recoil";
+import {atoms} from "@/app/home/atoms";
 
-function NoteCard({note, isSelected}: {note: Note, isSelected: boolean}) {
-  const dateText = note.updatedAt == null ?
-    `${utils.dateToText(note.createdAt)}` :
-    `${utils.dateToText(note.updatedAt)}`;
-  var text = note.content.replace(/<("[^"]*"|'[^']*'|[^'">])*>/g, "")
+function NoteCard({note, isSelected}: { note: Note, isSelected: boolean }) {
+  const dateText = utils.dateToText(note.updatedAt ?? note.createdAt);
+  const text = note.content.replace(/<("[^"]*"|'[^']*'|[^'">])*>/g, "")
   return (
     <div className={"border-gray-300 border-b-2"}>
       <div className={
-        "flex flex-col hover:bg-white hover:border-cyan-400 border-gray-100 border-2 p-2"
-        + (isSelected ? " border-blue-500 bg-white" : "")
+        "flex flex-col hover:bg-white hover:border-cyan-400 border-2 p-2"
+        + (isSelected ? " border-blue-500 bg-white" : " border-gray-100")
       }>
         <strong className="line-clamp-2">{note.title}</strong>
         <div className={"mt-2 h-16 line-clamp-3 text-gray-600 text-sm"}>{text}</div>
@@ -32,28 +32,33 @@ const orderItems = [
   ["名前順↑", (a: Note, b: Note) => b.title.localeCompare(a.title)],
 ];
 
-export default function NoteListView({notes, selectedNote, setSelectedNote}: {
-  notes: Note[],
-  selectedNote: Note | null,
-  setSelectedNote: (note: Note | null) => void,
+export default function NoteListView({notes}: {
+  notes: Note[] | null,
 }) {
-  const noteCount = notes?.length ?? 0;
+  const [selectedNote, setSelectedNote] = useRecoilState(atoms.selectedNote);
   const [selectedOrder, setSelectedOrder] = useState(0);
+  const [showOrderItems, setShowOrderItems] = useState(false);
+  const [shouldScroll, setShouldScroll] = useState(false);
+
+  const noteCount = notes?.length ?? 0;
   const orderName = (String)(orderItems[selectedOrder][0]);
   const orderFunc = orderItems[selectedOrder][1];
-  const [showOrderItems, setShowOrderItems] = useState(false);
   const refSelectedNoteElement = useRef<Element>(null);
-  const [shouldScroll, setShouldScroll] = useState(false);
-  useEffect(() => {
-    if (notes == null) return;
-    console.log("update");
-    notes = notes?.sort(orderFunc);
+  notes = useMemo(() => {
+    if (notes == null) return null;
+    console.log("sort notes");
+    return notes.sort(orderFunc as any);
   }, [notes, selectedOrder]);
+
   if (notes == null) return <div>loading...</div>
 
-  console.log("draw notelistview");
+  console.log("render notes");
   function onKeyDoen(ev: React.KeyboardEvent) {
-    if (ev.key === "ArrowDown") {
+    if (notes == null) return;
+    if (selectedNote == null) {
+      setSelectedNote(notes[0]);
+      setShouldScroll(true);
+    } else if (ev.key === "ArrowDown") {
       const nextNote = notes[Math.min(notes.indexOf(selectedNote) + 1, notes.length - 1)];
       setSelectedNote(nextNote);
       setShouldScroll(true);
@@ -102,7 +107,7 @@ export default function NoteListView({notes, selectedNote, setSelectedNote}: {
           return (
             <li key={note.name + "-" + i}
                 onMouseDown={() => setSelectedNote(note)}
-                ref={selectedNote === note ? refSelectedNoteElement : null}
+                ref={selectedNote === note ? refSelectedNoteElement : null as any}
             >
               <NoteCard note={note} isSelected={selectedNote === note}></NoteCard>
             </li>);

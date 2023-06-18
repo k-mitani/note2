@@ -1,14 +1,13 @@
 "use client";
 
-import Image from 'next/image'
-import React from "react";
+import React, {useContext} from "react";
 import useSWR from "swr";
-import {format} from 'date-fns';
 import SideBar from "@/app/home/SideBar";
 import NoteEditor from "@/app/home/NoteEditor";
 import NoteListView from "@/app/home/NoteListView";
 import {Folder, Note} from "@prisma/client";
-
+import {RecoilRoot, useRecoilState} from "recoil";
+import {atoms} from "@/app/home/atoms";
 
 function fetcher(url: string) {
   return fetch(url).then(res => res.json())
@@ -18,41 +17,47 @@ function useFoldersAll() {
   return useSWR<Folder[]>('/api/rpc/getFoldersAll', fetcher);
 }
 
-function useNotes(folderId: number | undefined) {
-  return useSWR<Folder>(`/api/rest/folders/${folderId}`, fetcher);
+function useFolderAndNotes(folderId: number | undefined) {
+  const swr = useSWR<Folder & { notes: Note[] }>(`/api/folders/${folderId}`, fetcher);
+  if (swr.data != null) {
+    swr.data.notes.forEach((n: Note) => {
+      if (n != null && !(n.updatedAt instanceof Date)) n.updatedAt = new Date(n.updatedAt as any);
+      if (!(n.createdAt instanceof Date)) n.createdAt = new Date(n.createdAt as any);
+    });
+  }
+  return swr;
 }
 
-export default function Home() {
-  const {data: folders, error, isLoading} = useFoldersAll();
-  const [selectedNotebook, setSelectedNotebook] = React.useState<Folder | null>(null);
-  const {data: notesParent} = useNotes(selectedNotebook?.id);
-  const [selectedNote, setSelectedNote] = React.useState<Note | null>(null);
+function HomeInternal() {
+  // State
+  const [selectedFolder, setSelectedFolder] = useRecoilState(atoms.selectedFolder);
+  const [selectedNote, setSelectedNote] = useRecoilState(atoms.selectedNote);
 
+  // Data
+  const {data: folders, error, isLoading} = useFoldersAll();
+  const {data: notesParent} = useFolderAndNotes(selectedFolder?.id);
+
+  // 読み込み中なら何もしない。
   if (error) return <div>failed to load</div>
   if (isLoading) return <div>loading...</div>
   if (folders == null) return <div>folders is null</div>
 
   const notes = notesParent?.notes ?? [];
-  notes.forEach((n: Note) => {
-    n.updatedAt = new Date(n.updatedAt as any);
-    n.createdAt = new Date(n.createdAt as any);
-  });
-
-
-  console.log("draw page");
   return (
     <main className='flex h-screen w-screen bg-red-200'>
-      <SideBar folders={folders}
-               selectedNotebook={selectedNotebook}
-               setSelectedNotebook={setSelectedNotebook}
-      />
+      <SideBar folders={folders}/>
 
-      <NoteListView notes={notes}
-                    selectedNote={selectedNote}
-                    setSelectedNote={setSelectedNote}
-      />
+      <NoteListView notes={notes}/>
 
-      <NoteEditor note={selectedNote}/>
+      <NoteEditor/>
     </main>
   )
+}
+
+export default function Home() {
+  return (
+    <RecoilRoot>
+      <HomeInternal/>
+    </RecoilRoot>
+  );
 }

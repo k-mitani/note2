@@ -8,6 +8,9 @@ export async function GET(
   {params}: { params: { folderId: string } }
 ) {
   const folderId = parseInt(params.folderId);
+  if (isNaN(folderId)) {
+    return NextResponse.json(null);
+  }
   const folder = await prisma.folder.findUnique({
     include: {
       notes: true,

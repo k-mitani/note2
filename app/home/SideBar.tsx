@@ -2,16 +2,18 @@ import {useState} from "react";
 import {falseTag} from "yaml/dist/schema/yaml-1.1/bool";
 import {bool} from "prop-types";
 import {Folder} from "@prisma/client";
+import {atoms} from "@/app/home/atoms";
+import {useRecoilState} from "recoil";
 
 /**
  * スタックやノートを表示する。
  */
-export default function SideBar({folders, selectedNotebook, setSelectedNotebook}: {
+export default function SideBar({folders}: {
   folders: Folder[],
-  selectedNotebook: Folder | null,
-  setSelectedNotebook: (notebook: Folder) => void
 }) {
+  const [selectedFolder, setSelectedFolder] = useRecoilState(atoms.selectedFolder);
   const [openState, setOpenState] = useState({} as any);
+
   return (
     <div className='p-2 flex-none w-72 bg-gray-700 text-white h-screen overflow-y-scroll'>
       <ul>
@@ -43,9 +45,9 @@ export default function SideBar({folders, selectedNotebook, setSelectedNotebook}
                 {stack.childFolders.map((notebook: any) => {
                   return <li
                     key={stack.name + notebook.name}
-                    onClick={() => setSelectedNotebook(notebook)}
+                    onClick={() => setSelectedFolder(notebook)}
                     className={[
-                      (selectedNotebook?.name === notebook.name ? "bg-gray-500" : "hover:bg-gray-600"),
+                      (selectedFolder?.name === notebook.name ? "bg-gray-500" : "hover:bg-gray-600"),
                       "ps-5",
                       "cursor-pointer"
                     ].join(" ")}>
