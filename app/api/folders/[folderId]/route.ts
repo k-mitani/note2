@@ -3,6 +3,15 @@ import {NextRequest, NextResponse} from "next/server";
 
 const prisma = new PrismaClient();
 
+export  async function DELETE(
+  {params}: { params: { folderId: string } }
+) {
+  const folder = prisma.folder.update({
+    data: { parentFolderId: -1 },
+    where: {id: parseInt(params.folderId)},
+  })
+  return NextResponse.json(folder);
+}
 export async function GET(
   _req: NextRequest,
   {params}: { params: { folderId: string } }
