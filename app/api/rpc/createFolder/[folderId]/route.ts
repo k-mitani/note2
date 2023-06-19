@@ -5,9 +5,11 @@ export async function POST(
   req: NextRequest,
   {params}: { params: { folderId: string } }
 ) {
-  const folderId = parseInt(params.folderId);
+  const folderId = params.folderId === "null" ?
+    null :
+    parseInt(params.folderId);
   const {name} = await req.json();
-  if (isNaN(folderId)) {
+  if (isNaN(folderId ?? 0)) {
     return NextResponse.error();
   }
   const folder = await prisma.folder.create({

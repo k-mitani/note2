@@ -11,20 +11,29 @@ type FolderAndChild = Folder & { childFolders: FolderAndChild[] };
 
 function Header() {
   return <>
-    <ul className="flex-col">
-      <li>
-        <button className="hover:bg-gray-600 w-full text-start">➕新規ノートブック</button>
-      </li>
-      <li>
-        <button className="hover:bg-gray-600 w-full text-start">🔖ショートカット</button>
-      </li>
-    </ul>
+    <button className="rounded m-1 bg-emerald-700 p-2 hover:bg-emerald-600">
+      新規ノートブック
+    </button>
+    <button className="hover:bg-gray-600 w-full text-start">🔖ショートカット</button>
   </>
 }
 
 
 const INDENT_WIDTH = 5;
 const INDENTS = ["ps-0", "ps-5", "ps-10", "ps-[3.75rem]", "ps-[5rem]", "ps-[6.25rem]"];
+
+async function createFolder(parentFolderId: number | null) {
+  const newName = prompt("名前を入力してください", "新しいフォルダー");
+  if (newName == null) return;
+  await fetch(`/api/rpc/createFolder/${parentFolderId}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    } as any,
+    body: JSON.stringify({name: newName}),
+  });
+  await mutate('/api/rpc/getFoldersAll');
+}
 
 function Folder({folder, selectedFolder, setSelectedFolder, indent, isExpanded, setIsExpanded}: {
   folder: FolderAndChild,
@@ -60,18 +69,7 @@ function Folder({folder, selectedFolder, setSelectedFolder, indent, isExpanded, 
       }
     },
     {
-      name: "フォルダー作成", onClick: async () => {
-        const newName = prompt("名前を入力してください", "新しいフォルダー");
-        if (newName == null) return;
-        await fetch(`/api/rpc/createFolder/${folder.id}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          } as any,
-          body: JSON.stringify({name: newName}),
-        });
-        await mutate('/api/rpc/getFoldersAll');
-      }
+      name: "フォルダー作成", onClick: () => createFolder(folder.id),
     },
     {
       name: "削除", onClick: async () => {
@@ -161,8 +159,9 @@ export default function SideBar() {
       {/*固定ヘッダー*/}
       <Header></Header>
 
+      <div className='mt-4 flex-col overflow-y-auto'>
       {/*フォルダー一覧*/}
-      <ul className='mt-4 flex-col overflow-y-auto'>
+      <ul className=''>
         {folders.map(folder => {
           return <li key={folder.id}>
             <Folder folder={folder as any}
@@ -174,7 +173,30 @@ export default function SideBar() {
             />
           </li>
         })}
+      </ul>
+      {/*新規フォルダー作成ボタン*/}
+      <div className="mt-2">
+        <button className="pt-2 pb-2 rounded hover:bg-gray-600 w-full text-start"
+                onClick={() => createFolder(null)}>
+          ➕フォルダー新規作成
+        </button>
+      </div>
+
+      {/*ゴミ箱*/}
+      <ul className='mt-2 flex-col overflow-y-auto'>
+        {[trash!!].map(folder => {
+          return <li key={folder.id}>
+            <Folder folder={folder as any}
+                    selectedFolder={selectedFolder as any}
+                    setSelectedFolder={setSelectedFolder as any}
+                    indent={0}
+                    isExpanded={(id) => isExpanded[id]}
+                    setIsExpanded={(id, expand) => setIsExpanded({...isExpanded, [id]: expand})}
+            />
+          </li>
+        })}
       </ ul>
+      </div>
     </div>
   );
 }
