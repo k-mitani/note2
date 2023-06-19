@@ -14,3 +14,9 @@ export function dateToText(date: Date) {
   return format(date, 'yyyy/MM/dd');
 }
 
+export function coerceDate(obj: any, key: string) {
+  if (obj[key] instanceof Date) {
+    return;
+  }
+  obj[key] = new Date(obj[key]);
+}

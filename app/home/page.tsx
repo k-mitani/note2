@@ -3,6 +3,7 @@
 import React from "react";
 import useSWR from "swr";
 import SideBar from "@/app/home/SideBar";
+import * as utils from "@/app/utils";
 import NoteEditor from "@/app/home/NoteEditor";
 import NoteListView from "@/app/home/NoteListView";
 import {Folder, Note} from "@prisma/client";
@@ -18,17 +19,31 @@ function HomeInternal() {
 
   // Data
   const {data: folders, error, isLoading} = useFoldersAll();
-  const {data: notesParent} = useFolderAndNotes(selectedFolder?.id);
+  const {data: notesParent, mutate: mutateNotesParent} = useFolderAndNotes(selectedFolder?.id);
 
   // 読み込み中なら何もしない。
   if (error) return <div>failed to load</div>
   if (isLoading) return <div>loading...</div>
   if (folders == null) return <div>folders is null</div>
 
+  async function onCreateNewNote() {
+    if (selectedFolder == null) return;
+    const res = await fetch(
+      `/api/folders/${selectedFolder.id}/createNote`,
+      {method: "POST"}
+    );
+    const newNote = await res.json();
+    utils.coerceDate(newNote, "createdAt");
+    utils.coerceDate(newNote, "updatedAt");
+    console.log(newNote);
+    await mutateNotesParent();
+    setSelectedNote(newNote);
+  }
+
   const notes = notesParent?.notes ?? [];
   return (
     <main className='flex h-screen w-screen bg-red-200'>
-      <SideBar />
+      <SideBar onCreateNewNote={onCreateNewNote}/>
 
       <NoteListView notes={notes}/>
 

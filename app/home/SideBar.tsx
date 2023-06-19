@@ -9,16 +9,6 @@ import {useLocalStorage} from "usehooks-ts";
 
 type FolderAndChild = Folder & { childFolders: FolderAndChild[] };
 
-function Header() {
-  return <>
-    <button className="rounded m-1 bg-emerald-700 p-2 hover:bg-emerald-600">
-      新規ノートブック
-    </button>
-    <button className="hover:bg-gray-600 w-full text-start">🔖ショートカット</button>
-  </>
-}
-
-
 const INDENT_WIDTH = 5;
 const INDENTS = ["ps-0", "ps-5", "ps-10", "ps-[3.75rem]", "ps-[5rem]", "ps-[6.25rem]"];
 
@@ -146,7 +136,7 @@ function Folder({folder, selectedFolder, setSelectedFolder, indent, isExpanded, 
 /**
  * スタックやノートを表示する。
  */
-export default function SideBar() {
+export default function SideBar({onCreateNewNote}: {onCreateNewNote: () => void}) {
   const {data} = useFoldersAll();
   const [selectedFolder, setSelectedFolder] = useRecoilState(atoms.selectedFolder);
   const [isExpanded, setIsExpanded] = useLocalStorage<{
@@ -157,45 +147,53 @@ export default function SideBar() {
   return (
     <div className='p-0.5 flex-none flex flex-col w-72 bg-gray-700 text-white h-screen'>
       {/*固定ヘッダー*/}
-      <Header></Header>
-
-      <div className='mt-4 flex-col overflow-y-auto'>
-      {/*フォルダー一覧*/}
-      <ul className=''>
-        {folders.map(folder => {
-          return <li key={folder.id}>
-            <Folder folder={folder as any}
-                    selectedFolder={selectedFolder as any}
-                    setSelectedFolder={setSelectedFolder as any}
-                    indent={0}
-                    isExpanded={(id) => isExpanded[id]}
-                    setIsExpanded={(id, expand) => setIsExpanded({...isExpanded, [id]: expand})}
-            />
-          </li>
-        })}
-      </ul>
-      {/*新規フォルダー作成ボタン*/}
-      <div className="mt-2">
-        <button className="pt-2 pb-2 rounded hover:bg-gray-600 w-full text-start"
-                onClick={() => createFolder(null)}>
-          ➕フォルダー新規作成
+      <div>
+        <div className="m-1">
+        <button className="rounded bg-emerald-700 p-2 hover:bg-emerald-600 w-full"
+                onClick={onCreateNewNote}>
+          ノート新規作成
         </button>
+        </div>
+        <button className="hover:bg-gray-600 w-full text-start">🔖ショートカット</button>
       </div>
 
-      {/*ゴミ箱*/}
-      <ul className='mt-2 flex-col overflow-y-auto'>
-        {[trash!!].map(folder => {
-          return <li key={folder.id}>
-            <Folder folder={folder as any}
-                    selectedFolder={selectedFolder as any}
-                    setSelectedFolder={setSelectedFolder as any}
-                    indent={0}
-                    isExpanded={(id) => isExpanded[id]}
-                    setIsExpanded={(id, expand) => setIsExpanded({...isExpanded, [id]: expand})}
-            />
-          </li>
-        })}
-      </ ul>
+      <div className='mt-4 flex-col overflow-y-auto'>
+        {/*フォルダー一覧*/}
+        <ul className=''>
+          {folders.map(folder => {
+            return <li key={folder.id}>
+              <Folder folder={folder as any}
+                      selectedFolder={selectedFolder as any}
+                      setSelectedFolder={setSelectedFolder as any}
+                      indent={0}
+                      isExpanded={(id) => isExpanded[id]}
+                      setIsExpanded={(id, expand) => setIsExpanded({...isExpanded, [id]: expand})}
+              />
+            </li>
+          })}
+        </ul>
+        {/*新規フォルダー作成ボタン*/}
+        <div className="mt-2">
+          <button className="pt-2 pb-2 rounded hover:bg-gray-600 w-full text-start"
+                  onClick={() => createFolder(null)}>
+            ➕フォルダー新規作成
+          </button>
+        </div>
+
+        {/*ゴミ箱*/}
+        <ul className='mt-2 flex-col overflow-y-auto'>
+          {[trash!!].map(folder => {
+            return <li key={folder.id}>
+              <Folder folder={folder as any}
+                      selectedFolder={selectedFolder as any}
+                      setSelectedFolder={setSelectedFolder as any}
+                      indent={0}
+                      isExpanded={(id) => isExpanded[id]}
+                      setIsExpanded={(id, expand) => setIsExpanded({...isExpanded, [id]: expand})}
+              />
+            </li>
+          })}
+        </ ul>
       </div>
     </div>
   );
