@@ -196,7 +196,10 @@ function Folder({folder, allFolders, selectedFolder, setSelectedFolder, indent, 
         <button className={classNames(
           "hover:bg-gray-500 w-5",
           {"hidden": !hasChildren}
-        )} onClick={() => setIsExpanded(folder.id, !isExpanded(folder.id))}>
+        )} onClick={(ev) => {
+          setIsExpanded(folder.id, !isExpanded(folder.id));
+          ev.stopPropagation();
+        }}>
           {isExpanded(folder.id) ? "▼" : "▶"}
         </button>
 
