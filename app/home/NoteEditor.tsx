@@ -1,13 +1,23 @@
-import React, {useDebugValue} from "react";
+import React, {useDebugValue, useRef} from "react";
 import Link from "next/link";
 import * as utils from "@/app/utils";
 import {format} from "date-fns";
 import {Note} from "@prisma/client";
 import {atoms} from "@/app/home/atoms";
 import {useRecoilValue} from "recoil";
+import ContentEditable from 'react-contenteditable'
 
 export default function NoteEditor({}: {}) {
   const note = useRecoilValue(atoms.selectedNote);
+  const prevNote = useRef(note);
+  const refHtml = useRef(note?.content ?? "");
+
+  // noteが更新されたら、refHtml.currentを更新する。
+  if (note !== prevNote.current) {
+    console.log("noteupdated", refHtml.current)
+    prevNote.current = note;
+    refHtml.current = note?.content ?? "";
+  }
 
   let link = null;
   let linkText = null;
@@ -25,7 +35,10 @@ export default function NoteEditor({}: {}) {
     const date = note.updatedAt || note.createdAt;
     timeText = date && format(date, "yyyy-MM-dd HH:mm") || "";
   }
-  return <div className={"grow bg-white h-screen overflow-y-scroll "}>
+
+  (window as any)["__aa"] = note;
+  return <div className="grow bg-white flex flex-col">
+    {/*ヘッダー*/}
     <div className={"border-b-2 border-gray-200 p-2"}>
       <input className="text-blue-500 w-full"
              type="text"
@@ -40,9 +53,15 @@ export default function NoteEditor({}: {}) {
         )}
       </div>
     </div>
-    <div className={"p-2"}>
-      <div dangerouslySetInnerHTML={{__html: note?.content ?? ""}}>
-      </div>
+
+    {/*本文*/}
+    <div className="p-2 grow overflow-y-scroll break-all">
+      <ContentEditable html={refHtml.current}
+                       className="w-full h-full"
+                       style={{outline: "0px solid #fff"}}
+                       onChange={ev => refHtml.current = ev.target.value}
+                       onBlur={() => console.log("onblur", refHtml.current)}
+      />
     </div>
   </div>
 }
