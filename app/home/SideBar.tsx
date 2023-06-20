@@ -77,30 +77,32 @@ function Folder({folder, selectedFolder, setSelectedFolder, indent, isExpanded, 
   return (
     <div onMouseLeave={() => setShowMenu(false)}>
       {/*フォルダー項目*/}
-      <div className={classNames(
-        "cursor-pointer flex select-none",
-        INDENTS[indent],
-        selectedFolder?.id === folder.id ? "bg-gray-500" : "hover:bg-gray-600",
-      )}>
+      <button
+        className={classNames(
+          "cursor-pointer select-none  w-full text-start",
+          INDENTS[indent],
+          selectedFolder?.id === folder.id ? "bg-gray-500" : "hover:bg-gray-600",
+        )}
+        title={JSON.stringify(folder)}
+        onClick={() => setSelectedFolder(folder)}
+        onContextMenu={(ev) => {
+          setShowMenu(!showMenu);
+          ev.preventDefault();
+        }}
+      >
         {/*サブフォルダー展開ボタン*/}
-        <span className={classNames(
-          "flex-col hover:bg-gray-500 w-5",
+        <button className={classNames(
+          "hover:bg-gray-500 w-5",
           {"hidden": !hasChildren}
         )} onClick={() => setIsExpanded(folder.id, !isExpanded(folder.id))}>
           {isExpanded(folder.id) ? "▼" : "▶"}
-        </span>
+        </button>
 
         {/*フォルダー名*/}
-        <span className={classNames("flex-col w-full")}
-              title={JSON.stringify(folder)}
-              onClick={() => setSelectedFolder(folder)}
-              onContextMenu={(ev) => {
-                setShowMenu(!showMenu);
-                ev.preventDefault();
-              }}>
+        <span className="w-full">
           {folder.name}
         </span>
-      </div>
+      </button>
 
       {/*コンテキストメニュー*/}
       {showMenu && <div className="bg-white text-black">
@@ -136,7 +138,7 @@ function Folder({folder, selectedFolder, setSelectedFolder, indent, isExpanded, 
 /**
  * スタックやノートを表示する。
  */
-export default function SideBar({onCreateNewNote}: {onCreateNewNote: () => void}) {
+export default function SideBar({onCreateNewNote}: { onCreateNewNote: () => void }) {
   const {data} = useFoldersAll();
   const [selectedFolder, setSelectedFolder] = useRecoilState(atoms.selectedFolder);
   const [isExpanded, setIsExpanded] = useLocalStorage<{
@@ -149,15 +151,15 @@ export default function SideBar({onCreateNewNote}: {onCreateNewNote: () => void}
       {/*固定ヘッダー*/}
       <div>
         <div className="m-1">
-        <button className="rounded bg-emerald-700 p-2 hover:bg-emerald-600 w-full"
-                onClick={onCreateNewNote}>
-          ノート新規作成
-        </button>
+          <button className="rounded bg-gray-500 p-2 hover:bg-gray-400 w-full"
+                  onClick={onCreateNewNote}>
+            ノート新規作成
+          </button>
         </div>
         <button className="hover:bg-gray-600 w-full text-start">🔖ショートカット</button>
       </div>
 
-      <div className='mt-4 flex-col overflow-y-auto'>
+      <div className='mt-4 pt-0.5 flex-col overflow-y-auto'>
         {/*フォルダー一覧*/}
         <ul className=''>
           {folders.map(folder => {
