@@ -25,8 +25,9 @@ async function createFolder(parentFolderId: number | null) {
   await mutate('/api/rpc/getFoldersAll');
 }
 
-function Folder({folder, selectedFolder, setSelectedFolder, indent, isExpanded, setIsExpanded}: {
+function Folder({folder, allFolders, selectedFolder, setSelectedFolder, indent, isExpanded, setIsExpanded}: {
   folder: FolderAndChild,
+  allFolders: FolderAndChild[],
   selectedFolder: FolderAndChild | undefined,
   setSelectedFolder: (folder: FolderAndChild) => void,
   indent: number,
@@ -79,12 +80,113 @@ function Folder({folder, selectedFolder, setSelectedFolder, indent, isExpanded, 
       {/*フォルダー項目*/}
       <button
         className={classNames(
+          `js-folder-${folder.id}`,
           "cursor-pointer select-none  w-full text-start",
           INDENTS[indent],
           selectedFolder?.id === folder.id ? "bg-gray-500" : "hover:bg-gray-600",
         )}
         title={JSON.stringify(folder)}
         onClick={() => setSelectedFolder(folder)}
+        onKeyDown={(ev) => {
+          let current: FolderAndChild | null = null;
+
+          function find(tagetId: number, fs: FolderAndChild[]): FolderAndChild | null {
+            for (const f of fs) {
+              if (f.id === tagetId) return f;
+              if (f.childFolders) {
+                const found = find(tagetId, f.childFolders);
+                if (found) return found;
+              }
+            }
+            return null;
+          }
+          function findPrev(target: FolderAndChild, fs: FolderAndChild[]): FolderAndChild | null {
+            for (const f of fs) {
+              // targetが見つかったら、その一つ前の要素を返す。
+              if (f === target) return current;
+              // currentを更新する。
+              current = f;
+              // 子フォルダーありでopen状態なら、その中を探す。
+              if (f.childFolders && isExpanded(f.id)) {
+                const found = findPrev(target, f.childFolders);
+                if (found) return found;
+              }
+            }
+            return null;
+          }
+
+          function findNext(target: FolderAndChild, fs: FolderAndChild[]): FolderAndChild | null {
+            // 逆から調べていく。
+            for (let i = fs.length - 1; i >= 0; i--) {
+              const f = fs[i];
+              // 子フォルダーありでopen状態なら、その中を探す。
+              if (f.childFolders && isExpanded(f.id)) {
+                const found = findNext(target, f.childFolders);
+                if (found) return found;
+              }
+              // targetが見つかったら、その一つ次の要素を返す。
+              if (f === target) return current;
+              // currentを更新する。
+              current = f;
+            }
+            return null;
+          }
+
+          // 上下キーなら選択を移動する。
+          if (ev.key === "ArrowUp" || ev.key === "ArrowDown") {
+            const target = ev.key === "ArrowUp" ?
+              findPrev(folder, allFolders) :
+              findNext(folder, allFolders);
+            if (target) {
+              ev.preventDefault();
+              const el = document.getElementsByClassName(`js-folder-${target.id}`)[0];
+              (el as HTMLElement)?.focus()
+            }
+          }
+          // 左キーの場合
+          if (ev.key === "ArrowLeft") {
+            // 子フォルダーありでopen状態なら閉じる。
+            if (hasChildren && isExpanded(folder.id)) {
+              setIsExpanded(folder.id, false);
+              ev.preventDefault();
+            }
+            // 親フォルダーを選択する。
+            else if (folder.parentFolderId != null) {
+              const parent = find(folder.parentFolderId, allFolders);
+              if (parent) {
+                ev.preventDefault();
+                const el = document.getElementsByClassName(`js-folder-${parent.id}`)[0];
+                (el as HTMLElement)?.focus()
+              }
+            }
+            // 前の要素を選択する。
+            else {
+              const prev = findPrev(folder, allFolders);
+              if (prev) {
+                ev.preventDefault();
+                const el = document.getElementsByClassName(`js-folder-${prev.id}`)[0];
+                (el as HTMLElement)?.focus()
+              }
+            }
+          }
+          // 右キーの場合
+          if (ev.key === "ArrowRight") {
+            // 子フォルダーありでclose状態なら開く。
+            if (hasChildren && !isExpanded(folder.id)) {
+              setIsExpanded(folder.id, true);
+              ev.preventDefault();
+            }
+            // 次の要素を選択する。
+            else {
+              const next = findNext(folder, allFolders);
+              if (next) {
+                ev.preventDefault();
+                const el = document.getElementsByClassName(`js-folder-${next.id}`)[0];
+                (el as HTMLElement)?.focus()
+              }
+            }
+          }
+        }}
         onContextMenu={(ev) => {
           setShowMenu(!showMenu);
           ev.preventDefault();
@@ -121,6 +223,7 @@ function Folder({folder, selectedFolder, setSelectedFolder, indent, isExpanded, 
         {folder.childFolders.map(subFolder => {
           return <li key={subFolder.id}>
             <Folder folder={subFolder}
+                    allFolders={allFolders}
                     selectedFolder={selectedFolder}
                     setSelectedFolder={setSelectedFolder}
                     indent={indent + 1}
@@ -165,6 +268,7 @@ export default function SideBar({onCreateNewNote}: { onCreateNewNote: () => void
           {folders.map(folder => {
             return <li key={folder.id}>
               <Folder folder={folder as any}
+                      allFolders={folders}
                       selectedFolder={selectedFolder as any}
                       setSelectedFolder={setSelectedFolder as any}
                       indent={0}
@@ -187,6 +291,7 @@ export default function SideBar({onCreateNewNote}: { onCreateNewNote: () => void
           {[trash!!].map(folder => {
             return <li key={folder.id}>
               <Folder folder={folder as any}
+                      allFolders={[trash!!]}
                       selectedFolder={selectedFolder as any}
                       setSelectedFolder={setSelectedFolder as any}
                       indent={0}
