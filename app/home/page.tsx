@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, {useCallback, useEffect} from "react";
 import useSWR from "swr";
 import SideBar from "@/app/home/SideBar";
 import * as utils from "@/app/utils";
@@ -16,6 +16,7 @@ function HomeInternal() {
   // State
   const [selectedFolder, setSelectedFolder] = useRecoilState(atoms.selectedFolder);
   const [selectedNote, setSelectedNote] = useRecoilState(atoms.selectedNote);
+  const [[changedNotes], setChangedNotes] = useRecoilState(atoms.changedNotes);
 
   // Data
   const {data: folders, error, isLoading} = useFoldersAll();
@@ -40,10 +41,23 @@ function HomeInternal() {
     setSelectedNote(newNote);
   }
 
+  async function saveChanges() {
+    console.log(changedNotes);
+    await fetch("/api/rpc/saveChanges", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        notes: Array.from(changedNotes.values()),
+      }),
+    });
+    setChangedNotes([new Map<number, any>()]);
+    await mutateNotesParent();
+  }
+
   const notes = notesParent?.notes ?? [];
   return (
     <main className='flex h-screen w-screen bg-red-200'>
-      <SideBar onCreateNewNote={onCreateNewNote}/>
+      <SideBar onCreateNewNote={onCreateNewNote} saveChanges={saveChanges}/>
 
       <NoteListView notes={notes}/>
 

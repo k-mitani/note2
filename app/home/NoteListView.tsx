@@ -6,16 +6,16 @@ import {Note} from "@prisma/client";
 import {useRecoilState, useRecoilValue} from "recoil";
 import {atoms} from "@/app/home/atoms";
 
-function NoteCard({note, isSelected}: { note: Note, isSelected: boolean }) {
+function NoteCard({note, changed, isSelected}: { note: Note, changed: {title: string, content: string} | undefined, isSelected: boolean }) {
   const dateText = utils.dateToText(note.updatedAt ?? note.createdAt);
-  const text = note.content.replace(/<("[^"]*"|'[^']*'|[^'">])*>/g, "")
+  const text = (changed ?? note).content.replace(/<("[^"]*"|'[^']*'|[^'">])*>/g, "")
   return (
     <div className={"border-gray-300 border-b-2"}>
       <div className={
         "flex flex-col hover:bg-white hover:border-cyan-400 border-2 p-2"
         + (isSelected ? " border-blue-500 bg-white" : " border-gray-100")
       }>
-        <strong className="line-clamp-2">{note.title}</strong>
+        <strong className="line-clamp-2">{(changed ?? note).title}</strong>
         <div className={"mt-2 h-16 line-clamp-3 text-gray-600 text-sm"}>{text}</div>
         <div className={"mt-2 text-[12px] text-gray-500"}>{dateText}</div>
       </div>
@@ -39,6 +39,7 @@ export default function NoteListView({notes}: {
   const [selectedOrder, setSelectedOrder] = useState(0);
   const [showOrderItems, setShowOrderItems] = useState(false);
   const [shouldScroll, setShouldScroll] = useState(false);
+  const [[changedNotes], setChangedNotes] = useRecoilState(atoms.changedNotes);
 
   const noteCount = notes?.length ?? 0;
   const orderName = (String)(orderItems[selectedOrder][0]);
@@ -109,7 +110,7 @@ export default function NoteListView({notes}: {
                 onMouseDown={() => setSelectedNote(note)}
                 ref={selectedNote === note ? refSelectedNoteElement : null as any}
             >
-              <NoteCard note={note} isSelected={selectedNote === note}></NoteCard>
+              <NoteCard note={note} changed={changedNotes.get(note.id)} isSelected={selectedNote === note}></NoteCard>
             </li>);
         })}
       </ ul>

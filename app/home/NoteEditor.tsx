@@ -1,22 +1,42 @@
-import React, {useDebugValue, useRef} from "react";
+import React, {useCallback, useDebugValue, useEffect, useRef, useState} from "react";
 import Link from "next/link";
 import * as utils from "@/app/utils";
 import {format} from "date-fns";
 import {Note} from "@prisma/client";
 import {atoms} from "@/app/home/atoms";
-import {useRecoilValue} from "recoil";
+import {useRecoilState, useRecoilValue} from "recoil";
 import ContentEditable from 'react-contenteditable'
+import {Simulate} from "react-dom/test-utils";
+import change = Simulate.change;
 
 export default function NoteEditor({}: {}) {
   const note = useRecoilValue(atoms.selectedNote);
   const prevNote = useRef(note);
   const refHtml = useRef(note?.content ?? "");
+  const [title, setTitle] = useState(note?.title ?? "");
+  const [[changedNotes], setChangedNotes] = useRecoilState(atoms.changedNotes);
+
+
+  function addToChangedNotes(id: number, title: string, content: string) {
+    setChangedNotes(([prev]) => {
+      prev.set(id, {id, title, content});
+      return [prev];
+    });
+  }
 
   // noteが更新されたら、refHtml.currentを更新する。
   if (note !== prevNote.current) {
     console.log("noteupdated", refHtml.current)
     prevNote.current = note;
-    refHtml.current = note?.content ?? "";
+    if (note != null) {
+      const n = changedNotes.get(note.id) ?? note;
+      refHtml.current =  n.content;
+      setTitle(n.title);
+    }
+    else {
+      refHtml.current = "";
+      setTitle("");
+    }
   }
 
   let link = null;
@@ -42,8 +62,15 @@ export default function NoteEditor({}: {}) {
     <div className={"border-b-2 border-gray-200 p-2"}>
       <input className="text-blue-500 w-full"
              type="text"
-             onChange={() => {}}
-             value={note?.title ?? ""}></input>
+             onChange={ev => {
+               setTitle(ev.target.value);
+               console.log("hmm", ev.target.value);
+               if (note != null) {
+                 const content = changedNotes.get(note.id)?.content ?? note.content;
+                 addToChangedNotes(note.id, ev.target.value, content);
+               }
+             }}
+             value={title}></input>
       <div>
         <span className="text-xs text-gray-500">{timeText}</span>
         {link && (
@@ -59,7 +86,14 @@ export default function NoteEditor({}: {}) {
       <ContentEditable html={refHtml.current}
                        className="w-full h-full"
                        style={{outline: "0px solid #fff"}}
-                       onChange={ev => refHtml.current = ev.target.value}
+                       onChange={ev => {
+                         console.log("onchange");
+                         refHtml.current = ev.target.value
+                         if (note != null) {
+                           const title = changedNotes.get(note.id)?.title ?? note.title;
+                           addToChangedNotes(note.id, title, ev.target.value);
+                         }
+                       }}
                        onBlur={() => console.log("onblur", refHtml.current)}
       />
     </div>

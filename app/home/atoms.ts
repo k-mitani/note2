@@ -11,4 +11,9 @@ export const atoms = {
     key: 'selectedNote',
     default: null as Note | null,
   }),
+
+  changedNotes: atom({
+    key: "changedNotes",
+    default: [new Map<number, { id: number, title: string, content: string }>()],
+  })
 }
