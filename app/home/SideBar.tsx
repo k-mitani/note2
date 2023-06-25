@@ -260,11 +260,11 @@ export default function SideBar({onCreateNewNote, saveChanges}: {
     if (changedNotes.size === 0) return;
     ev.preventDefault();
     ev.returnValue = "unsaved changes";
-  }, []);
+  }, [changedNotes]);
   useEffect(() => {
     window.addEventListener("beforeunload", onBeforeUnload);
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, []);
+  }, [onBeforeUnload]);
 
 
   const {folders, trash} = data ?? {folders: [], trash: null};
