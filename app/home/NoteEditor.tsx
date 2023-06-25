@@ -41,10 +41,9 @@ export default function NoteEditor({saveChanges}: {
     prevNote.current = note;
     if (note != null) {
       const n = changedNotes.get(note.id) ?? note;
-      refHtml.current =  n.content;
+      refHtml.current = n.content;
       setTitle(n.title);
-    }
-    else {
+    } else {
       refHtml.current = "";
       setTitle("");
     }
@@ -66,11 +65,27 @@ export default function NoteEditor({saveChanges}: {
     const date = note.updatedAt || note.createdAt;
     timeText = date && format(date, "yyyy-MM-dd HH:mm") || "";
   }
+  
+  // ctrl+sで保存する。
+  useEffect(() => {
+    function handleKeyDown(ev: KeyboardEvent) {
+      if (ev.ctrlKey && ev.key === "s") {
+        console.log("ctrl+s")
+        ev.preventDefault();
+        saveChanges();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [note, saveChanges]);
 
   (window as any)["__aa"] = note;
   return <div className="grow bg-white flex flex-col">
     {/*ヘッダー*/}
-    <div className={"border-b-2 border-gray-200 p-2"}>
+    <div className={"border-b-2 border-gray-200 p-2"}
+    >
       <input className="text-blue-500 w-full"
              type="text"
              onChange={ev => {
@@ -95,6 +110,7 @@ export default function NoteEditor({saveChanges}: {
     {/*本文*/}
     <div className="p-2 grow overflow-y-scroll break-all">
       <ContentEditable html={refHtml.current}
+
                        className="w-full h-full"
                        style={{outline: "0px solid #fff"}}
                        onChange={ev => {
