@@ -8,13 +8,24 @@ import {useRecoilState, useRecoilValue} from "recoil";
 import ContentEditable from 'react-contenteditable'
 import {Simulate} from "react-dom/test-utils";
 import change = Simulate.change;
+import {useDebounce} from "usehooks-ts";
 
-export default function NoteEditor({}: {}) {
+export default function NoteEditor({saveChanges}: {
+  saveChanges: () => void,
+}) {
   const note = useRecoilValue(atoms.selectedNote);
   const prevNote = useRef(note);
   const refHtml = useRef(note?.content ?? "");
   const [title, setTitle] = useState(note?.title ?? "");
-  const [[changedNotes], setChangedNotes] = useRecoilState(atoms.changedNotes);
+  const [changedNotesWrapper, setChangedNotes] = useRecoilState(atoms.changedNotes);
+  const [changedNotes] = changedNotesWrapper;
+  const editingIsPaused = useDebounce(changedNotesWrapper, 3000);
+
+  useEffect(() => {
+    if (changedNotes.size === 0) return;
+    console.log("do auto save");
+    saveChanges();
+  }, [editingIsPaused]);
 
 
   function addToChangedNotes(id: number, title: string, content: string) {

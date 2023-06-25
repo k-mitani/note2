@@ -61,7 +61,7 @@ function HomeInternal() {
 
       <NoteListView notes={notes}/>
 
-      <NoteEditor/>
+      <NoteEditor saveChanges={saveChanges}/>
     </main>
   )
 }
