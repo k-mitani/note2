@@ -58,9 +58,9 @@ function HomeInternal() {
   const notes = notesParent?.notes ?? [];
   return (
     <main className='h-full w-screen bg-red-200 flex flex-col'>
-      <Header/>
+      <Header onCreateNewNote={onCreateNewNote} saveChanges={saveChanges}/>
       <div className="flex flex-grow h-[0%]">
-        <SideBar onCreateNewNote={onCreateNewNote} saveChanges={saveChanges}/>
+        <SideBar/>
 
         <NoteListView notes={notes}/>
 

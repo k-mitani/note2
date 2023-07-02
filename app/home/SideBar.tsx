@@ -86,7 +86,6 @@ function Folder({folder, allFolders, selectedFolder, setSelectedFolder, indent, 
           INDENTS[indent],
           selectedFolder?.id === folder.id ? "bg-gray-500" : "hover:bg-gray-600",
         )}
-        title={JSON.stringify(folder)}
         onClick={() => setSelectedFolder(folder)}
         onKeyDown={(ev) => {
           let current: FolderAndChild | null = null;
@@ -246,29 +245,13 @@ function Folder({folder, allFolders, selectedFolder, setSelectedFolder, indent, 
 /**
  * スタックやノートを表示する。
  */
-export default function SideBar({onCreateNewNote, saveChanges}: {
-  onCreateNewNote: () => void,
-  saveChanges: () => void,
-}) {
+export default function SideBar() {
   const {data} = useFoldersAll();
   const [selectedFolder, setSelectedFolder] = useRecoilState(atoms.selectedFolder);
-  const [[changedNotes], setChangedNotes] = useRecoilState(atoms.changedNotes);
   const [showSideBar, setShowSideBar] = useRecoilLocalStorage(atoms.showSideBar);
   const [isExpanded, setIsExpanded] = useLocalStorage<{
     [key: number]: boolean
   }>("SideBar.folders.isExpanded", {});
-
-  // ページ離脱時に、変更されたノートがあれば保存確認を行う。
-  const onBeforeUnload = useCallback((ev: BeforeUnloadEvent) => {
-    if (changedNotes.size === 0) return;
-    ev.preventDefault();
-    ev.returnValue = "unsaved changes";
-  }, [changedNotes]);
-  useEffect(() => {
-    window.addEventListener("beforeunload", onBeforeUnload);
-    return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, [onBeforeUnload]);
-
 
   const {folders, trash} = data ?? {folders: [], trash: null};
   return (
@@ -277,21 +260,6 @@ export default function SideBar({onCreateNewNote, saveChanges}: {
     )}>
       {/*固定ヘッダー*/}
       <div>
-        <div className="m-1">
-          <button className="rounded bg-gray-500 p-2 hover:bg-gray-400 w-full"
-                  onClick={onCreateNewNote}>
-            ノート新規作成
-          </button>
-        </div>
-        <div className="m-1">
-          <button className={classNames(
-            "rounded p-2 w-full",
-            changedNotes.size === 0 ? "bg-gray-900" : "bg-gray-500 hover:bg-gray-400"
-          )}
-                  onClick={saveChanges}>
-            同期 ({changedNotes.size})
-          </button>
-        </div>
         <button className="hover:bg-gray-600 w-full text-start">🔖ショートカット</button>
       </div>
 
