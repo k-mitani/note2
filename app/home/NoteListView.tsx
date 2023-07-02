@@ -5,6 +5,8 @@ import {z} from "zod";
 import {Note} from "@prisma/client";
 import {useRecoilState, useRecoilValue} from "recoil";
 import {atoms} from "@/app/home/atoms";
+import classNames from "classnames";
+import {useRecoilLocalStorage} from "@/app/utils";
 
 function NoteCard({note, changed, isSelected}: { note: Note, changed: {title: string, content: string} | undefined, isSelected: boolean }) {
   const dateText = utils.dateToText(note.updatedAt ?? note.createdAt);
@@ -40,6 +42,7 @@ export default function NoteListView({notes}: {
   const [showOrderItems, setShowOrderItems] = useState(false);
   const [shouldScroll, setShouldScroll] = useState(false);
   const [[changedNotes], setChangedNotes] = useRecoilState(atoms.changedNotes);
+  const [showNoteListView, setShowNoteListView] = useRecoilLocalStorage(atoms.showNoteListView);
 
   const noteCount = notes?.length ?? 0;
   const orderName = (String)(orderItems[selectedOrder][0]);
@@ -76,7 +79,9 @@ export default function NoteListView({notes}: {
   }
 
   return (
-    <div className='flex-none w-72 h-screen overflow-y-scroll bg-gray-100'
+    <div className={classNames('flex-none w-72 overflow-y-scroll bg-gray-100',
+      {'hidden': !showNoteListView},
+      )}
          tabIndex={0}
          onKeyDown={onKeyDoen}>
       <div className={"p-2 border-b-2 border-gray-400"}>

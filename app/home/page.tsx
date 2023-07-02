@@ -10,6 +10,7 @@ import {Folder, Note} from "@prisma/client";
 import {RecoilRoot, useRecoilState} from "recoil";
 import {atoms} from "@/app/home/atoms";
 import {useFolderAndNotes, useFoldersAll} from "@/app/home/hooks";
+import {Header} from "@/app/home/Header";
 
 
 function HomeInternal() {
@@ -56,12 +57,15 @@ function HomeInternal() {
 
   const notes = notesParent?.notes ?? [];
   return (
-    <main className='flex h-screen w-screen bg-red-200'>
-      <SideBar onCreateNewNote={onCreateNewNote} saveChanges={saveChanges}/>
+    <main className='h-full w-screen bg-red-200 flex flex-col'>
+      <Header />
+      <div className="flex flex-grow h-[0%]">
+        <SideBar onCreateNewNote={onCreateNewNote} saveChanges={saveChanges}/>
 
-      <NoteListView notes={notes}/>
+        <NoteListView notes={notes}/>
 
-      <NoteEditor saveChanges={saveChanges}/>
+        <NoteEditor saveChanges={saveChanges}/>
+      </div>
     </main>
   )
 }

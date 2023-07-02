@@ -6,6 +6,7 @@ import classNames from "classnames";
 import {mutate} from "swr";
 import {useFoldersAll} from "@/app/home/hooks";
 import {useLocalStorage} from "usehooks-ts";
+import {useRecoilLocalStorage} from "@/app/utils";
 
 type FolderAndChild = Folder & { childFolders: FolderAndChild[] };
 
@@ -251,6 +252,7 @@ export default function SideBar({onCreateNewNote, saveChanges}: {
   const {data} = useFoldersAll();
   const [selectedFolder, setSelectedFolder] = useRecoilState(atoms.selectedFolder);
   const [[changedNotes], setChangedNotes] = useRecoilState(atoms.changedNotes);
+  const [showSideBar, setShowSideBar] = useRecoilLocalStorage(atoms.showSideBar);
   const [isExpanded, setIsExpanded] = useLocalStorage<{
     [key: number]: boolean
   }>("SideBar.folders.isExpanded", {});
@@ -269,7 +271,9 @@ export default function SideBar({onCreateNewNote, saveChanges}: {
 
   const {folders, trash} = data ?? {folders: [], trash: null};
   return (
-    <div className='p-0.5 flex-none flex flex-col w-72 bg-gray-700 text-white h-screen'>
+    <div className={classNames('p-0.5 flex-none flex flex-col w-72 bg-gray-700 text-white',
+      {'hidden': !showSideBar}
+      )}>
       {/*固定ヘッダー*/}
       <div>
         <div className="m-1">
