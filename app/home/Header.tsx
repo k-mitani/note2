@@ -44,7 +44,7 @@ export function Header({onCreateNewNote, saveChanges}: {
         changedNotes.size === 0 ? "bg-gray-900" : "bg-gray-500 hover:bg-gray-400"
       )}
               onClick={saveChanges}>
-        <div className="flex relative">
+        <div className="flex relative" title={JSON.stringify([...changedNotes], null, 2)}>
           <FaFloppyDisk color="white" className="m-auto"></FaFloppyDisk>
           {/*<span className="absolute text-white right-0"> {changedNotes.size}</span>*/}
         </div>

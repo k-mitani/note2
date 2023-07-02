@@ -10,10 +10,11 @@ import {Simulate} from "react-dom/test-utils";
 import change = Simulate.change;
 import {useDebounce} from "usehooks-ts";
 
-export default function NoteEditor({saveChanges}: {
+export default function NoteEditor({saveChanges, notes}: {
   saveChanges: () => void,
+  notes: Note[] | null,
 }) {
-  const note = useRecoilValue(atoms.selectedNote);
+  const [note, setNote] = useRecoilState(atoms.selectedNote);
   const prevNote = useRef(note);
   const refHtml = useRef(note?.content ?? "");
   const [title, setTitle] = useState(note?.title ?? "");
@@ -26,6 +27,18 @@ export default function NoteEditor({saveChanges}: {
     console.log("do auto save");
     saveChanges();
   }, [editingIsPaused]);
+  
+  useEffect(() => {
+    console.log("yoyo")
+    if (notes != null && note != null) {
+      console.log("yoyoyo")
+      const noteInNotes = notes.find(n => n.id === note.id);
+      if (noteInNotes != null && noteInNotes != note) {
+        console.log("yoyoyoyo")
+        setNote(noteInNotes);
+      }
+    }
+  }, [note, notes, setNote]);
 
 
   function addToChangedNotes(id: number, title: string, content: string) {
@@ -119,6 +132,9 @@ export default function NoteEditor({saveChanges}: {
                          refHtml.current = ev.target.value
                          if (note != null) {
                            const title = changedNotes.get(note.id)?.title ?? note.title;
+                           console.log("タイトル", changedNotes.get(note.id)?.title)
+                           console.log("note.title", note.title);
+                           console.log("title", title);
                            addToChangedNotes(note.id, title, ev.target.value);
                          }
                        }}

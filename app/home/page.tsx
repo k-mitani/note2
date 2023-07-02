@@ -64,7 +64,7 @@ function HomeInternal() {
 
         <NoteListView notes={notes}/>
 
-        <NoteEditor saveChanges={saveChanges}/>
+        <NoteEditor notes={notes} saveChanges={saveChanges}/>
       </div>
     </main>
   )
