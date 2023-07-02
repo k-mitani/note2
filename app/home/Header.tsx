@@ -4,11 +4,13 @@ import {atoms} from "@/app/home/atoms";
 import {useRecoilLocalStorage} from "@/app/utils";
 import classNames from "classnames";
 import {useCallback, useEffect} from "react";
+import {useLocalStorage} from "usehooks-ts";
 
 export function Header({onCreateNewNote, saveChanges}: {
   onCreateNewNote: () => void,
   saveChanges: () => void,
 }) {
+  const [autoSave, setAutoSave] = useLocalStorage("autoSave", true);
   const [showSideBar, setShowSideBar] = useRecoilLocalStorage(atoms.showSideBar);
   const [showNoteListView, setShowNoteListView] = useRecoilLocalStorage(atoms.showNoteListView);
   const [[changedNotes], setChangedNotes] = useRecoilState(atoms.changedNotes);
@@ -48,6 +50,11 @@ export function Header({onCreateNewNote, saveChanges}: {
           <FaFloppyDisk color="white" className="m-auto"></FaFloppyDisk>
           {/*<span className="absolute text-white right-0"> {changedNotes.size}</span>*/}
         </div>
+      </button>
+
+      <button className="ms-1 text-white text-sm" onClick={() => setAutoSave(!autoSave)}>
+        <input className="align-middle" type="checkbox" checked={autoSave}/>
+        <span className="align-middle">自動保存</span>
       </button>
 
     </div>
