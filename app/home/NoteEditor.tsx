@@ -65,7 +65,7 @@ export default function NoteEditor({saveChanges}: {
     const date = note.updatedAt || note.createdAt;
     timeText = date && format(date, "yyyy-MM-dd HH:mm") || "";
   }
-  
+
   // ctrl+sで保存する。
   useEffect(() => {
     function handleKeyDown(ev: KeyboardEvent) {
@@ -75,6 +75,7 @@ export default function NoteEditor({saveChanges}: {
         saveChanges();
       }
     }
+
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);

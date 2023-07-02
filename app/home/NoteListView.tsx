@@ -8,7 +8,11 @@ import {atoms} from "@/app/home/atoms";
 import classNames from "classnames";
 import {useRecoilLocalStorage} from "@/app/utils";
 
-function NoteCard({note, changed, isSelected}: { note: Note, changed: {title: string, content: string} | undefined, isSelected: boolean }) {
+function NoteCard({note, changed, isSelected}: {
+  note: Note,
+  changed: { title: string, content: string } | undefined,
+  isSelected: boolean
+}) {
   const dateText = utils.dateToText(note.updatedAt ?? note.createdAt);
   const text = (changed ?? note).content.replace(/<("[^"]*"|'[^']*'|[^'">])*>/g, "")
   return (
@@ -57,6 +61,7 @@ export default function NoteListView({notes}: {
   if (notes == null) return <div>loading...</div>
 
   console.log("render notes");
+
   function onKeyDoen(ev: React.KeyboardEvent) {
     if (notes == null) return;
     if (selectedNote == null) {
@@ -81,7 +86,7 @@ export default function NoteListView({notes}: {
   return (
     <div className={classNames('flex-none w-72 overflow-y-scroll bg-gray-100',
       {'hidden': !showNoteListView},
-      )}
+    )}
          tabIndex={0}
          onKeyDown={onKeyDoen}>
       <div className={"p-2 border-b-2 border-gray-400"}>

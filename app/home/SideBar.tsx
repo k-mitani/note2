@@ -101,6 +101,7 @@ function Folder({folder, allFolders, selectedFolder, setSelectedFolder, indent, 
             }
             return null;
           }
+
           function findPrev(target: FolderAndChild, fs: FolderAndChild[]): FolderAndChild | null {
             for (const f of fs) {
               // targetが見つかったら、その一つ前の要素を返す。
@@ -273,7 +274,7 @@ export default function SideBar({onCreateNewNote, saveChanges}: {
   return (
     <div className={classNames('p-0.5 flex-none flex flex-col w-72 bg-gray-700 text-white',
       {'hidden': !showSideBar}
-      )}>
+    )}>
       {/*固定ヘッダー*/}
       <div>
         <div className="m-1">
@@ -286,7 +287,7 @@ export default function SideBar({onCreateNewNote, saveChanges}: {
           <button className={classNames(
             "rounded p-2 w-full",
             changedNotes.size === 0 ? "bg-gray-900" : "bg-gray-500 hover:bg-gray-400"
-            )}
+          )}
                   onClick={saveChanges}>
             同期 ({changedNotes.size})
           </button>
