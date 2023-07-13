@@ -5,7 +5,15 @@ import {Folder} from "@prisma/client";
 
 export async function GET() {
   // 全フォルダーを取得する。
-  const foldersAll = await prisma.folder.findMany();
+  const foldersAll = await prisma.folder.findMany({
+    include: {
+      _count: {
+        select: {
+          notes: true,
+        }
+      }
+    }
+  });
   // ゴミ箱を取得する。
   const trash = foldersAll.find(f => f.id === -1);
 

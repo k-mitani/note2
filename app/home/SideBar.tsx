@@ -207,6 +207,9 @@ function Folder({folder, allFolders, selectedFolder, setSelectedFolder, indent, 
         {/*フォルダー名*/}
         <span className="w-full">
           {folder.name}
+          {(folder as any)._count.notes != 0 && <span className="text-gray-400">
+            &nbsp;({(folder as any)._count.notes})
+          </span>}
         </span>
       </button>
 
