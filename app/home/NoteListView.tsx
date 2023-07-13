@@ -108,7 +108,7 @@ export default function NoteListView({notes}: {
       {'hidden': !showNoteListView},
     )}>
       {/*ヘッダー*/}
-      <div className={"flex-none p-1 border-b-2 border-gray-400"}>
+      <div className={"flex-none p-1 border-b-2 border-gray-300"}>
         <h2>ノート一覧 ({noteCount})</h2>
         {/*ソート設定リスト*/}
         <span>

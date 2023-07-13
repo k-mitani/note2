@@ -37,7 +37,7 @@ export function Header({onCreateNewNote, saveChanges}: {
         <FaList color="white" className="m-auto"/>
       </button>
 
-      <button className="ms-16 rounded bg-gray-500 p-2 w-14 hover:bg-gray-400"
+      <button className="ms-16 rounded bg-gray-500 p-2 w-24 hover:bg-gray-400"
               onClick={onCreateNewNote}>
         <FaSquarePlus color="white" className="m-auto"/>
       </button>
