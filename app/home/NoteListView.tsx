@@ -7,32 +7,63 @@ import classNames from "classnames";
 import {useRecoilLocalStorage} from "@/app/utils";
 import {tr} from "date-fns/locale";
 
-function NoteCard({note, setShouldScroll, setSelectedNote, _ref, changed, isSelected, onKeyDown}: {
-  note: Note,
-  setShouldScroll: (b: boolean) => void,
-  setSelectedNote: (note: Note) => void,
-  _ref: React.Ref<HTMLButtonElement>,
-  changed: { title: string, content: string } | undefined,
-  isSelected: boolean,
-  onKeyDown: (e: React.KeyboardEvent<HTMLButtonElement>) => void,
-}) {
+function NoteCard(
+  {
+    note,
+    multiSelectionMode,
+    isMultiSelected,
+    setMultiSelection,
+    setShouldScroll,
+    setSelectedNote,
+    _ref,
+    changed,
+    isSelected,
+    onKeyDown
+  }: {
+    note: Note,
+    multiSelectionMode: boolean,
+    isMultiSelected: boolean,
+    setMultiSelection: (note: Note, b: boolean) => void,
+    setShouldScroll: (b: boolean) => void,
+    setSelectedNote: (note: Note) => void,
+    _ref: React.Ref<HTMLButtonElement>,
+    changed: { title: string, content: string } | undefined,
+    isSelected: boolean,
+    onKeyDown: (e: React.KeyboardEvent<HTMLButtonElement>) => void,
+  }) {
   const dateText = utils.dateToText(note.updatedAt ?? note.createdAt);
   const text = (changed ?? note).content.replace(/<("[^"]*"|'[^']*'|[^'">])*>/g, "")
   return (
-    <button className="w-full text-start block border-gray-300 border-b-2"
+    <button className="relative w-full text-start block border-gray-300 border-b-2"
             onClick={() => {
               setShouldScroll(false);
-              setSelectedNote(note)
+              setSelectedNote(note);
+              if (multiSelectionMode) {
+                setMultiSelection(note, !isMultiSelected);
+              }
             }}
             onFocus={() => setSelectedNote(note)}
             onKeyDown={onKeyDown}
             ref={_ref}>
+      {/*複数選択チェックボックス*/}
+      <div className="absolute p-2 right-0">
+        <input type="checkbox"
+               className={classNames("w-4 h-4", {hidden: !multiSelectionMode})}
+               checked={isMultiSelected}/>
+      </div>
+
+      {/*本体*/}
       <div className={
         "flex flex-col hover:bg-white hover:border-cyan-400 border-2 p-2"
         + (isSelected ? " border-blue-500 bg-white" : " border-gray-100")
       }>
+        {/*タイトル*/}
         <strong className="line-clamp-2">{(changed ?? note).title}</strong>
+
+        {/*サマリー*/}
         <div className={"mt-2 h-16 line-clamp-3 text-gray-600 text-sm"}>{text}</div>
+
+        {/*日付*/}
         <div className={"mt-2 text-[12px] text-gray-500"}>{dateText}</div>
       </div>
     </button>);
@@ -61,6 +92,22 @@ export default function NoteListView({notes}: {
   const [showOrderItems, setShowOrderItems] = useState(false);
   const [[changedNotes], setChangedNotes] = useRecoilState(atoms.changedNotes);
   const [showNoteListView, setShowNoteListView] = useRecoilLocalStorage(atoms.showNoteListView);
+  const [multiSelectionMode, setMultiSelectionMode] = useState(false);
+  const [multiSelectionNotes, setMultiSelectionNotes] = useState<{ v: Set<Note> }>({v: new Set()});
+
+  function isMultiSelected(note: Note) {
+    return multiSelectionNotes.v.has(note);
+  }
+
+  function setMultiSelection(note: Note, on: boolean) {
+    if (on) {
+      multiSelectionNotes.v.add(note);
+      setMultiSelectionNotes({v: multiSelectionNotes.v});
+    } else {
+      multiSelectionNotes.v.delete(note);
+      setMultiSelectionNotes({v: multiSelectionNotes.v});
+    }
+  }
 
   const noteCount = notes?.length ?? 0;
   const orderName = (String)(orderItems[selectedOrder][0]);
@@ -136,6 +183,21 @@ export default function NoteListView({notes}: {
         {/*表示形式*/}
         <button className={"text-sm m-1 p-0.5 bg-gray-500 text-white"}>サマリー</button>
 
+        {/*複数選択*/}
+        <button className={classNames(
+          "text-sm m-1 w-16 p-0.5 bg-gray-500 text-white",
+          multiSelectionMode ? "bg-blue-500" : "",
+        )}
+                onClick={() => {
+                  if (multiSelectionMode) {
+                    setMultiSelectionMode(false);
+                    setMultiSelectionNotes({v: new Set()});
+                  } else {
+                    setMultiSelectionMode(true);
+                  }
+                }}>選択 {multiSelectionMode && `(${multiSelectionNotes.v.size})`}
+        </button>
+
         {/*検索*/}
         <input className={"m-1 border-2"} type="text" placeholder="ノートを検索"/>
       </div>
@@ -146,6 +208,9 @@ export default function NoteListView({notes}: {
           return (
             <li key={note.name + "-" + i} id={`note-${i}`}>
               <NoteCard note={note}
+                        multiSelectionMode={multiSelectionMode}
+                        isMultiSelected={isMultiSelected(note)}
+                        setMultiSelection={setMultiSelection}
                         setShouldScroll={setShouldScroll}
                         setSelectedNote={setSelectedNote}
                         _ref={selectedNote === note ? refSelectedNoteElement : null as any}
