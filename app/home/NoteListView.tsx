@@ -90,17 +90,18 @@ export default function NoteListView({notes}: {
   function onKeyDown(ev: React.KeyboardEvent) {
     if (notes == null) return;
 
-    let index = 0;
-    if (selectedNote == null) {
-      index = 0;
-    } else if (ev.key === "ArrowDown") {
-      index = Math.min(notes.indexOf(selectedNote) + 1, notes.length - 1);
+    let index = -1;
+    if (ev.key === "ArrowDown") {
+      if (selectedNote == null) index = 0;
+      else index = Math.min(notes.indexOf(selectedNote) + 1, notes.length - 1);
     } else if (ev.key === "ArrowUp") {
-      index = Math.max(notes.indexOf(selectedNote) - 1, 0);
+      if (selectedNote == null) index = 0;
+      else index = Math.max(notes.indexOf(selectedNote) - 1, 0);
     }
-    const nextNote = notes[index];
-    // setSelectedNote(nextNote);
-    (document.querySelector(`#note-${index} button`) as HTMLElement).focus();
+    if (index >= 0) {
+      const nextNote = notes[index];
+      (document.querySelector(`#note-${index} button`) as HTMLElement).focus();
+    }
   }
 
   return (
