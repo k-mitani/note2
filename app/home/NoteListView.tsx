@@ -167,6 +167,14 @@ export default function NoteListView({notes}: {
   function onKeyDown(ev: React.KeyboardEvent) {
     if (notes == null) return;
 
+    // ctrl+aなら全選択する。
+    if (ev.ctrlKey && ev.key === "a") {
+      ev.preventDefault();
+      setMultiSelectionMode(true);
+      setMultiSelectionNotes({v: new Set(notes)});
+      return;
+    }
+
     let index = -1;
     if (ev.key === "ArrowDown") {
       if (selectedNote == null) index = 0;
@@ -178,6 +186,17 @@ export default function NoteListView({notes}: {
     if (index >= 0) {
       const nextNote = notes[index];
       (document.querySelector(`#note-${index} button`) as HTMLElement).focus();
+      // シフトキーが押されていたら、複数選択モードにして選択する。
+      if (ev.shiftKey) {
+        // 現在が選択モードでなければ、選択モードにして今まで選択していたノートも選択する。
+        if (!multiSelectionMode) {
+          setMultiSelectionMode(true);
+          setMultiSelectionNotes({v: new Set([selectedNote, nextNote] as Note[])});
+        }
+        else {
+          setMultiSelection(nextNote, true);
+        }
+      }
     }
   }
 
