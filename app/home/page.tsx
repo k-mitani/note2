@@ -1,7 +1,7 @@
 "use client";
 
 import React, {useCallback, useEffect} from "react";
-import useSWR from "swr";
+import useSWR, {mutate} from "swr";
 import SideBar from "@/app/home/SideBar";
 import * as utils from "@/app/utils";
 import NoteEditor from "@/app/home/NoteEditor";
@@ -11,6 +11,8 @@ import {RecoilRoot, useRecoilState} from "recoil";
 import {atoms} from "@/app/home/atoms";
 import {useFolderAndNotes, useFoldersAll} from "@/app/home/hooks";
 import {Header} from "@/app/home/Header";
+import {DndProvider} from "react-dnd";
+import {HTML5Backend} from "react-dnd-html5-backend";
 
 
 function HomeInternal() {
@@ -38,7 +40,10 @@ function HomeInternal() {
     utils.coerceDate(newNote, "createdAt");
     utils.coerceDate(newNote, "updatedAt");
     console.log(newNote);
-    await mutateNotesParent();
+    await Promise.all([
+      mutateNotesParent(),
+      mutate("/api/rpc/getFoldersAll"),
+    ]);
     setSelectedNote(newNote);
   }
 
@@ -52,15 +57,37 @@ function HomeInternal() {
       }),
     });
     setChangedNotes([new Map<number, any>()]);
-    await mutateNotesParent();
+    await Promise.all([
+      mutateNotesParent(),
+      mutate("/api/rpc/getFoldersAll"),
+    ]);
   }
+
+  async function onDropToFolder(ev: { target: Folder, notes: Note[] | null, folders: Folder[] | null }) {
+    if (ev.notes != null) {
+      await fetch("/api/rpc/moveNotes/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          folderId: ev.target.id,
+          noteIds: ev.notes.map(n => n.id),
+        })
+      });
+
+      mutateNotesParent();
+      mutate("/api/rpc/getFoldersAll");
+    }
+  }
+
 
   const notes = notesParent?.notes ?? [];
   return (
     <main className='h-full w-screen bg-red-200 flex flex-col'>
       <Header onCreateNewNote={onCreateNewNote} saveChanges={saveChanges}/>
       <div className="flex flex-grow h-[0%]">
-        <SideBar/>
+        <SideBar onDropToFolder={onDropToFolder}/>
 
         <NoteListView notes={notes}/>
 
@@ -72,8 +99,10 @@ function HomeInternal() {
 
 export default function Home() {
   return (
-    <RecoilRoot>
-      <HomeInternal/>
-    </RecoilRoot>
+    <DndProvider backend={HTML5Backend}>
+      <RecoilRoot>
+        <HomeInternal/>
+      </RecoilRoot>
+    </DndProvider>
   );
 }

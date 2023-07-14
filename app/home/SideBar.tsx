@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useState} from "react";
-import {Folder} from "@prisma/client";
+import {Folder, Note} from "@prisma/client";
 import {atoms} from "@/app/home/atoms";
 import {useRecoilState} from "recoil";
 import classNames from "classnames";
@@ -7,6 +7,7 @@ import {mutate} from "swr";
 import {useFoldersAll} from "@/app/home/hooks";
 import {useLocalStorage} from "usehooks-ts";
 import {useRecoilLocalStorage} from "@/app/utils";
+import {useDrag, useDrop} from "react-dnd";
 
 type FolderAndChild = Folder & { childFolders: FolderAndChild[] };
 
@@ -26,8 +27,9 @@ async function createFolder(parentFolderId: number | null) {
   await mutate('/api/rpc/getFoldersAll');
 }
 
-function Folder({folder, allFolders, selectedFolder, setSelectedFolder, indent, isExpanded, setIsExpanded}: {
+function Folder({folder, onDrop, allFolders, selectedFolder, setSelectedFolder, indent, isExpanded, setIsExpanded}: {
   folder: FolderAndChild,
+  onDrop: (ev: { target: Folder, notes: Note[] | null, folders: Folder[] | null }) => void,
   allFolders: FolderAndChild[],
   selectedFolder: FolderAndChild | undefined,
   setSelectedFolder: (folder: FolderAndChild) => void,
@@ -35,6 +37,20 @@ function Folder({folder, allFolders, selectedFolder, setSelectedFolder, indent, 
   isExpanded: (id: number) => boolean,
   setIsExpanded: (id: number, expand: boolean) => void,
 }) {
+  const [{canDrop, isOver}, refDrop] = useDrop({
+    accept: ["note", "folder"],
+    drop: (items) => onDrop({target: folder, notes: items} as any),
+    collect: (monitor) => ({
+      canDrop: monitor.canDrop(),
+      isOver: monitor.isOver(),
+    }),
+  });
+  const [{isDragging}, refDrag, refDragPreview] = useDrag(() => ({
+    type: "folder",
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging()
+    }),
+  }));
   const [showMenu, setShowMenu] = useState(false);
   const hasChildren = folder.childFolders?.length > 0 ?? false;
 
@@ -80,10 +96,14 @@ function Folder({folder, allFolders, selectedFolder, setSelectedFolder, indent, 
     <div onMouseLeave={() => setShowMenu(false)}>
       {/*フォルダー項目*/}
       <button
+        ref={refDrop}
         className={classNames(
           `js-folder-${folder.id}`,
           "cursor-pointer select-none  w-full text-start",
           INDENTS[indent],
+          {
+            "bg-blue-300": isOver,
+          },
           selectedFolder?.id === folder.id ? "bg-gray-500" : "hover:bg-gray-600",
         )}
         onClick={() => setSelectedFolder(folder)}
@@ -230,6 +250,7 @@ function Folder({folder, allFolders, selectedFolder, setSelectedFolder, indent, 
         {folder.childFolders.map(subFolder => {
           return <li key={subFolder.id}>
             <Folder folder={subFolder}
+                    onDrop={onDrop}
                     allFolders={allFolders}
                     selectedFolder={selectedFolder}
                     setSelectedFolder={setSelectedFolder}
@@ -248,14 +269,15 @@ function Folder({folder, allFolders, selectedFolder, setSelectedFolder, indent, 
 /**
  * スタックやノートを表示する。
  */
-export default function SideBar() {
+export default function SideBar({onDropToFolder}: {
+  onDropToFolder: (ev: { target: Folder, notes: Note[] | null, folders: Folder[] | null }) => void,
+}) {
   const {data} = useFoldersAll();
   const [selectedFolder, setSelectedFolder] = useRecoilState(atoms.selectedFolder);
   const [showSideBar, setShowSideBar] = useRecoilLocalStorage(atoms.showSideBar);
   const [isExpanded, setIsExpanded] = useLocalStorage<{
     [key: number]: boolean
   }>("SideBar.folders.isExpanded", {});
-
   const {folders, trash} = data ?? {folders: [], trash: null};
   return (
     <div className={classNames('p-0.5 flex-none flex flex-col w-72 bg-gray-700 text-white',
@@ -272,6 +294,7 @@ export default function SideBar() {
           {folders.map(folder => {
             return <li key={folder.id}>
               <Folder folder={folder as any}
+                      onDrop={onDropToFolder}
                       allFolders={folders}
                       selectedFolder={selectedFolder as any}
                       setSelectedFolder={setSelectedFolder as any}
@@ -295,6 +318,7 @@ export default function SideBar() {
           {[trash!!].map(folder => {
             return <li key={folder.id}>
               <Folder folder={folder as any}
+                      onDrop={onDropToFolder}
                       allFolders={[trash!!]}
                       selectedFolder={selectedFolder as any}
                       setSelectedFolder={setSelectedFolder as any}

@@ -6,11 +6,14 @@ import {atoms} from "@/app/home/atoms";
 import classNames from "classnames";
 import {useRecoilLocalStorage} from "@/app/utils";
 import {tr} from "date-fns/locale";
+import {useDrag} from "react-dnd";
 
 function NoteCard(
   {
     note,
+    getDragSourceNotes,
     multiSelectionMode,
+    setMultiSelectionMode,
     isMultiSelected,
     setMultiSelection,
     setShouldScroll,
@@ -21,7 +24,9 @@ function NoteCard(
     onKeyDown
   }: {
     note: Note,
+    getDragSourceNotes: () => Note[] | null
     multiSelectionMode: boolean,
+    setMultiSelectionMode: (b: boolean) => void,
     isMultiSelected: boolean,
     setMultiSelection: (note: Note, b: boolean) => void,
     setShouldScroll: (b: boolean) => void,
@@ -31,6 +36,21 @@ function NoteCard(
     isSelected: boolean,
     onKeyDown: (e: React.KeyboardEvent<HTMLButtonElement>) => void,
   }) {
+  const [{}, refDrag] = useDrag(() => ({
+    type: "note",
+    item: getDragSourceNotes,
+    end: (item, monitor) => {
+      if (monitor.didDrop()) {
+        if (multiSelectionMode) {
+          setMultiSelectionMode(false);
+        }
+      }
+    },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging()
+    }),
+  }), [getDragSourceNotes]);
+
   const dateText = utils.dateToText(note.updatedAt ?? note.createdAt);
   const text = (changed ?? note).content.replace(/<("[^"]*"|'[^']*'|[^'">])*>/g, "")
   return (
@@ -49,14 +69,16 @@ function NoteCard(
       <div className="absolute p-2 right-0">
         <input type="checkbox"
                className={classNames("w-4 h-4", {hidden: !multiSelectionMode})}
+               readOnly={true}
                checked={isMultiSelected}/>
       </div>
 
       {/*本体*/}
-      <div className={
-        "flex flex-col hover:bg-white hover:border-cyan-400 border-2 p-2"
-        + (isSelected ? " border-blue-500 bg-white" : " border-gray-100")
-      }>
+      <div className={classNames(
+        "flex flex-col hover:bg-white hover:border-cyan-400 border-2 p-2",
+        isSelected ? "border-blue-500 bg-white" : " border-gray-100",
+      )}
+           ref={refDrag}>
         {/*タイトル*/}
         <strong className="line-clamp-2">{(changed ?? note).title}</strong>
 
@@ -107,6 +129,14 @@ export default function NoteListView({notes}: {
       multiSelectionNotes.v.delete(note);
       setMultiSelectionNotes({v: multiSelectionNotes.v});
     }
+  }
+
+  function getDragSourceNotes(): Note[] | null {
+    if (!multiSelectionMode) {
+      return [selectedNote] as any;
+    }
+    const notes = Array.from(multiSelectionNotes.v);
+    return notes.length > 0 ? notes : null;
   }
 
   const noteCount = notes?.length ?? 0;
@@ -191,8 +221,8 @@ export default function NoteListView({notes}: {
                 onClick={() => {
                   if (multiSelectionMode) {
                     setMultiSelectionMode(false);
-                    setMultiSelectionNotes({v: new Set()});
                   } else {
+                    setMultiSelectionNotes({v: new Set()});
                     setMultiSelectionMode(true);
                   }
                 }}>選択 {multiSelectionMode && `(${multiSelectionNotes.v.size})`}
@@ -208,7 +238,9 @@ export default function NoteListView({notes}: {
           return (
             <li key={note.name + "-" + i} id={`note-${i}`}>
               <NoteCard note={note}
+                        getDragSourceNotes={getDragSourceNotes}
                         multiSelectionMode={multiSelectionMode}
+                        setMultiSelectionMode={setMultiSelectionMode}
                         isMultiSelected={isMultiSelected(note)}
                         setMultiSelection={setMultiSelection}
                         setShouldScroll={setShouldScroll}
