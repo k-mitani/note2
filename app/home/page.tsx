@@ -79,6 +79,21 @@ function HomeInternal() {
       mutateNotesParent();
       mutate("/api/rpc/getFoldersAll");
     }
+    if (ev.folders != null) {
+      await fetch("/api/rpc/moveFolders/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          parentFolderId: ev.target.id,
+          folderIds: ev.folders.map(n => n.id),
+        })
+      });
+
+      mutateNotesParent();
+      mutate("/api/rpc/getFoldersAll");
+    }
   }
 
 

@@ -24,7 +24,7 @@ function NoteCard(
     onKeyDown
   }: {
     note: Note,
-    getDragSourceNotes: () => Note[] | null
+    getDragSourceNotes: () => {notes: Note[]} | null
     multiSelectionMode: boolean,
     setMultiSelectionMode: (b: boolean) => void,
     isMultiSelected: boolean,
@@ -131,12 +131,12 @@ export default function NoteListView({notes}: {
     }
   }
 
-  function getDragSourceNotes(): Note[] | null {
+  function getDragSourceNotes(): { notes: Note[] } | null {
     if (!multiSelectionMode) {
-      return [selectedNote] as any;
+      return {notes: [selectedNote as Note]};
     }
     const notes = Array.from(multiSelectionNotes.v);
-    return notes.length > 0 ? notes : null;
+    return notes.length > 0 ? {notes} : null;
   }
 
   const noteCount = notes?.length ?? 0;

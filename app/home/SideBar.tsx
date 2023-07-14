@@ -39,14 +39,15 @@ function Folder({folder, onDrop, allFolders, selectedFolder, setSelectedFolder, 
 }) {
   const [{canDrop, isOver}, refDrop] = useDrop({
     accept: ["note", "folder"],
-    drop: (items) => onDrop({target: folder, notes: items} as any),
+    drop: (item: {}) => onDrop({target: folder, ...item} as any),
     collect: (monitor) => ({
       canDrop: monitor.canDrop(),
       isOver: monitor.isOver(),
     }),
   });
-  const [{isDragging}, refDrag, refDragPreview] = useDrag(() => ({
+  const [{isDragging}, refDrag] = useDrag(() => ({
     type: "folder",
+    item: {folders: [folder]},
     collect: (monitor) => ({
       isDragging: monitor.isDragging()
     }),
@@ -103,6 +104,7 @@ function Folder({folder, onDrop, allFolders, selectedFolder, setSelectedFolder, 
           INDENTS[indent],
           {
             "bg-blue-300": isOver,
+            "bg-cyan-500": isDragging,
           },
           selectedFolder?.id === folder.id ? "bg-gray-500" : "hover:bg-gray-600",
         )}
@@ -225,7 +227,8 @@ function Folder({folder, onDrop, allFolders, selectedFolder, setSelectedFolder, 
         </button>
 
         {/*フォルダー名*/}
-        <span className="w-full">
+        <span className="w-full"
+              ref={refDrag}>
           {folder.name}
           {(folder as any)._count.notes != 0 && <span className="text-gray-400">
             &nbsp;({(folder as any)._count.notes})
