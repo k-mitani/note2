@@ -24,7 +24,7 @@ function NoteCard(
     onKeyDown
   }: {
     note: Note,
-    getDragSourceNotes: () => {notes: Note[]} | null
+    getDragSourceNotes: () => { notes: Note[] } | null
     multiSelectionMode: boolean,
     setMultiSelectionMode: (b: boolean) => void,
     isMultiSelected: boolean,
@@ -152,7 +152,13 @@ export default function NoteListView({notes}: {
   useEffect(() => {
     console.log("scroll b", refSelectedNoteElement.current)
     if (refSelectedNoteElement.current == null) return;
-    (refSelectedNoteElement.current as HTMLElement).focus();
+
+    // 他の場所にフォーカスがあるならフォーカスしない。
+    if (document.activeElement == null ||
+      document.getElementById("note-list")?.contains(document.activeElement)) {
+      (refSelectedNoteElement.current as HTMLElement).focus();
+    }
+
     console.log("scroll", refSelectedNoteElement.current)
     if (shouldScroll) {
       refSelectedNoteElement.current.scrollIntoView({block: "center"});
@@ -192,8 +198,7 @@ export default function NoteListView({notes}: {
         if (!multiSelectionMode) {
           setMultiSelectionMode(true);
           setMultiSelectionNotes({v: new Set([selectedNote, nextNote] as Note[])});
-        }
-        else {
+        } else {
           setMultiSelection(nextNote, true);
         }
       }
@@ -252,7 +257,7 @@ export default function NoteListView({notes}: {
       </div>
 
       {/*一覧*/}
-      <ul className="flex-grow overflow-y-scroll">
+      <ul id="note-list" className="flex-grow overflow-y-scroll">
         {notes?.map((note: any, i: number) => {
           return (
             <li key={note.name + "-" + i} id={`note-${i}`}>
