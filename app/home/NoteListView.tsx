@@ -146,6 +146,7 @@ export default function NoteListView({notes}: {
   notes = useMemo(() => {
     if (notes == null) return null;
     console.log("sort notes");
+    setShouldScroll(true);
     return notes.sort(orderFunc as any);
   }, [notes, selectedOrder]);
 
