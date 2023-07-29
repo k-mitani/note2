@@ -58,7 +58,7 @@ function NoteCard(
   const text = (changed ?? note).content.replace(/<("[^"]*"|'[^']*'|[^'">])*>/g, "")
   return (
     <button className="relative w-full text-start block border-gray-300 border-b-2"
-            onClick={(ev) => {
+            onMouseDown={(ev) => {
               // Ctrl+クリックで通常選択モードなら、
               // 複数選択モードに入り現在のノートとクリックされたノートを選択状態にする。
               if (ev.ctrlKey) {
