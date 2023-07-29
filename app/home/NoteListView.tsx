@@ -72,6 +72,10 @@ function NoteCard(
               setShouldScroll(false);
 
               setSelectedNote(note);
+            }}
+            // ドラッグするためのマウスダウンで選択状態が変わらないように
+            // 選択状態の変更はクリックイベントで行う。
+            onClick={() => {
               if (multiSelectionMode) {
                 setMultiSelection(note, !isMultiSelected);
               }
