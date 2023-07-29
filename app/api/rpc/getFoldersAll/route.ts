@@ -31,6 +31,15 @@ export async function GET() {
   });
   // ルートのみの配列を作る。
   const roots = foldersAll.filter(f => f.parentFolderId === null && f !== trash);
+  // 全部ソートしていく。
+  function sortChildren(folders: any[]) {
+    folders.sort((a: any, b: any) => a.name.localeCompare(b.name));
+    folders.forEach((f: any) => {
+      if (f.childFolders === undefined) return;
+      sortChildren(f.childFolders);
+    });
+  }
+  sortChildren(roots);
 
   return NextResponse.json({
     folders: roots,
