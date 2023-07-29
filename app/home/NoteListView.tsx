@@ -5,7 +5,6 @@ import {useRecoilState, useRecoilValue} from "recoil";
 import {atoms} from "@/app/home/atoms";
 import classNames from "classnames";
 import {useRecoilLocalStorage} from "@/app/utils";
-import {tr} from "date-fns/locale";
 import {useDrag} from "react-dnd";
 
 function NoteCard(
@@ -21,7 +20,9 @@ function NoteCard(
     _ref,
     changed,
     isSelected,
-    onKeyDown
+    onKeyDown,
+    onCtrlClick,
+    onShiftClick,
   }: {
     note: Note,
     getDragSourceNotes: () => { notes: Note[] } | null
@@ -35,6 +36,8 @@ function NoteCard(
     changed: { title: string, content: string } | undefined,
     isSelected: boolean,
     onKeyDown: (e: React.KeyboardEvent<HTMLButtonElement>) => void,
+    onCtrlClick: (note: Note) => void,
+    onShiftClick: (note: Note) => void,
   }) {
   const [{}, refDrag] = useDrag(() => ({
     type: "note",
@@ -55,14 +58,25 @@ function NoteCard(
   const text = (changed ?? note).content.replace(/<("[^"]*"|'[^']*'|[^'">])*>/g, "")
   return (
     <button className="relative w-full text-start block border-gray-300 border-b-2"
-            onClick={() => {
+            onClick={(ev) => {
+              // Ctrl+クリックで通常選択モードなら、
+              // 複数選択モードに入り現在のノートとクリックされたノートを選択状態にする。
+              if (ev.ctrlKey) {
+                onCtrlClick(note);
+              }
+              // Shift+クリックで通常選択モードなら、
+              // 複数選択モードに入り現在のノートからクリックされたノートまでのノートを選択状態にする。
+              else if (ev.shiftKey) {
+                onShiftClick(note);
+              }
               setShouldScroll(false);
+
               setSelectedNote(note);
               if (multiSelectionMode) {
                 setMultiSelection(note, !isMultiSelected);
               }
             }}
-            onFocus={() => setSelectedNote(note)}
+            // onFocus={() => setSelectedNote(note)}
             onKeyDown={onKeyDown}
             ref={_ref}>
       {/*複数選択チェックボックス*/}
@@ -193,6 +207,7 @@ export default function NoteListView({notes}: {
     if (index >= 0) {
       const nextNote = notes[index];
       (document.querySelector(`#note-${index} button`) as HTMLElement).focus();
+      setSelectedNote(nextNote);
       // シフトキーが押されていたら、複数選択モードにして選択する。
       if (ev.shiftKey) {
         // 現在が選択モードでなければ、選択モードにして今まで選択していたノートも選択する。
@@ -203,6 +218,32 @@ export default function NoteListView({notes}: {
           setMultiSelection(nextNote, true);
         }
       }
+    }
+  }
+
+  function onCtrlClick(note: Note) {
+    if (!multiSelectionMode) {
+      setMultiSelectionMode(true);
+      setMultiSelectionNotes({v: new Set([selectedNote, note] as Note[])});
+    }
+    else {
+      // デフォルトの処理に任せる。
+    }
+  }
+  function onShiftClick(note: Note) {
+    const start = notes!.indexOf(selectedNote as Note);
+    const end = notes!.indexOf(note);
+    const [a, b] = start < end ? [start, end] : [end, start];
+    const newNotes = notes!.slice(a, b + 1);
+    // すでに複数選択状態なら
+    if (multiSelectionMode) {
+      for (const n of newNotes) {
+        setMultiSelection(n, true);
+      }
+    }
+    else {
+      setMultiSelectionMode(true);
+      setMultiSelectionNotes({v: new Set(newNotes)});
     }
   }
 
@@ -273,7 +314,10 @@ export default function NoteListView({notes}: {
                         _ref={selectedNote === note ? refSelectedNoteElement : null as any}
                         onKeyDown={onKeyDown}
                         changed={changedNotes.get(note.id)}
-                        isSelected={selectedNote === note}/>
+                        isSelected={selectedNote === note}
+                        onCtrlClick={onCtrlClick}
+                        onShiftClick={onShiftClick}
+              />
             </li>);
         })}
       </ ul>
