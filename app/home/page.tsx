@@ -87,7 +87,7 @@ function HomeInternal() {
         },
         body: JSON.stringify({
           parentFolderId: ev.target.id,
-          folderIds: ev.folders.map(n => n.id),
+          folderIds: ev.folders.map(n => n.id).filter(id => id !== ev.target.id),
         })
       });
 
