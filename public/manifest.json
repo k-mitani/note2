@@ -1,0 +1,16 @@
+{
+    "theme_color": "#444",
+    "background_color": "#000",
+    "display": "standalone",
+    "scope": "/",
+    "start_url": "/home",
+    "name": "note2",
+    "short_name": "note2",
+    "icons": [
+        {
+            "src": "/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        }
+    ]
+}
