@@ -100,7 +100,7 @@ function Folder({folder, onDrop, allFolders, selectedFolder, setSelectedFolder, 
         ref={refDrop}
         className={classNames(
           `js-folder-${folder.id}`,
-          "cursor-pointer select-none  w-full text-start",
+          "cursor-pointer select-none  w-full text-start h-7",
           INDENTS[indent],
           {
             "bg-blue-300": isOver,
