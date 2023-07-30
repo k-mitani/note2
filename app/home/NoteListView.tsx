@@ -252,7 +252,7 @@ export default function NoteListView({notes}: {
   }
 
   return (
-    <div className={classNames('flex flex-col h-[60%] md:h-full w-48 md:w-72 bg-gray-100',
+    <div className={classNames('flex flex-1 flex-col h-0 basis-80 md:h-full w-48 md:w-72 bg-gray-100',
       {'hidden': !showNoteListView},
     )}>
       {/*ヘッダー*/}
@@ -281,7 +281,7 @@ export default function NoteListView({notes}: {
         </button>
 
         {/*表示形式*/}
-        <button className={"text-sm m-1 p-0.5 bg-gray-500 text-white"}>サマリー</button>
+        {/*<button className={"text-sm m-1 p-0.5 bg-gray-500 text-white"}>サマリー</button>*/}
 
         {/*複数選択*/}
         <button className={classNames(
