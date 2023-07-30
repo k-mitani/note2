@@ -102,10 +102,10 @@ function HomeInternal() {
     <main className='h-full w-screen bg-red-200 flex flex-col'>
       <Header onCreateNewNote={onCreateNewNote} saveChanges={saveChanges}/>
       <div className="flex flex-grow h-[0%]">
-        <SideBar onDropToFolder={onDropToFolder}/>
-
-        <NoteListView notes={notes}/>
-
+        <div className="flex flex-col md:flex-row">
+          <SideBar onDropToFolder={onDropToFolder}/>
+          <NoteListView notes={notes}/>
+        </div>
         <NoteEditor notes={notes} saveChanges={saveChanges}/>
       </div>
     </main>
