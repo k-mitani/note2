@@ -252,7 +252,7 @@ export default function NoteListView({notes}: {
   }
 
   return (
-    <div className={classNames('flex flex-1 flex-col h-0 basis-80 md:h-full w-48 md:w-72 bg-gray-100',
+    <div className={classNames('flex flex-1 flex-col h-0 basis-80 md:flex-none md:h-full w-48 md:w-72 bg-gray-100',
       {'hidden': !showNoteListView},
     )}>
       {/*ヘッダー*/}

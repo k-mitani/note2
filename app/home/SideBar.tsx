@@ -290,7 +290,7 @@ export default function SideBar({onDropToFolder}: {
   }>("SideBar.folders.isExpanded", {});
   const {folders, trash} = data ?? {folders: [], trash: null};
   return (
-    <div className={classNames('p-0.5 flex-1 flex flex-col h-0 basis-0.5 md:h-full w-48 md:w-72 bg-gray-700 text-white',
+    <div className={classNames('p-0.5 flex-1 flex flex-col h-0 basis-0.5 md:flex-none md:h-full w-48 md:w-72 bg-gray-700 text-white',
       {'hidden': !showSideBar}
     )}>
       {/*固定ヘッダー*/}
