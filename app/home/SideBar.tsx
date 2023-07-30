@@ -290,12 +290,12 @@ export default function SideBar({onDropToFolder}: {
   }>("SideBar.folders.isExpanded", {});
   const {folders, trash} = data ?? {folders: [], trash: null};
   return (
-    <div className={classNames('p-0.5 flex-none flex flex-col w-40 md:w-72 bg-gray-700 text-white',
+    <div className={classNames('p-0.5 flex-none flex flex-col w-32 md:w-72 bg-gray-700 text-white',
       {'hidden': !showSideBar}
     )}>
       {/*固定ヘッダー*/}
       <div>
-        <button className="hover:bg-gray-600 w-full text-start">🔖ショートカット</button>
+        <button className="hover:bg-gray-600 w-full text-start text-sm md:text-base">🔖ショートカット</button>
       </div>
 
       <div className='mt-4 pt-0.5 flex-col overflow-y-auto'>
@@ -317,7 +317,7 @@ export default function SideBar({onDropToFolder}: {
         </ul>
         {/*新規フォルダー作成ボタン*/}
         <div className="mt-2">
-          <button className="pt-2 pb-2 rounded hover:bg-gray-600 w-full text-start"
+          <button className="pt-2 pb-2 rounded hover:bg-gray-600 w-full text-start text-sm md:text-base"
                   onClick={() => createFolder(null)}>
             ➕フォルダー新規作成
           </button>
