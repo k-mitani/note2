@@ -93,15 +93,15 @@ function NoteCard(
 
       {/*本体*/}
       <div className={classNames(
-        "flex flex-col hover:bg-white hover:border-cyan-400 border-2 p-2",
+        "flex flex-col hover:bg-white hover:border-cyan-400 border-2 p-0.5 md:p-2",
         isSelected ? "border-blue-500 bg-white" : " border-gray-100",
       )}
            ref={refDrag}>
         {/*タイトル*/}
-        <strong className="line-clamp-2">{(changed ?? note).title}</strong>
+        <strong className="text-xs md:text-base line-clamp-2">{(changed ?? note).title}</strong>
 
         {/*サマリー*/}
-        <div className={"mt-2 h-16 line-clamp-3 text-gray-600 text-sm"}>{text}</div>
+        <div className={"mt-2 h-16 line-clamp-3 text-gray-600 text-xs md:text-sm"}>{text}</div>
 
         {/*日付*/}
         <div className={"mt-2 text-[12px] text-gray-500"}>{dateText}</div>
@@ -252,7 +252,7 @@ export default function NoteListView({notes}: {
   }
 
   return (
-    <div className={classNames('flex flex-col flex-none w-72 bg-gray-100',
+    <div className={classNames('flex flex-col flex-none w-40 md:w-72 bg-gray-100',
       {'hidden': !showNoteListView},
     )}>
       {/*ヘッダー*/}

@@ -12,7 +12,14 @@ import {useDrag, useDrop} from "react-dnd";
 type FolderAndChild = Folder & { childFolders: FolderAndChild[] };
 
 const INDENT_WIDTH = 5;
-const INDENTS = ["ps-0", "ps-5", "ps-10", "ps-[3.75rem]", "ps-[5rem]", "ps-[6.25rem]"];
+const INDENTS = [
+  "ps-0",
+  "ps-[0.625rem] md:ps-[1.25rem]",
+  "ps-[1.25rem] md:ps-[2.5rem]",
+  "ps-[1.875rem] md:ps-[3.75rem]",
+  "ps-[2.5rem] md:ps-[5rem]",
+  "ps-[3.125rem] md:ps-[6.25rem]"
+];
 
 async function createFolder(parentFolderId: number | null) {
   const newName = prompt("名前を入力してください", "新しいフォルダー");
@@ -100,7 +107,7 @@ function Folder({folder, onDrop, allFolders, selectedFolder, setSelectedFolder, 
         ref={refDrop}
         className={classNames(
           `js-folder-${folder.id}`,
-          "cursor-pointer select-none  w-full text-start h-7",
+          "cursor-pointer select-none w-full text-start h-7 flex items-center",
           INDENTS[indent],
           {
             "bg-blue-300": isOver,
@@ -216,24 +223,24 @@ function Folder({folder, onDrop, allFolders, selectedFolder, setSelectedFolder, 
         }}
       >
         {/*サブフォルダー展開ボタン*/}
-        <button className={classNames(
-          "hover:bg-gray-500 w-5",
+        <div className={classNames(
+          "hover:bg-gray-500 w-5 ps-0.5 pe-0.5",
           {"hidden": !hasChildren}
         )} onClick={(ev) => {
           setIsExpanded(folder.id, !isExpanded(folder.id));
           ev.stopPropagation();
         }}>
           {isExpanded(folder.id) ? "▼" : "▶"}
-        </button>
+        </div>
 
         {/*フォルダー名*/}
-        <span className="w-full"
+        <div className="text-sm md:text-base line-clamp-1"
               ref={refDrag}>
           {folder.name}
           {(folder as any)._count.notes != 0 && <span className="text-gray-400">
             &nbsp;({(folder as any)._count.notes})
           </span>}
-        </span>
+        </div>
       </button>
 
       {/*コンテキストメニュー*/}
@@ -283,7 +290,7 @@ export default function SideBar({onDropToFolder}: {
   }>("SideBar.folders.isExpanded", {});
   const {folders, trash} = data ?? {folders: [], trash: null};
   return (
-    <div className={classNames('p-0.5 flex-none flex flex-col w-72 bg-gray-700 text-white',
+    <div className={classNames('p-0.5 flex-none flex flex-col w-40 md:w-72 bg-gray-700 text-white',
       {'hidden': !showSideBar}
     )}>
       {/*固定ヘッダー*/}
