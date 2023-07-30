@@ -26,9 +26,9 @@ function HomeInternal() {
   const {data: notesParent, mutate: mutateNotesParent} = useFolderAndNotes(selectedFolder?.id);
 
   // 読み込み中なら何もしない。
-  if (error) return <div>failed to load</div>
-  if (isLoading) return <div>loading...</div>
-  if (folders == null) return <div>folders is null</div>
+  if (error) return <div className="h-full w-screen bg-gray-700 text-white">failed to load</div>
+  if (isLoading) return <div className="h-full w-screen bg-gray-700 text-white">loading...</div>
+  if (folders == null) return <div className="h-full w-screen bg-gray-700 text-white">folders is null</div>
 
   async function onCreateNewNote() {
     if (selectedFolder == null) return;
