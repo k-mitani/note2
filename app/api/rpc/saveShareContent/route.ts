@@ -1,6 +1,8 @@
 import {prisma} from '@/lib/prisma';
 import {NextRequest, NextResponse} from "next/server";
 import settings from "@/lib/settings";
+import {Prisma} from ".prisma/client";
+import JsonNull = Prisma.JsonNull;
 
 type Params = {
   title: string,
@@ -9,42 +11,28 @@ type Params = {
   files: File[] | null,
 }
 
-export async function GET(req: NextRequest) {
-  return await process(req);
-}
-
-export async function POST(req: NextRequest) {
-  return await process(req);
-}
-
-async function process(
+export async function GET(
   req: NextRequest,
 ) {
   const entries = [...req.nextUrl.searchParams.entries()];
   const params: Params = entries.reduce((acc, v) => ({...acc, [v[0]]: v[1]}), {}) as any;
-  console.log(req.nextUrl.toString());
 
   const content =
-    (params.text == null ? '' : params.text + "<br>") +
-    (params.url == null ? '' : `<a href="${params.url}">${params.url}</a>`);
+    (params.title == null ? '' : params.title + "<br>\n") +
+    (params.text == null ? '' : params.text + "<br>\n") +
+    (params.url == null ? '' : `<a href="${params.url}">${params.url}</a>\n`);
   const note = await prisma.note.create({
     data: {
       title: params.title,
       content: content,
-      folderId: await settings.getShareTargetFolderId()
+      folderId: await settings.getShareTargetFolderId(),
+      tags: [],
+      attributes: [],
+      resource: JsonNull,
     }
   });
 
-  return NextResponse.json("ok");
-}
-
-function test() {
-  fetch("/api/rpc/web-share-target?" + new URLSearchParams({
-    title: "たいとる",
-    text: "test",
-    url: "http://www.example.com/",
-  }), {
-    method: "POST",
+  return new NextResponse("<script>window.close();</script>", {
+    headers: {"content-type": "text/html"}
   });
 }
-
