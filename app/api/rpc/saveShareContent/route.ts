@@ -22,6 +22,7 @@ async function process(
 ) {
   const entries = [...req.nextUrl.searchParams.entries()];
   const params: Params = entries.reduce((acc, v) => ({...acc, [v[0]]: v[1]}), {}) as any;
+  console.log(req.nextUrl.toString());
 
   const content =
     (params.text == null ? '' : params.text + "<br>") +
