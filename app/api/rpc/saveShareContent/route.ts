@@ -9,7 +9,15 @@ type Params = {
   files: File[] | null,
 }
 
-export async function POST(
+export async function GET(req: NextRequest) {
+  return await process(req);
+}
+
+export async function POST(req: NextRequest) {
+  return await process(req);
+}
+
+async function process(
   req: NextRequest,
 ) {
   const entries = [...req.nextUrl.searchParams.entries()];
