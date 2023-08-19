@@ -64,6 +64,17 @@ function Folder({folder, onDrop, allFolders, selectedFolder, setSelectedFolder, 
 
   const menuItems = [
     {
+      name: "共有先に設定", onClick: async () => {
+        await fetch(`/api/settings/ShareTargetFolder`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({folderId: folder.id}),
+        });
+      }
+    },
+    {
       name: "名前変更", onClick: async () => {
         const newName = prompt("名前を入力してください", folder.name)
         if (newName == null) return;

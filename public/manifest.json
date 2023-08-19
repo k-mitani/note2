@@ -6,6 +6,11 @@
     "start_url": "/home",
     "name": "note2",
     "short_name": "note2",
+    "share_target": {
+        "action": "/api/rpc/saveShareContent",
+        "method": "POST",
+        "enctype": "application/x-www-form-urlencoded"
+    },
     "icons": [
         {
             "src": "/icon-192.png",
