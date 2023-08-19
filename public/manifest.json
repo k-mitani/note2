@@ -9,7 +9,12 @@
     "share_target": {
         "action": "/api/rpc/saveShareContent",
         "method": "POST",
-        "enctype": "application/x-www-form-urlencoded"
+        "enctype": "application/x-www-form-urlencoded",
+        "params": {
+            "title": "title",
+            "text": "text",
+            "url": "url"
+        }
     },
     "icons": [
         {
