@@ -23,7 +23,7 @@ export async function GET(
     (params.url == null ? '' : `<a href="${params.url}">${params.url}</a>\n`);
   const note = await prisma.note.create({
     data: {
-      title: params.title,
+      title: params.title ?? "無題の共有アイテム",
       content: content,
       folderId: await settings.getShareTargetFolderId(),
       tags: [],
