@@ -81,6 +81,8 @@ export default function NoteEditor({saveChanges, notes}: {
   // ctrl+sで保存する。
   useEffect(() => {
     function handleKeyDown(ev: KeyboardEvent) {
+      const editable = document.getElementById("NoteEditor-ContentEditable");
+      // ctrl+sで保存する。
       if (ev.ctrlKey && ev.key === "s") {
         console.log("ctrl+s")
         ev.preventDefault();
@@ -90,7 +92,6 @@ export default function NoteEditor({saveChanges, notes}: {
       if (ev.key === "Tab") {
         const range = document.getSelection()?.getRangeAt(0);
         if (range == null) return;
-        const editable = document.getElementById("NoteEditor-ContentEditable");
         // editableの中の要素が選択されていないなら何もしない。
         if (editable == null || !editable.contains(range.startContainer)) return;
         const tabNode = document.createTextNode("\t");
@@ -98,6 +99,30 @@ export default function NoteEditor({saveChanges, notes}: {
         // タブは選択に含めないようにする。
         range.setStartAfter(tabNode);
         ev.preventDefault();
+      }
+
+      if (ev.key === "Enter") {
+        const selection = document.getSelection()?.getRangeAt(0).startContainer;
+        if (selection == null) return;
+        if (editable == null || !editable.contains(selection)) return;
+
+        const url = selection.textContent;
+        const patternUrl = /^https?:\/\/[^\s]+$/;
+        if (url != null && patternUrl.test(url)) {
+          setTimeout(async () => {
+            // URLの場合は、選択位置の次の場所にカードを挿入する。
+            const res = await fetch("/getLinkPreview?url=" + url);
+            const rawCard = await res.text();
+            console.log("text", rawCard);
+            const tmp = document.createElement("div");
+            tmp.innerHTML = rawCard;
+            const card = tmp.querySelector(".link-preview");
+            selection.parentNode?.insertBefore(card!!, selection.nextSibling);
+            if (note == null) return;
+            addToChangedNotes(note.id, title, editable.innerHTML);
+            refHtml.current = editable.innerHTML;
+          });
+        }
       }
     }
 
