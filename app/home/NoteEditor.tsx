@@ -86,6 +86,19 @@ export default function NoteEditor({saveChanges, notes}: {
         ev.preventDefault();
         saveChanges();
       }
+      // tabキーでインデントする。
+      if (ev.key === "Tab") {
+        const range = document.getSelection()?.getRangeAt(0);
+        if (range == null) return;
+        const editable = document.getElementById("NoteEditor-ContentEditable");
+        // editableの中の要素が選択されていないなら何もしない。
+        if (editable == null || !editable.contains(range.startContainer)) return;
+        const tabNode = document.createTextNode("\t");
+        range.insertNode(tabNode);
+        // タブは選択に含めないようにする。
+        range.setStartAfter(tabNode);
+        ev.preventDefault();
+      }
     }
 
     window.addEventListener("keydown", handleKeyDown);
@@ -123,9 +136,13 @@ export default function NoteEditor({saveChanges, notes}: {
     {/*本文*/}
     <div className="p-2 grow overflow-y-scroll break-all">
       <ContentEditable html={refHtml.current}
-
+                       id="NoteEditor-ContentEditable"
                        className="w-full h-full"
-                       style={{outline: "0px solid #fff"}}
+                       style={{
+                         outline: "0px solid #fff",
+                         whiteSpace: "pre-wrap",
+                         tabSize: 8,
+                       }}
                        onChange={ev => {
                          console.log("onchange");
                          refHtml.current = ev.target.value
