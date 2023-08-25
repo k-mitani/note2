@@ -21,7 +21,7 @@ export default function NoteEditor({saveChanges, notes}: {
   const [title, setTitle] = useState(note?.title ?? "");
   const [changedNotesWrapper, setChangedNotes] = useRecoilState(atoms.changedNotes);
   const [changedNotes] = changedNotesWrapper;
-  const editingIsPaused = useDebounce(changedNotesWrapper, 3000);
+  const editingIsPaused = useDebounce(changedNotesWrapper, 10000);
 
   useEffect(() => {
     if (changedNotes.size === 0) return;
