@@ -19,3 +19,8 @@
 html {
   font-family: sans-serif;
 }
+
+#NoteEditor-ContentEditable a {
+  color: revert;
+  text-decoration: revert;
+}
