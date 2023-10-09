@@ -6,8 +6,6 @@ import {Note} from "@prisma/client";
 import {atoms} from "@/app/home/atoms";
 import {useRecoilState, useRecoilValue} from "recoil";
 import ContentEditable from 'react-contenteditable'
-import {Simulate} from "react-dom/test-utils";
-import change = Simulate.change;
 import {useDebounce, useLocalStorage} from "usehooks-ts";
 
 export default function NoteEditor({saveChanges, notes}: {
