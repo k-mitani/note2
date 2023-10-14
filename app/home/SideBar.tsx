@@ -124,7 +124,7 @@ function Folder({folder, onDrop, allFolders, selectedFolder, setSelectedFolder, 
             "bg-blue-300": isOver,
             "bg-cyan-500": isDragging,
           },
-          selectedFolder?.id === folder.id ? "bg-gray-500" : "hover:bg-gray-600",
+          selectedFolder?.id === folder.id ? "bg-gray-500 dark:bg-gray-700" : "hover:bg-gray-600",
         )}
         onClick={() => setSelectedFolder(folder)}
         onKeyDown={(ev) => {
@@ -255,10 +255,10 @@ function Folder({folder, onDrop, allFolders, selectedFolder, setSelectedFolder, 
       </button>
 
       {/*コンテキストメニュー*/}
-      {showMenu && <div className="bg-white text-black">
+      {showMenu && <div className="bg-white text-black dark:bg-gray-700 dark:text-gray-200">
         <ul className="flex-col p-0.5">
           {menuItems.map(({name, onClick}) =>
-            <li key={name} className="hover:bg-gray-200 w-full cursor-pointer"
+            <li key={name} className="hover:bg-gray-200 dark:hover:bg-gray-500 w-full cursor-pointer"
                 onClick={onClick}>
               {name}
             </li>
@@ -301,7 +301,9 @@ export default function SideBar({onDropToFolder}: {
   }>("SideBar.folders.isExpanded", {});
   const {folders, trash} = data ?? {folders: [], trash: null};
   return (
-    <div className={classNames('p-0.5 flex-1 flex flex-col h-0 basis-0.5 md:flex-none md:h-full w-48 md:w-72 bg-gray-700 text-white',
+    <div className={classNames(
+      'p-0.5 flex-1 flex flex-col h-0 basis-0.5 md:flex-none md:h-full w-48 md:w-72',
+      'bg-gray-700 text-white dark:bg-black dark:text-gray-300',
       {'hidden': !showSideBar}
     )}>
       {/*固定ヘッダー*/}

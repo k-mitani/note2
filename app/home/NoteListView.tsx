@@ -57,7 +57,7 @@ function NoteCard(
   const dateText = utils.dateToText(note.updatedAt ?? note.createdAt);
   const text = (changed ?? note).content.replace(/<("[^"]*"|'[^']*'|[^'">])*>/g, "")
   return (
-    <button className="relative w-full text-start block border-gray-300 border-b-2"
+    <button className="relative w-full text-start block border-gray-300 dark:border-gray-600 border-b-2"
             onMouseDown={(ev) => {
               // Ctrl+クリックで通常選択モードなら、
               // 複数選択モードに入り現在のノートとクリックされたノートを選択状態にする。
@@ -93,15 +93,15 @@ function NoteCard(
 
       {/*本体*/}
       <div className={classNames(
-        "flex flex-col hover:bg-white hover:border-cyan-400 border-2 p-0.5 md:p-2",
-        isSelected ? "border-blue-500 bg-white" : " border-gray-100",
+        "flex flex-col hover:bg-white dark:hover:bg-black hover:border-cyan-400 dark:hover:border-cyan-600 border-2 p-0.5 md:p-2",
+        isSelected ? "border-blue-500 dark:border-blue-600 bg-white dark:bg-gray-900" : " border-gray-100 dark:border-gray-800",
       )}
            ref={refDrag}>
         {/*タイトル*/}
         <strong className="text-xs md:text-base line-clamp-2">{(changed ?? note).title}</strong>
 
         {/*サマリー*/}
-        <div className={"mt-2 h-16 line-clamp-3 text-gray-600 text-xs md:text-sm"}>{text}</div>
+        <div className={"mt-2 h-16 line-clamp-3 text-gray-600 dark:text-gray-400 text-xs md:text-sm"}>{text}</div>
 
         {/*日付*/}
         <div className={"mt-2 text-[12px] text-gray-500"}>{dateText}</div>
@@ -252,30 +252,32 @@ export default function NoteListView({notes}: {
   }
 
   return (
-    <div className={classNames('flex flex-1 flex-col h-0 basis-80 md:flex-none md:h-full w-48 md:w-72 bg-gray-100',
+    <div className={classNames(
+      'flex flex-1 flex-col h-0 basis-80 md:flex-none md:h-full w-48 md:w-72',
+      'bg-gray-100 dark:bg-gray-800 dark:text-gray-400',
       {'hidden': !showNoteListView},
     )}>
       {/*ヘッダー*/}
-      <div className={"flex-none p-1 border-b-2 border-gray-300"}>
+      <div className={"flex-none p-1 border-b-2 border-gray-300 dark:border-gray-600"}>
         <h2>ノート一覧 ({noteCount})</h2>
         {/*ソート設定リスト*/}
         <span>
           <span className={classNames(
-            "bg-white border-2 border-gray-600",
+            "bg-white dark:bg-gray-800 border-2 border-gray-600",
             "block absolute ml-[-80px]",
             showOrderItems ? "" : " hidden",
           )}>
             <ul>
               {orderItems.map((order: any, i) =>
                 <li key={i}
-                    className={"hover:bg-blue-300 p-0.5 cursor-pointer"}
+                    className={"hover:bg-blue-300 dark:hover:bg-blue-800 p-0.5 cursor-pointer"}
                     onClick={() => setSelectedOrder(i)}>{order[0]}</li>
               )}
             </ul>
           </span>
         </span>
         {/*ソートボタン*/}
-        <button className={"text-sm m-1 p-0.5 bg-gray-500 text-white"}
+        <button className={"text-sm m-1 p-0.5 bg-gray-500 text-white dark:bg-gray-600 dark:text-gray-300"}
                 onClick={() => setShowOrderItems(!showOrderItems)}>
           {orderName}
         </button>
@@ -285,7 +287,7 @@ export default function NoteListView({notes}: {
 
         {/*複数選択*/}
         <button className={classNames(
-          "text-sm m-1 w-16 p-0.5 bg-gray-500 text-white",
+          "text-sm m-1 w-16 p-0.5 bg-gray-500 text-white dark:bg-gray-600 dark:text-gray-300",
           multiSelectionMode ? "bg-blue-500" : "",
         )}
                 onClick={() => {
@@ -299,7 +301,7 @@ export default function NoteListView({notes}: {
         </button>
 
         {/*検索*/}
-        <input className={"m-1 border-2"} type="text" placeholder="ノートを検索"/>
+        <input className={"m-1 border-2 dark:bg-gray-700 dark:border-gray-700"} type="text" placeholder="ノートを検索"/>
       </div>
 
       {/*一覧*/}

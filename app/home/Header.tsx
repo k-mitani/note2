@@ -1,4 +1,4 @@
-import {FaFloppyDisk, FaFolderClosed, FaList, FaSquarePlus} from "react-icons/fa6";
+import {FaFloppyDisk, FaFolderClosed, FaList, FaSquarePlus, FaMoon, FaSun} from "react-icons/fa6";
 import {useRecoilState} from "recoil";
 import {atoms} from "@/app/home/atoms";
 import {useRecoilLocalStorage} from "@/app/utils";
@@ -11,9 +11,19 @@ export function Header({onCreateNewNote, saveChanges}: {
   saveChanges: () => void,
 }) {
   const [autoSave, setAutoSave] = useLocalStorage("autoSave", true);
+  const [theme, setTheme] = useLocalStorage("theme", "");
+  const themeIsDark = theme === "dark";
   const [showSideBar, setShowSideBar] = useRecoilLocalStorage(atoms.showSideBar);
   const [showNoteListView, setShowNoteListView] = useRecoilLocalStorage(atoms.showNoteListView);
   const [[changedNotes], setChangedNotes] = useRecoilState(atoms.changedNotes);
+
+  useEffect(() => {
+    if (themeIsDark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [themeIsDark]);
 
   // ページ離脱時に、変更されたノートがあれば保存確認を行う。
   const onBeforeUnload = useCallback((ev: BeforeUnloadEvent) => {
@@ -27,43 +37,51 @@ export function Header({onCreateNewNote, saveChanges}: {
   }, [onBeforeUnload]);
 
   return (
-    <div className="flex bg-gray-800 p-1">
+    <div className="flex bg-gray-800 dark:bg-gray-900 p-1 text-white dark:text-gray-400">
       <div className="md:block hidden">
-        <button className="rounded bg-gray-500 p-2 w-14 hover:bg-gray-400 content-center"
+        <button className="rounded bg-gray-500 dark:bg-gray-700 p-2 w-14 hover:bg-gray-400 content-center"
                 onClick={() => setShowSideBar(!showSideBar)}>
-          <FaFolderClosed color="white" className="m-auto"/>
+          <FaFolderClosed className="m-auto"/>
         </button>
-        <button className="ms-1 rounded bg-gray-500 p-2 w-14 hover:bg-gray-400"
+        <button className="ms-1 rounded bg-gray-500 dark:bg-gray-700 p-2 w-14 hover:bg-gray-400"
                 onClick={() => setShowNoteListView(!showNoteListView)}>
-          <FaList color="white" className="m-auto"/>
+          <FaList className="m-auto"/>
         </button>
       </div>
-      <button className="rounded bg-gray-500 p-2 w-[115px] hover:bg-gray-400 content-center md:hidden"
+      <button className="rounded bg-gray-500 dark:bg-gray-700 p-2 w-[115px] hover:bg-gray-400 content-center md:hidden"
               onClick={() => {
                 setShowSideBar(!showSideBar);
                 setShowNoteListView(!showNoteListView);
               }}>
-        <FaFolderClosed color="white" className="m-auto"/>
+        <FaFolderClosed className="m-auto"/>
       </button>
 
-      <button className="ms-16 rounded bg-gray-500 p-2 w-24 hover:bg-gray-400"
+      <button className="ms-16 rounded bg-gray-500 dark:bg-gray-700 p-2 w-24 hover:bg-gray-400"
               onClick={onCreateNewNote}>
-        <FaSquarePlus color="white" className="m-auto"/>
+        <FaSquarePlus className="m-auto"/>
       </button>
 
       <button className={classNames("ms-1 rounded p-2 w-14",
-        changedNotes.size === 0 ? "bg-gray-900" : "bg-gray-500 hover:bg-gray-400"
+        changedNotes.size === 0 ? "bg-gray-900 dark:bg-gray-800" : "bg-gray-500 hover:bg-gray-400  dark:bg-gray-700"
       )}
               onClick={saveChanges}>
         <div className="flex relative">
-          <FaFloppyDisk color="white" className="m-auto"></FaFloppyDisk>
+          <FaFloppyDisk className="m-auto"></FaFloppyDisk>
           {/*<span className="absolute text-white right-0"> {changedNotes.size}</span>*/}
         </div>
       </button>
 
-      <button className="ms-1 text-white text-sm" onClick={() => setAutoSave(!autoSave)}>
+      <button className="ms-1 text-sm" onClick={() => setAutoSave(!autoSave)}>
         <input className="align-middle" type="checkbox" checked={autoSave}/>
         <span className="align-middle">自動保存</span>
+      </button>
+
+      <button className="ms-16 rounded bg-gray-500 dark:bg-gray-700 p-2 w-24 hover:bg-gray-400"
+              onClick={() => themeIsDark ? setTheme("") : setTheme("dark")}>
+        {themeIsDark ?
+          <FaSun className="m-auto"/> :
+          <FaMoon className="m-auto"/>
+        }
       </button>
 
     </div>

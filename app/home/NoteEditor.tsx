@@ -173,11 +173,11 @@ export default function NoteEditor({saveChanges, notes}: {
   }, hotkeysOptions);
 
   (window as any)["__aa"] = note;
-  return <div className="grow bg-white flex flex-col">
+  return <div className="grow bg-white dark:bg-black flex flex-col">
     {/*ヘッダー*/}
-    <div className={"border-b-2 border-gray-200 p-2"}
+    <div className={"border-b-2 border-gray-200 dark:border-gray-600 p-2"}
     >
-      <input className="text-blue-500 w-full"
+      <input className="text-blue-500 dark:bg-black dark:text-blue-500 w-full"
              type="text"
              onChange={ev => {
                setTitle(ev.target.value);
@@ -199,7 +199,7 @@ export default function NoteEditor({saveChanges, notes}: {
     </div>
 
     {/*本文*/}
-    <div className="p-2 grow overflow-y-scroll break-all">
+    <div className="p-2 grow overflow-y-scroll break-all dark:text-gray-300">
       <ContentEditable html={refHtml.current}
                        id="NoteEditor-ContentEditable"
                        className="w-full h-full"
