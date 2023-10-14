@@ -28,13 +28,22 @@ export function Header({onCreateNewNote, saveChanges}: {
 
   return (
     <div className="flex bg-gray-800 p-1">
-      <button className="rounded bg-gray-500 p-2 w-14 hover:bg-gray-400 content-center"
-              onClick={() => setShowSideBar(!showSideBar)}>
+      <div className="md:block hidden">
+        <button className="rounded bg-gray-500 p-2 w-14 hover:bg-gray-400 content-center"
+                onClick={() => setShowSideBar(!showSideBar)}>
+          <FaFolderClosed color="white" className="m-auto"/>
+        </button>
+        <button className="ms-1 rounded bg-gray-500 p-2 w-14 hover:bg-gray-400"
+                onClick={() => setShowNoteListView(!showNoteListView)}>
+          <FaList color="white" className="m-auto"/>
+        </button>
+      </div>
+      <button className="rounded bg-gray-500 p-2 w-[115px] hover:bg-gray-400 content-center md:hidden"
+              onClick={() => {
+                setShowSideBar(!showSideBar);
+                setShowNoteListView(!showNoteListView);
+              }}>
         <FaFolderClosed color="white" className="m-auto"/>
-      </button>
-      <button className="ms-1 rounded bg-gray-500 p-2 w-14 hover:bg-gray-400"
-              onClick={() => setShowNoteListView(!showNoteListView)}>
-        <FaList color="white" className="m-auto"/>
       </button>
 
       <button className="ms-16 rounded bg-gray-500 p-2 w-24 hover:bg-gray-400"
