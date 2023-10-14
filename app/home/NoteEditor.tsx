@@ -7,6 +7,7 @@ import {atoms} from "@/app/home/atoms";
 import {useRecoilState, useRecoilValue} from "recoil";
 import ContentEditable from 'react-contenteditable'
 import {useDebounce, useLocalStorage} from "usehooks-ts";
+import {useHotkeys} from 'react-hotkeys-hook'
 
 export default function NoteEditor({saveChanges, notes}: {
   saveChanges: () => void,
@@ -27,7 +28,7 @@ export default function NoteEditor({saveChanges, notes}: {
     console.log("do auto save");
     saveChanges();
   }, [editingIsPaused]);
-  
+
   useEffect(() => {
     if (notes != null && note != null) {
       const noteInNotes = notes.find(n => n.id === note.id);
@@ -76,59 +77,57 @@ export default function NoteEditor({saveChanges, notes}: {
     timeText = date && format(date, "yyyy-MM-dd HH:mm") || "";
   }
 
+  const hotkeysOptions = {
+    enableOnFormTags: true,
+    enableOnContentEditable: true,
+  };
+
   // ctrl+sで保存する。
-  useEffect(() => {
-    function handleKeyDown(ev: KeyboardEvent) {
-      const editable = document.getElementById("NoteEditor-ContentEditable");
-      // ctrl+sで保存する。
-      if (ev.ctrlKey && ev.key === "s") {
-        console.log("ctrl+s")
-        ev.preventDefault();
-        saveChanges();
-      }
-      // tabキーでインデントする。
-      if (ev.key === "Tab") {
-        const range = document.getSelection()?.getRangeAt(0);
-        if (range == null) return;
-        // editableの中の要素が選択されていないなら何もしない。
-        if (editable == null || !editable.contains(range.startContainer)) return;
-        const tabNode = document.createTextNode("\t");
-        range.insertNode(tabNode);
-        // タブは選択に含めないようにする。
-        range.setStartAfter(tabNode);
-        ev.preventDefault();
-      }
+  useHotkeys("ctrl+s", (ev: KeyboardEvent) => {
+    console.log("ctrl+s")
+    saveChanges();
+    ev.preventDefault();
+  }, hotkeysOptions);
 
-      if (ev.key === "Enter") {
-        const selection = document.getSelection()?.getRangeAt(0).startContainer;
-        if (selection == null) return;
-        if (editable == null || !editable.contains(selection)) return;
+  // tabキーでインデントする。
+  useHotkeys("tab", (ev: KeyboardEvent) => {
+    const editable = document.getElementById("NoteEditor-ContentEditable");
+    const range = document.getSelection()?.getRangeAt(0);
+    if (range == null) return;
+    // editableの中の要素が選択されていないなら何もしない。
+    if (editable == null || !editable.contains(range.startContainer)) return;
+    const tabNode = document.createTextNode("\t");
+    range.insertNode(tabNode);
+    // タブは選択に含めないようにする。
+    range.setStartAfter(tabNode);
+    ev.preventDefault();
+  }, hotkeysOptions);
 
-        const url = selection.textContent;
-        const patternUrl = /^https?:\/\/[^\s]+$/;
-        if (url != null && patternUrl.test(url)) {
-          setTimeout(async () => {
-            // URLの場合は、選択位置の次の場所にカードを挿入する。
-            const res = await fetch("/getLinkPreview?url=" + url);
-            const rawCard = await res.text();
-            console.log("text", rawCard);
-            const tmp = document.createElement("div");
-            tmp.innerHTML = rawCard;
-            const card = tmp.querySelector(".link-preview");
-            selection.parentNode?.insertBefore(card!!, selection.nextSibling);
-            if (note == null) return;
-            addToChangedNotes(note.id, title, editable.innerHTML);
-            refHtml.current = editable.innerHTML;
-          });
-        }
-      }
+  // EnterキーでURLをカードにする。
+  useHotkeys("enter", (ev: KeyboardEvent) => {
+    const editable = document.getElementById("NoteEditor-ContentEditable");
+    const selection = document.getSelection()?.getRangeAt(0).startContainer;
+    if (selection == null) return;
+    if (editable == null || !editable.contains(selection)) return;
+
+    const url = selection.textContent;
+    const patternUrl = /^https?:\/\/[^\s]+$/;
+    if (url != null && patternUrl.test(url)) {
+      setTimeout(async () => {
+        // URLの場合は、選択位置の次の場所にカードを挿入する。
+        const res = await fetch("/getLinkPreview?url=" + url);
+        const rawCard = await res.text();
+        console.log("text", rawCard);
+        const tmp = document.createElement("div");
+        tmp.innerHTML = rawCard;
+        const card = tmp.querySelector(".link-preview");
+        selection.parentNode?.insertBefore(card!!, selection.nextSibling);
+        if (note == null) return;
+        addToChangedNotes(note.id, title, editable.innerHTML);
+        refHtml.current = editable.innerHTML;
+      });
     }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    }
-  }, [note, saveChanges]);
+  }, hotkeysOptions);
 
   (window as any)["__aa"] = note;
   return <div className="grow bg-white flex flex-col">
