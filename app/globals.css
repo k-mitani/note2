@@ -35,3 +35,62 @@ html {
   font-size: revert;
   font-weight: revert;
 }
+
+#NoteEditor-ContentEditable ol
+, #NoteEditor-ContentEditable ul
+{
+  list-style-type: revert;
+  padding: 0 0 0 2em;
+}
+
+#NoteEditor-ContentEditable *
+, #NoteEditor-ContentEditable ::before
+, #NoteEditor-ContentEditable ::after {
+--tw-border-spacing-x: revert;
+--tw-border-spacing-y: revert;
+--tw-translate-x: revert;
+--tw-translate-y: revert;
+--tw-rotate: revert;
+--tw-skew-x: revert;
+--tw-skew-y: revert;
+--tw-scale-x: revert;
+--tw-scale-y: revert;
+--tw-pan-x: revert;
+--tw-pan-y: revert;
+--tw-pinch-zoom: revert;
+--tw-scroll-snap-strictness: revert;
+--tw-gradient-from-position: revert;
+--tw-gradient-via-position: revert;
+--tw-gradient-to-position: revert;
+--tw-ordinal: revert;
+--tw-slashed-zero: revert;
+--tw-numeric-figure: revert;
+--tw-numeric-spacing: revert;
+--tw-numeric-fraction: revert;
+--tw-ring-inset: revert;
+--tw-ring-offset-width: revert;
+--tw-ring-offset-color: revert;
+--tw-ring-color: revert;
+--tw-ring-offset-shadow: revert;
+--tw-ring-shadow: revert;
+--tw-shadow: revert;
+--tw-shadow-colored: revert;
+--tw-blur: revert;
+--tw-brightness: revert;
+--tw-contrast: revert;
+--tw-grayscale: revert;
+--tw-hue-rotate: revert;
+--tw-invert: revert;
+--tw-saturate: revert;
+--tw-sepia: revert;
+--tw-drop-shadow: revert;
+--tw-backdrop-blur: revert;
+--tw-backdrop-brightness: revert;
+--tw-backdrop-contrast: revert;
+--tw-backdrop-grayscale: revert;
+--tw-backdrop-hue-rotate: revert;
+--tw-backdrop-invert: revert;
+--tw-backdrop-opacity: revert;
+--tw-backdrop-saturate: revert;
+--tw-backdrop-sepia: revert;
+}

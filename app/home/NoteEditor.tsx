@@ -89,7 +89,13 @@ export default function NoteEditor({saveChanges, notes}: {
   const a = {
     "ctrl+b": ["bold"],
     "ctrl+u": ["underline"],
-    "ctrl+m": ["enableObjectResizing"],
+    "alt+shift+5": ["strikeThrough"],
+    "ctrl+h": ["backColor", false, "yellow"],
+    "ctrl+shift+r": ["foreColor", false, "red"],
+    "ctrl+k": ["removeFormat"],
+    "ctrl+o": ["insertOrderedList"],
+    "ctrl+l": ["insertUnorderedList"],
+    "ctrl+shift+h": ["insertHorizontalRule"],
     "ctrl+alt+1": ["formatBlock", false, "h1"],
     "ctrl+alt+2": ["formatBlock", false, "h2"],
     "ctrl+alt+3": ["formatBlock", false, "h3"],
@@ -124,10 +130,7 @@ export default function NoteEditor({saveChanges, notes}: {
       document.execCommand("indent");
     }
     else {
-      const tabNode = document.createTextNode("\t");
-      range.insertNode(tabNode);
-      // タブは選択に含めないようにする。
-      range.setStartAfter(tabNode);
+      document.execCommand("insertText", false, "\t")
     }
     ev.preventDefault();
   }, hotkeysOptions);
