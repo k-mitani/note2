@@ -76,7 +76,7 @@ export function Header({onCreateNewNote, saveChanges}: {
         <span className="align-middle">自動保存</span>
       </button>
 
-      <button className="ms-16 rounded bg-gray-500 dark:bg-gray-700 p-2 w-24 hover:bg-gray-400"
+      <button className="rounded bg-gray-500 dark:bg-gray-700 p-2 w-14 hover:bg-gray-400 ml-auto"
               onClick={() => themeIsDark ? setTheme("") : setTheme("dark")}>
         {themeIsDark ?
           <FaSun className="m-auto"/> :
