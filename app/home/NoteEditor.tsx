@@ -81,13 +81,36 @@ export default function NoteEditor({saveChanges, notes}: {
     enableOnFormTags: true,
     enableOnContentEditable: true,
   };
+  const hotkeysOptionsPreventDefault = {
+    preventDefault: true,
+    ...hotkeysOptions,
+  }
+
+  const a = {
+    "ctrl+b": ["bold"],
+    "ctrl+u": ["underline"],
+    "ctrl+m": ["enableObjectResizing"],
+    "ctrl+alt+1": ["formatBlock", false, "h1"],
+    "ctrl+alt+2": ["formatBlock", false, "h2"],
+    "ctrl+alt+3": ["formatBlock", false, "h3"],
+    "ctrl+alt+4": ["formatBlock", false, "h4"],
+    "ctrl+alt+5": ["formatBlock", false, "h5"],
+    "ctrl+alt+6": ["formatBlock", false, "h6"],
+  }
+  for (let [key, args] of Object.entries(a)) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useHotkeys(key, () => {
+      // @ts-ignore
+      const result = document.execCommand(...args);
+      console.log(key, result)
+    }, hotkeysOptionsPreventDefault);
+  }
 
   // ctrl+sで保存する。
   useHotkeys("ctrl+s", (ev: KeyboardEvent) => {
     console.log("ctrl+s")
     saveChanges();
-    ev.preventDefault();
-  }, hotkeysOptions);
+  }, hotkeysOptionsPreventDefault);
 
   // tabキーでインデントする。
   useHotkeys("tab", (ev: KeyboardEvent) => {
@@ -96,12 +119,29 @@ export default function NoteEditor({saveChanges, notes}: {
     if (range == null) return;
     // editableの中の要素が選択されていないなら何もしない。
     if (editable == null || !editable.contains(range.startContainer)) return;
-    const tabNode = document.createTextNode("\t");
-    range.insertNode(tabNode);
-    // タブは選択に含めないようにする。
-    range.setStartAfter(tabNode);
+
+    if (range.startOffset === 0 || !range.collapsed) {
+      document.execCommand("indent");
+    }
+    else {
+      const tabNode = document.createTextNode("\t");
+      range.insertNode(tabNode);
+      // タブは選択に含めないようにする。
+      range.setStartAfter(tabNode);
+    }
     ev.preventDefault();
   }, hotkeysOptions);
+  // shift+tabキーでアンインデントする。
+  useHotkeys("shift+tab", (ev: KeyboardEvent) => {
+    const editable = document.getElementById("NoteEditor-ContentEditable");
+    const range = document.getSelection()?.getRangeAt(0);
+    if (range == null) return;
+    // editableの中の要素が選択されていないなら何もしない。
+    if (editable == null || !editable.contains(range.startContainer)) return;
+    document.execCommand("outdent");
+    ev.preventDefault();
+  }, hotkeysOptions);
+
 
   // EnterキーでURLをカードにする。
   useHotkeys("enter", (ev: KeyboardEvent) => {

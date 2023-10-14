@@ -13,6 +13,7 @@ import {useFolderAndNotes, useFoldersAll} from "@/app/home/hooks";
 import {Header} from "@/app/home/Header";
 import {DndProvider} from "react-dnd";
 import {HTML5Backend} from "react-dnd-html5-backend";
+import {HotkeysProvider} from "react-hotkeys-hook";
 
 
 function HomeInternal() {
@@ -106,7 +107,9 @@ function HomeInternal() {
           <SideBar onDropToFolder={onDropToFolder}/>
           <NoteListView notes={notes}/>
         </div>
-        <NoteEditor notes={notes} saveChanges={saveChanges}/>
+        <HotkeysProvider>
+          <NoteEditor notes={notes} saveChanges={saveChanges}/>
+        </HotkeysProvider>
       </div>
     </main>
   )

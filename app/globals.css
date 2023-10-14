@@ -24,3 +24,14 @@ html {
   color: revert;
   text-decoration: revert;
 }
+
+#NoteEditor-ContentEditable h1
+, #NoteEditor-ContentEditable h2
+, #NoteEditor-ContentEditable h3
+, #NoteEditor-ContentEditable h4
+, #NoteEditor-ContentEditable h5
+, #NoteEditor-ContentEditable h6
+{
+  font-size: revert;
+  font-weight: revert;
+}
