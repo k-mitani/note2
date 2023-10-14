@@ -43,6 +43,15 @@ html {
   padding: 0 0 0 2em;
 }
 
+#NoteEditor-ContentEditable hr {
+  height: 2px;
+  background-color: #888;
+  border: none;
+  /*height: revert;*/
+  /*border: revert;*/
+  margin: revert;
+}
+
 #NoteEditor-ContentEditable *
 , #NoteEditor-ContentEditable ::before
 , #NoteEditor-ContentEditable ::after {
