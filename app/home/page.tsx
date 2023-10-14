@@ -26,6 +26,14 @@ function HomeInternal() {
   const {data: folders, error, isLoading} = useFoldersAll();
   const {data: notesParent, mutate: mutateNotesParent} = useFolderAndNotes(selectedFolder?.id);
 
+    // 初回のみ、最初のフォルダを選択する。
+  useEffect(() => {
+    if (selectedFolder == null && folders != null && folders.folders.length > 0) {
+      setSelectedFolder(folders.folders[0] as any);
+    }
+  }, [folders, selectedFolder, setSelectedFolder]);
+
+
   // 読み込み中なら何もしない。
   if (error) return <div className="h-full w-screen bg-gray-700 text-white">failed to load</div>
   if (isLoading) return <div className="h-full w-screen bg-gray-700 text-white">loading...</div>
