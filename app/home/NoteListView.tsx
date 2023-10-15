@@ -57,7 +57,7 @@ function NoteCard(
   const dateText = utils.dateToText(note.updatedAt ?? note.createdAt);
   const text = (changed ?? note).content.replace(/<("[^"]*"|'[^']*'|[^'">])*>/g, "")
   return (
-    <button className="relative w-full text-start block border-gray-300 dark:border-gray-600 border-b-2"
+    <button className="relative w-full text-start block border-gray-300 dark:border-gray-700 border-b-2"
             onMouseDown={(ev) => {
               // Ctrl+クリックで通常選択モードなら、
               // 複数選択モードに入り現在のノートとクリックされたノートを選択状態にする。
@@ -94,7 +94,7 @@ function NoteCard(
       {/*本体*/}
       <div className={classNames(
         "flex flex-col hover:bg-white dark:hover:bg-black hover:border-cyan-400 dark:hover:border-cyan-600 border-2 p-0.5 md:p-2",
-        isSelected ? "border-blue-500 dark:border-blue-600 bg-white dark:bg-gray-900" : " border-gray-100 dark:border-gray-800",
+        isSelected ? "border-blue-500 dark:border-blue-600 bg-white dark:bg-gray-900" : " border-gray-100 dark:border-gray-900",
       )}
            ref={refDrag}>
         {/*タイトル*/}
@@ -258,7 +258,7 @@ export default function NoteListView({notes}: {
       {'hidden': !showNoteListView},
     )}>
       {/*ヘッダー*/}
-      <div className={"flex-none p-1 border-b-2 border-gray-300 dark:border-gray-600"}>
+      <div className={"flex-none p-1 border-b-2 border-gray-300 dark:border-gray-700"}>
         <h2>ノート一覧 ({noteCount})</h2>
         {/*ソート設定リスト*/}
         <span>
@@ -301,7 +301,7 @@ export default function NoteListView({notes}: {
         </button>
 
         {/*検索*/}
-        <input className={"m-1 border-2 dark:bg-gray-900 dark:border-gray-700"} type="text" placeholder="ノートを検索"/>
+        <input className={"m-1 border-2 dark:bg-gray-950 dark:border-gray-900"} type="text" placeholder="ノートを検索"/>
       </div>
 
       {/*一覧*/}

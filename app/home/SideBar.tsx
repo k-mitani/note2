@@ -303,7 +303,7 @@ export default function SideBar({onDropToFolder}: {
   return (
     <div className={classNames(
       'p-0.5 flex-1 flex flex-col h-0 basis-0.5 md:flex-none md:h-full w-48 md:w-72',
-      'bg-gray-700 text-white dark:bg-black dark:text-gray-300',
+      'bg-gray-700 text-white dark:bg-gray-950 dark:text-gray-300',
       {'hidden': !showSideBar}
     )}>
       {/*固定ヘッダー*/}
