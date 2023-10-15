@@ -254,7 +254,7 @@ export default function NoteListView({notes}: {
   return (
     <div className={classNames(
       'flex flex-1 flex-col h-0 basis-80 md:flex-none md:h-full w-48 md:w-72',
-      'bg-gray-100 dark:bg-gray-800 dark:text-gray-400',
+      'bg-gray-100 dark:bg-gray-900 dark:text-gray-400',
       {'hidden': !showNoteListView},
     )}>
       {/*ヘッダー*/}
@@ -301,7 +301,7 @@ export default function NoteListView({notes}: {
         </button>
 
         {/*検索*/}
-        <input className={"m-1 border-2 dark:bg-gray-700 dark:border-gray-700"} type="text" placeholder="ノートを検索"/>
+        <input className={"m-1 border-2 dark:bg-gray-900 dark:border-gray-700"} type="text" placeholder="ノートを検索"/>
       </div>
 
       {/*一覧*/}
