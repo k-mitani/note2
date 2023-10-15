@@ -37,7 +37,7 @@ export function Header({onCreateNewNote, saveChanges}: {
   }, [onBeforeUnload]);
 
   return (
-    <div className="flex bg-gray-800 dark:bg-gray-900 p-1 text-white dark:text-gray-400">
+    <div className="flex bg-gray-800 dark:bg-neutral-900 p-1 text-white dark:text-gray-400">
       <div className="md:block hidden">
         <button className="rounded bg-gray-500 dark:bg-gray-700 p-2 w-14 hover:bg-gray-400 content-center"
                 onClick={() => setShowSideBar(!showSideBar)}>
@@ -48,7 +48,7 @@ export function Header({onCreateNewNote, saveChanges}: {
           <FaList className="m-auto"/>
         </button>
       </div>
-      <button className="rounded bg-gray-500 dark:bg-gray-700 p-2 w-[115px] hover:bg-gray-400 content-center md:hidden"
+      <button className="rounded bg-gray-500 dark:bg-gray-700 p-2 w-20 hover:bg-gray-400 content-center md:hidden"
               onClick={() => {
                 setShowSideBar(!showSideBar);
                 setShowNoteListView(!showNoteListView);
@@ -56,7 +56,7 @@ export function Header({onCreateNewNote, saveChanges}: {
         <FaFolderClosed className="m-auto"/>
       </button>
 
-      <button className="ms-16 rounded bg-gray-500 dark:bg-gray-700 p-2 w-24 hover:bg-gray-400"
+      <button className="ms-6 md:ms-16 rounded bg-gray-500 dark:bg-gray-700 p-2 w-20 md:w-24 hover:bg-gray-400"
               onClick={onCreateNewNote}>
         <FaSquarePlus className="m-auto"/>
       </button>
