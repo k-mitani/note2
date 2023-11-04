@@ -151,27 +151,32 @@ export default function NoteEditor({saveChanges, notes}: {
   // EnterキーでURLをカードにする。
   useHotkeys("enter", (ev: KeyboardEvent) => {
     const editable = document.getElementById("NoteEditor-ContentEditable");
-    const selection = document.getSelection()?.getRangeAt(0).startContainer;
+    const range = document.getSelection()!.getRangeAt(0);
+    const selection = range.startContainer;
     if (selection == null) return;
-    if (editable == null || !editable.contains(selection)) return;
+    if (editable == null || !editable .contains(selection)) return;
+    if (!range.collapsed) return;
 
     const url = selection.textContent;
     const patternUrl = /^https?:\/\/[^\s]+$/;
-    if (url != null && patternUrl.test(url)) {
-      setTimeout(async () => {
-        // URLの場合は、選択位置の次の場所にカードを挿入する。
-        const res = await fetch("/getLinkPreview?url=" + url);
-        const rawCard = await res.text();
-        console.log("text", rawCard);
-        const tmp = document.createElement("div");
-        tmp.innerHTML = rawCard;
-        const card = tmp.querySelector(".link-preview");
-        selection.parentNode?.insertBefore(card!!, selection.nextSibling);
-        if (note == null) return;
-        addToChangedNotes(note.id, title, editable.innerHTML);
-        refHtml.current = editable.innerHTML;
-      });
-    }
+    if (url == null || !patternUrl.test(url)) return;
+    if (url.length !== range.endOffset) return;
+    setTimeout(async () => {
+      const range = document.getSelection()!.getRangeAt(0);
+      // URLの場合は、選択位置の次の場所にカードを挿入する。
+      const res = await fetch("/getLinkPreview?url=" + url);
+      const rawCard = await res.text();
+      console.log("text", rawCard);
+      const tmp = document.createElement("div");
+      tmp.innerHTML = rawCard;
+      const card = tmp.querySelector(".link-preview")!;
+      if (card == null) return;
+      range.insertNode(card);
+      range.collapse();
+      if (note == null) return;
+      addToChangedNotes(note.id, title, editable.innerHTML);
+      refHtml.current = editable.innerHTML;
+    });
   }, hotkeysOptions);
 
   // Shift+Ctrl+Vでプレーンテキスト貼り付け。
