@@ -187,6 +187,48 @@ export default function NoteEditor({saveChanges, notes}: {
     document.execCommand("insertText", false, text.replace(/\r/g, ""));
   }, hotkeysOptions);
 
+  async function onPaste(ev: React.ClipboardEvent<HTMLDivElement>) {
+    function arrayBufferToBase64(buffer: ArrayBuffer): string {
+      let binary = '';
+      let bytes = new Uint8Array(buffer);
+      let len = bytes.byteLength;
+      for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return window.btoa(binary);
+    }
+
+    if (ev.clipboardData.files.length == 0) return;
+
+    ev.preventDefault();
+
+    for (let file of ev.clipboardData.files) {
+      if (file.type === "image/png") {
+        const data = await file.arrayBuffer();
+        const base64 = arrayBufferToBase64(data);
+        const src = `data:image/png;base64,${base64}`;
+        const img = document.createElement("img");
+        img.src = src;
+        // document.execCommand("insertHTML", false, img.outerHTML);
+        const range = document.getSelection()!.getRangeAt(0);
+        range.insertNode(img);
+        range.collapse();
+
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await fetch("/api/rpc/uploadFile", {
+          method: "POST",
+          body: formData,
+        });
+        const url = await res.json();
+        img.src = url;
+        console.log("url2", url);
+      }
+    }
+    // const range = document.getSelection()?.getRangeAt(0);
+    // range.insertNode()
+  }
+
   (window as any)["__aa"] = note;
   return <div className="grow bg-white dark:bg-black flex flex-col">
     {/*ヘッダー*/}
@@ -233,6 +275,7 @@ export default function NoteEditor({saveChanges, notes}: {
                          whiteSpace: "pre-wrap",
                          tabSize: 8,
                        }}
+                       onPaste={onPaste}
                        onChange={ev => {
                          // console.log("onchange");
                          refHtml.current = ev.target.value
