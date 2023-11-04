@@ -11,7 +11,7 @@ export async function POST(
   const file = form.get("file") as File;
   const DIRECTORY = "files/v1/";
   const filename = file.name;
-  const url = await s3.saveObject(DIRECTORY + uuidv4() + "_" + filename, file);
+  const url = await s3.saveObject(DIRECTORY + uuidv4() + "/" + filename, file);
   console.log("uploadFile", url);
   return NextResponse.json(url);
   } catch (e) {
