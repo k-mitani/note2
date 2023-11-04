@@ -31,13 +31,17 @@ const S3 = new S3Client({
   },
 });
 
-export async function saveObject(key: string, file: File): Promise<string> {
+export async function saveObject(
+  key: string,
+  blob: ArrayBuffer,
+  contentType: string | null = null
+): Promise<string> {
   await S3.send(
     new PutObjectCommand({
       Bucket: BUCKET_NAME,
       Key: PREFIX + key,
-      Body: await file.arrayBuffer() as any,
-      ContentType: file.type,
+      Body: blob as any,
+      ContentType: contentType ?? "application/octet-stream",
     })
   );
   return PUBLIC_URL + PREFIX + key;

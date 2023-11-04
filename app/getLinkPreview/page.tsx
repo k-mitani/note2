@@ -3,7 +3,17 @@ import {v4 as uuidv4} from "uuid";
 export const dynamic = "force-dynamic";
 import {unfurl} from 'unfurl.js'
 import * as s3 from "@/lib/s3client";
-import Image from "next/image";
+
+function pathNameToContentType(pathName: string): string {
+  if (pathName.endsWith(".png")) return "image/png";
+  if (pathName.endsWith(".jpg")) return "image/jpeg";
+  if (pathName.endsWith(".jpeg")) return "image/jpeg";
+  if (pathName.endsWith(".gif")) return "image/gif";
+  if (pathName.endsWith(".svg")) return "image/svg+xml";
+  if (pathName.endsWith(".webp")) return "image/webp";
+  console.warn("unknown content type", pathName)
+  return "image/png";
+}
 
 export default async function Page({
   searchParams
@@ -22,11 +32,13 @@ export default async function Page({
     for (let image of og.images ?? []) {
       // 画像を取得して保存する。
       const res = await fetch(image.url);
-      const blob = await res.blob();
-      const file = new File([blob], new URL(image.url).pathname, {type: blob.type});
+      const buff = await res.arrayBuffer();
+
+
       const DIRECTORY = "files-og/v1/";
       const filename = "image.png";
-      const url = await s3.saveObject(DIRECTORY + uuidv4() + "/" + filename, file);
+      const contentType = pathNameToContentType(filename);
+      const url = await s3.saveObject(DIRECTORY + uuidv4() + "/" + filename, buff, contentType);
       imageUrls.push(url);
     }
   } catch (e) {

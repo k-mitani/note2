@@ -9,9 +9,11 @@ export async function POST(
   try {
   const form = await req.formData();
   const file = form.get("file") as File;
+  const buff = await file.arrayBuffer();
   const DIRECTORY = "files/v1/";
   const filename = file.name;
-  const url = await s3.saveObject(DIRECTORY + uuidv4() + "/" + filename, file);
+  const contentType = file.type;
+  const url = await s3.saveObject(DIRECTORY + uuidv4() + "/" + filename, buff, contentType);
   console.log("uploadFile", url);
   return NextResponse.json(url);
   } catch (e) {
