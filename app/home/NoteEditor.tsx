@@ -209,13 +209,13 @@ export default function NoteEditor({saveChanges, notes}: {
                          tabSize: 8,
                        }}
                        onChange={ev => {
-                         console.log("onchange");
+                         // console.log("onchange");
                          refHtml.current = ev.target.value
                          if (note != null) {
                            const title = changedNotes.get(note.id)?.title ?? note.title;
-                           console.log("タイトル", changedNotes.get(note.id)?.title)
-                           console.log("note.title", note.title);
-                           console.log("title", title);
+                           // console.log("タイトル", changedNotes.get(note.id)?.title)
+                           // console.log("note.title", note.title);
+                           // console.log("title", title);
                            addToChangedNotes(note.id, title, ev.target.value);
                          }
                        }}
