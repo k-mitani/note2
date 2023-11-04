@@ -7,8 +7,9 @@ export async function POST(
 ) {
   const {notes} = await req.json();
   const res = await prisma.$transaction(notes.map((note: any) => {
+  const updatedAt = note.updatedAt || new Date();
     return prisma.note.update({
-      data: {title: note.title, content: note.content},
+      data: {title: note.title, content: note.content, updatedAt: updatedAt},
       where: {id: note.id},
     });
   }));

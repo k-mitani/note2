@@ -18,6 +18,7 @@ export default function NoteEditor({saveChanges, notes}: {
   const prevNote = useRef(note);
   const refHtml = useRef(note?.content ?? "");
   const [title, setTitle] = useState(note?.title ?? "");
+  const [updatedAt, setUpdatedAt] = useState(note?.updatedAt ?? note?.createdAt);
   const [changedNotesWrapper, setChangedNotes] = useRecoilState(atoms.changedNotes);
   const [changedNotes] = changedNotesWrapper;
   const editingIsPaused = useDebounce(changedNotesWrapper, 10000);
@@ -39,9 +40,10 @@ export default function NoteEditor({saveChanges, notes}: {
   }, [note, notes, setNote]);
 
 
-  function addToChangedNotes(id: number, title: string, content: string) {
+  function addToChangedNotes(id: number, title: string, content: string, updatedAt: Date | null = null) {
     setChangedNotes(([prev]) => {
-      prev.set(id, {id, title, content});
+      var prevData = prev.get(id);
+      prev.set(id, {id, title, content, updatedAt: updatedAt ?? prevData?.updatedAt ?? null});
       return [prev];
     });
   }
@@ -54,9 +56,11 @@ export default function NoteEditor({saveChanges, notes}: {
       const n = changedNotes.get(note.id) ?? note;
       refHtml.current = n.content;
       setTitle(n.title);
+      setUpdatedAt(n.updatedAt ?? (n as any).createdAt);
     } else {
       refHtml.current = "";
       setTitle("");
+      setUpdatedAt(new Date());
     }
   }
 
@@ -73,8 +77,7 @@ export default function NoteEditor({saveChanges, notes}: {
       }
     }
     // 日付を取得する。
-    const date = note.updatedAt || note.createdAt;
-    timeText = date && format(date, "yyyy-MM-dd HH:mm") || "";
+    timeText = updatedAt && format(updatedAt, "yyyy-MM-dd HH:mm") || "";
   }
 
   const hotkeysOptions = {
@@ -128,8 +131,7 @@ export default function NoteEditor({saveChanges, notes}: {
 
     if (range.startOffset === 0 || !range.collapsed) {
       document.execCommand("indent");
-    }
-    else {
+    } else {
       document.execCommand("insertText", false, "\t")
     }
     ev.preventDefault();
@@ -194,7 +196,6 @@ export default function NoteEditor({saveChanges, notes}: {
              type="text"
              onChange={ev => {
                setTitle(ev.target.value);
-               console.log("hmm", ev.target.value);
                if (note != null) {
                  const content = changedNotes.get(note.id)?.content ?? note.content;
                  addToChangedNotes(note.id, ev.target.value, content);
@@ -202,7 +203,18 @@ export default function NoteEditor({saveChanges, notes}: {
              }}
              value={title}></input>
       <div>
-        <span className="text-xs text-gray-500">{timeText}</span>
+        <input type="datetime-local"
+               className="text-sm text-gray-500 border-gray-300"
+               onChange={ev => {
+                 const datetime = new Date(ev.target.value);
+                 if (note != null) {
+                   const title = changedNotes.get(note.id)?.title ?? note.title;
+                   const content = changedNotes.get(note.id)?.content ?? note.content;
+                   addToChangedNotes(note.id, title, content, datetime);
+                   setUpdatedAt(datetime);
+                 }
+               }}
+               value={timeText}/>
         {link && (
           <span className="ml-1 text-xs text-blue-700">
             <Link href={link}>{linkText}</Link>
@@ -232,7 +244,7 @@ export default function NoteEditor({saveChanges, notes}: {
                            addToChangedNotes(note.id, title, ev.target.value);
                          }
                        }}
-                       // onBlur={() => console.log("onblur", refHtml.current)}
+        // onBlur={() => console.log("onblur", refHtml.current)}
       />
     </div>
   </div>

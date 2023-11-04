@@ -14,7 +14,7 @@ export const atoms = {
 
   changedNotes: atom({
     key: "changedNotes",
-    default: [new Map<number, { id: number, title: string, content: string }>()],
+    default: [new Map<number, { id: number, title: string, content: string, updatedAt: Date | null }>()],
   }),
 
   showSideBar: atom({
