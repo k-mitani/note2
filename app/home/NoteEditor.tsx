@@ -232,7 +232,7 @@ export default function NoteEditor({saveChanges, notes}: {
                            addToChangedNotes(note.id, title, ev.target.value);
                          }
                        }}
-                       onBlur={() => console.log("onblur", refHtml.current)}
+                       // onBlur={() => console.log("onblur", refHtml.current)}
       />
     </div>
   </div>
