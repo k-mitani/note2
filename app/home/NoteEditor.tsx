@@ -172,6 +172,19 @@ export default function NoteEditor({saveChanges, notes}: {
     }
   }, hotkeysOptions);
 
+  // Shift+Ctrl+Vでプレーンテキスト貼り付け。
+  // 標準のShift+Ctrl+Vのプレーンテキスト貼り付けは、
+  // カーソル移動がおかしくなるので自前で行う。
+  useHotkeys("shift+ctrl+v", async (ev: KeyboardEvent) => {
+    ev.preventDefault();
+    const text = await navigator.clipboard.readText();
+    const editable = document.getElementById("NoteEditor-ContentEditable");
+    const selection = document.getSelection()?.getRangeAt(0).startContainer;
+    if (selection == null) return;
+    if (editable == null || !editable.contains(selection)) return;
+    document.execCommand("insertText", false, text.replace(/\r/g, ""));
+  }, hotkeysOptions);
+
   (window as any)["__aa"] = note;
   return <div className="grow bg-white dark:bg-black flex flex-col">
     {/*ヘッダー*/}
