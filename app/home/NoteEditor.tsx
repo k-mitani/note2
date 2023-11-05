@@ -203,35 +203,64 @@ export default function NoteEditor({saveChanges, notes}: {
       return window.btoa(binary);
     }
 
-    if (ev.clipboardData.files.length == 0) return;
+    // 添付ファイルありの場合
+    if (ev.clipboardData.files.length > 0) {
+      ev.preventDefault();
+      for (let file of ev.clipboardData.files) {
+        if (file.type.includes("image/")) {
+          const data = await file.arrayBuffer();
+          const base64 = arrayBufferToBase64(data);
+          const src = `data:image/png;base64,${base64}`;
+          const img = document.createElement("img");
+          img.src = src;
+          // document.execCommand("insertHTML", false, img.outerHTML);
+          const range = document.getSelection()!.getRangeAt(0);
+          range.insertNode(img);
+          range.collapse();
 
-    ev.preventDefault();
-
-    for (let file of ev.clipboardData.files) {
-      if (file.type === "image/png") {
-        const data = await file.arrayBuffer();
-        const base64 = arrayBufferToBase64(data);
-        const src = `data:image/png;base64,${base64}`;
-        const img = document.createElement("img");
-        img.src = src;
-        // document.execCommand("insertHTML", false, img.outerHTML);
-        const range = document.getSelection()!.getRangeAt(0);
-        range.insertNode(img);
-        range.collapse();
-
-        const formData = new FormData();
-        formData.append("file", file);
-        const res = await fetch("/api/rpc/uploadFile", {
-          method: "POST",
-          body: formData,
-        });
-        const url = await res.json();
-        img.src = url;
-        console.log("url2", url);
+          const formData = new FormData();
+          formData.append("file", file);
+          const res = await fetch("/api/rpc/uploadFile", {
+            method: "POST",
+            body: formData,
+          });
+          const url = await res.json();
+          img.src = url;
+          console.log("url2", url);
+        }
       }
+      return;
     }
-    // const range = document.getSelection()?.getRangeAt(0);
-    // range.insertNode()
+    // 添付ファイルなしの場合
+    let html = ev.clipboardData.getData("text/html");
+    const note2FontFamilyCss = "font-family: sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;, &quot;Noto Color Emoji&quot;;";
+    const note2twCss = "--tw-sepia: revert;";
+    if (html.includes(note2FontFamilyCss) || html.includes(note2twCss)) {
+      ev.preventDefault();
+      const tmp = document.createElement("span");
+      // "<!--StartFragment-->"から<!--EndFragment-->"までを取得する。
+      const match = html.match("StartFragment-->(.*)<!--EndFragment");
+      html = match != null ? match[1] : html;
+      tmp.innerHTML = html;
+      function removeStyle(el: Element) {
+        const style = el.getAttribute("style");
+        if (style != null && (style.includes(note2FontFamilyCss.replaceAll("&quot;", '"')) || style.includes(note2twCss))) {
+          el.removeAttribute("style");
+        }
+        for (let child of el.children) {
+          removeStyle(child);
+        }
+      }
+      removeStyle(tmp);
+      const range = document.getSelection()!.getRangeAt(0);
+      range.deleteContents();
+      if (tmp.children.length === 1) range.insertNode(tmp.children[0]);
+      else range.insertNode(tmp);
+      range.collapse();
+      console.log("html", html);
+    }
+
+
   }
 
   (window as any)["__aa"] = note;
