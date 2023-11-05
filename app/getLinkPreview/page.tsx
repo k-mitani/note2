@@ -1,8 +1,11 @@
 import {v4 as uuidv4} from "uuid";
+import * as child_process from "child_process";
 
 export const dynamic = "force-dynamic";
 import {unfurl} from 'unfurl.js'
 import * as s3 from "@/lib/s3client";
+
+const ARCHIVE_COMMAND = process.env.ARCHIVE_COMMAND;
 
 function pathNameToContentType(pathName: string): string {
   if (pathName.endsWith(".png")) return "image/png";
@@ -21,11 +24,37 @@ export default async function Page({
   searchParams: { [key: string]: string | string[] | undefined }
 }) {
   const url = searchParams["url"] as string;
-
   console.log("unfurl url", url);
-  const result = await unfurl(url);
-  console.log("unfurl result", result);
-  const og = result.open_graph;
+  try {
+    const result = await unfurl(url);
+    console.log("unfurl result", result);
+    var og = result.open_graph;
+  } catch (e: any) {
+    console.error("unfurl error", e);
+    og = {
+      url: url,
+      site_name: new URL(url).hostname,
+      title: new URL(url).pathname,
+      description: "Error: " + e.message,
+      images: [],
+    } as any;
+  }
+
+  if (ARCHIVE_COMMAND != null) {
+    const command = ARCHIVE_COMMAND + " " + url;
+    console.log("archive", command);
+    child_process.exec(command, (error, stdout, stderr) => {
+      if (error != null) {
+        console.error("archive error", error);
+      }
+      if (stdout != null) {
+        console.log("archive stdout", stdout);
+      }
+      if (stderr != null) {
+        console.error("archive stderr", stderr);
+      }
+    });
+  }
 
   const imageUrls = [];
   try {
@@ -53,7 +82,7 @@ export default async function Page({
         padding: "0.3em",
         border: "1px solid #777",
       }}>
-      <div style={{fontSize: "0.9em", color: "#777"}}>{og.site_name}</div>
+      <div style={{fontSize: "0.9em", color: "#777"}}>{og.site_name ?? '(no site name)'}</div>
       <div><a href={og.url}>{og.title}</a></div>
       <div style={{borderBottom: "1px solid #ccc", margin: "0.5em -0.3em"}}></div>
       <div style={{
@@ -66,7 +95,7 @@ export default async function Page({
             <img src={url}
                  alt=""
                  style={{marginLeft: "0.3em", maxHeight: "5em", maxWidth: "5em"}}
-                 />
+            />
           </div>
         ))}
       </div>
