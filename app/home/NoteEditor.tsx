@@ -23,6 +23,24 @@ export default function NoteEditor({saveChanges, notes}: {
   const [changedNotes] = changedNotesWrapper;
   const editingIsPaused = useDebounce(changedNotesWrapper, 10000);
 
+  // 変換候補選択中ならtrue
+  const [isComposing, setIsComposing] = useState(false);
+  useEffect(() => {
+    const handleCompositionStart = () => {
+      setIsComposing(true);
+    };
+    const handleCompositionEnd = () => {
+      setIsComposing(false);
+    };
+    document.addEventListener('compositionstart', handleCompositionStart);
+    document.addEventListener('compositionend', handleCompositionEnd);
+    // クリーンアップ関数を返す
+    return () => {
+      document.removeEventListener('compositionstart', handleCompositionStart);
+      document.removeEventListener('compositionend', handleCompositionEnd);
+    };
+  }, [isComposing]); // isComposingが変更されたときにeffectを再実行する
+
   useEffect(() => {
     if (changedNotes.size === 0) return;
     if (!autoSave) return;
@@ -131,7 +149,7 @@ export default function NoteEditor({saveChanges, notes}: {
 
     if (range.startOffset === 0 || !range.collapsed) {
       document.execCommand("indent");
-    } else {
+    } else if (!isComposing) {
       document.execCommand("insertText", false, "\t")
     }
     ev.preventDefault();
