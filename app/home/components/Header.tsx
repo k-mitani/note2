@@ -3,11 +3,9 @@ import {useNote, useLocalPreferences} from "@/app/home/state";
 import classNames from "classnames";
 import {useCallback, useEffect} from "react";
 import {useLocalStorage} from "usehooks-ts";
+import {useOnCreateNewNote, useOnDropToFolder, useSaveChanges} from "@/app/home/hooks";
 
-export function Header({onCreateNewNote, saveChanges}: {
-  onCreateNewNote: () => void,
-  saveChanges: () => void,
-}) {
+export function Header() {
   const [autoSave, setAutoSave] = useLocalStorage("autoSave", true);
   const [theme, setTheme] = useLocalStorage("theme", "");
   const themeIsDark = theme === "dark";
@@ -19,6 +17,9 @@ export function Header({onCreateNewNote, saveChanges}: {
   const setShowSideBar = useLocalPreferences(state => state.setShowSideBar);
   const setShowNoteListView = useLocalPreferences(state => state.setShowNoteListView);
 
+  const selectedFolder = useNote(state => state.selectedFolder);
+  const saveChanges = useSaveChanges(selectedFolder?.id);
+  const onCreateNewNote = useOnCreateNewNote(selectedFolder?.id);
 
   useEffect(() => {
     if (themeIsDark) {

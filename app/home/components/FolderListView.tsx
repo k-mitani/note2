@@ -3,7 +3,7 @@ import {Folder, Note} from "@prisma/client";
 import {useNote, useLocalPreferences} from "@/app/home/state";
 import classNames from "classnames";
 import {mutate} from "swr";
-import {useFoldersAll} from "@/app/home/hooks";
+import {useFoldersAll, useOnDropToFolder} from "@/app/home/hooks";
 import {useLocalStorage} from "usehooks-ts";
 import {useDrag, useDrop} from "react-dnd";
 
@@ -288,13 +288,13 @@ function Folder({folder, onDrop, allFolders, selectedFolder, setSelectedFolder, 
 /**
  * スタックやノートを表示する。
  */
-export default function FolderListView({onDropToFolder}: {
-  onDropToFolder: (ev: { target: Folder, notes: Note[] | null, folders: Folder[] | null }) => void,
-}) {
+export default function FolderListView() {
   const {data} = useFoldersAll();
   const selectedFolder = useNote(state => state.selectedFolder);
   const setSelectedFolder = useNote(state => state.setSelectedFolder);
   const showSideBar = useLocalPreferences(state => state.showSideBar);
+
+  const onDropToFolder = useOnDropToFolder(selectedFolder?.id);
 
   const [isExpanded, setIsExpanded] = useLocalStorage<{
     [key: number]: boolean

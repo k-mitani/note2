@@ -4,6 +4,7 @@ import {Note} from "@prisma/client";
 import {useNote, useLocalPreferences} from "@/app/home/state";
 import classNames from "classnames";
 import {useDrag} from "react-dnd";
+import {useFolderAndNotes} from "@/app/home/hooks";
 
 function NoteCard(
   {
@@ -62,7 +63,7 @@ function NoteCard(
               if (ev.ctrlKey) {
                 onCtrlClick(note);
               }
-              // Shift+クリックで通常選択モードなら、
+                // Shift+クリックで通常選択モードなら、
               // 複数選択モードに入り現在のノートからクリックされたノートまでのノートを選択状態にする。
               else if (ev.shiftKey) {
                 onShiftClick(note);
@@ -71,14 +72,14 @@ function NoteCard(
 
               setSelectedNote(note);
             }}
-            // ドラッグするためのマウスダウンで選択状態が変わらないように
-            // 選択状態の変更はクリックイベントで行う。
+      // ドラッグするためのマウスダウンで選択状態が変わらないように
+      // 選択状態の変更はクリックイベントで行う。
             onClick={() => {
               if (multiSelectionMode) {
                 setMultiSelection(note, !isMultiSelected);
               }
             }}
-            // onFocus={() => setSelectedNote(note)}
+      // onFocus={() => setSelectedNote(note)}
             onKeyDown={onKeyDown}
             ref={_ref}>
       {/*複数選択チェックボックス*/}
@@ -119,15 +120,16 @@ const orderItems = [
 
 /**
  * ノート一覧
- * @param notes
  */
-export default function NoteListView({notes}: {
-  notes: Note[] | null,
-}) {
+export default function NoteListView() {
+  console.log("render NoteListView");
   const selectedNote = useNote(state => state.selectedNote);
   const [changedNotes] = useNote(state => state.changedNotes);
   const showNoteListView = useLocalPreferences(state => state.showNoteListView);
   const setSelectedNote = useNote(state => state.setSelectedNote);
+
+  const selectedFolder = useNote(state => state.selectedFolder);
+  const {notes: notesRaw, isLoading} = useFolderAndNotes(selectedFolder?.id);
 
   const [selectedOrder, setSelectedOrder] = useState(0);
   const [shouldScroll, setShouldScroll] = useState(true);
@@ -157,16 +159,15 @@ export default function NoteListView({notes}: {
     return notes.length > 0 ? {notes} : null;
   }
 
-  const noteCount = notes?.length ?? 0;
+  const noteCount = notesRaw.length;
   const orderName = (String)(orderItems[selectedOrder][0]);
   const orderFunc = orderItems[selectedOrder][1];
   const refSelectedNoteElement = useRef<Element>(null);
-  notes = useMemo(() => {
-    if (notes == null) return null;
+  const notes = useMemo(() => {
     console.log("sort notes");
     setShouldScroll(true);
-    return notes.sort(orderFunc as any);
-  }, [notes, selectedOrder]);
+    return notesRaw.sort(orderFunc as any);
+  }, [notesRaw, selectedOrder]);
 
   useEffect(() => {
     console.log("scroll b", refSelectedNoteElement.current)
@@ -184,8 +185,6 @@ export default function NoteListView({notes}: {
       setShouldScroll(false);
     }
   }, [refSelectedNoteElement.current]);
-
-  if (notes == null) return <div>loading...</div>
 
   console.log("render notes");
 
@@ -229,11 +228,11 @@ export default function NoteListView({notes}: {
     if (!multiSelectionMode) {
       setMultiSelectionMode(true);
       setMultiSelectionNotes({v: new Set([selectedNote, note] as Note[])});
-    }
-    else {
+    } else {
       // デフォルトの処理に任せる。
     }
   }
+
   function onShiftClick(note: Note) {
     const start = notes!.indexOf(selectedNote as Note);
     const end = notes!.indexOf(note);
@@ -244,8 +243,7 @@ export default function NoteListView({notes}: {
       for (const n of newNotes) {
         setMultiSelection(n, true);
       }
-    }
-    else {
+    } else {
       setMultiSelectionMode(true);
       setMultiSelectionNotes({v: new Set(newNotes)});
     }
@@ -305,7 +303,10 @@ export default function NoteListView({notes}: {
       </div>
 
       {/*一覧*/}
-      <ul id="note-list" className="flex-grow overflow-y-scroll">
+      {/* ロード中の場合 */}
+      {isLoading && <div className="flex-grow p-2">loading...</div>}
+      {!isLoading && notes.length === 0 && <div className="flex-grow p-2">no notes</div>}
+      {!isLoading && notes.length > 0 && <ul id="note-list" className="flex-grow overflow-y-scroll">
         {notes?.map((note: any, i: number) => {
           return (
             <li key={note.name + "-" + i} id={`note-${i}`}>
@@ -326,7 +327,7 @@ export default function NoteListView({notes}: {
               />
             </li>);
         })}
-      </ ul>
+      </ ul>}
     </div>
   )
 }

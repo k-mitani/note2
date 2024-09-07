@@ -2,6 +2,7 @@ import useSWR, {mutate} from "swr";
 import {Folder, Note} from "@prisma/client";
 import {useNote} from "@/app/home/state";
 import * as utils from "@/app/utils";
+import {useCallback} from "react";
 
 type FolderAndChild = Folder & { childFolders: FolderAndChild[] };
 
@@ -20,22 +21,27 @@ function folderUrl(folderId: number | undefined) {
   return `/api/folders/${folderId}`;
 }
 
-export function useFolderAndNotes(folderId: number | undefined) {
-  const {data} = useSWR<Folder & { notes: Note[] }>(folderUrl(folderId), fetcher);
+const emptyNoteList: Note[] = [];
+export function useFolderAndNotes(folderId: number | undefined): {notes: Note[], isLoading: boolean} {
+  const {data, isLoading} = useSWR<Folder & { notes: Note[] }>(folderUrl(folderId), fetcher);
   if (data != null) {
     data.notes.forEach((n: Note) => {
       if (n != null && !(n.updatedAt instanceof Date)) n.updatedAt = new Date(n.updatedAt as any);
       if (!(n.createdAt instanceof Date)) n.createdAt = new Date(n.createdAt as any);
     });
   }
-  return data?.notes ?? [];
+  return {
+    notes: data?.notes ?? emptyNoteList,
+    isLoading,
+  }
 }
 
 export function useSaveChanges(currentFolderId: number | undefined) {
-  const [changedNotes] = useNote(state => state.changedNotes);
+  const changedNotesWrapper = useNote(state => state.changedNotes);
+  const [changedNotes] = changedNotesWrapper;
   const clearChangedNotes = useNote(state => state.clearChangedNotes);
 
-  return async function saveChanges() {
+  return useCallback(async function saveChanges() {
     console.log("saveChanges", changedNotes);
     await fetch("/api/rpc/saveChanges", {
       method: "POST",
@@ -49,14 +55,14 @@ export function useSaveChanges(currentFolderId: number | undefined) {
       mutate(folderUrl(currentFolderId)),
       mutate("/api/rpc/getFoldersAll"),
     ]);
-  }
+  }, [currentFolderId, changedNotesWrapper, clearChangedNotes]);
 }
 
 export function useOnCreateNewNote(currentFolderId: number | undefined) {
   const selectedFolder = useNote(state => state.selectedFolder);
   const setSelectedNote = useNote(state => state.setSelectedNote);
 
-  return async function onCreateNewNote() {
+  return useCallback(async function onCreateNewNote() {
     if (selectedFolder == null) return;
     const res = await fetch(
       `/api/folders/${selectedFolder.id}/createNote`,
@@ -71,11 +77,11 @@ export function useOnCreateNewNote(currentFolderId: number | undefined) {
       mutate("/api/rpc/getFoldersAll"),
     ]);
     setSelectedNote(newNote);
-  }
+  }, [currentFolderId, selectedFolder, setSelectedNote]);
 }
 
 export function useOnDropToFolder(currentFolderId: number | undefined) {
-  return async function onDropToFolder(
+  return useCallback(async function onDropToFolder(
     ev: { target: Folder, notes: Note[] | null, folders: Folder[] | null }
   ) {
     // ノートがドロップされた場合
@@ -110,5 +116,5 @@ export function useOnDropToFolder(currentFolderId: number | undefined) {
       mutate(folderUrl(currentFolderId));
       mutate("/api/rpc/getFoldersAll");
     }
-  }
+  }, [currentFolderId]);
 }

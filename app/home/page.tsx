@@ -19,10 +19,6 @@ function HomeInternal() {
 
   // Data
   const {data: folders, error, isLoading} = useFoldersAll();
-  const notes = useFolderAndNotes(selectedFolder?.id);
-  const saveChanges = useSaveChanges(selectedFolder?.id);
-  const onCreateNewNote = useOnCreateNewNote(selectedFolder?.id);
-  const onDropToFolder = useOnDropToFolder(selectedFolder?.id);
 
   // 初回のみ、最初のフォルダを選択する。
   useEffect(() => {
@@ -30,22 +26,24 @@ function HomeInternal() {
       setSelectedFolder(folders.folders[0] as any);
     }
   }, [folders, selectedFolder, setSelectedFolder]);
+  console.log("prerender HomeInternal");
 
   // 読み込み中なら何もしない。
   if (error) return <div className="h-full w-screen bg-gray-700 text-white">failed to load</div>
   if (isLoading) return <div className="h-full w-screen bg-gray-700 text-white">loading...</div>
   if (folders == null) return <div className="h-full w-screen bg-gray-700 text-white">folders is null</div>
+  console.log("render HomeInternal");
 
   return (
     <main className='h-full w-screen bg-red-200 flex flex-col'>
-      <Header onCreateNewNote={onCreateNewNote} saveChanges={saveChanges}/>
+      <Header />
       <div className="flex flex-grow h-[0%]">
         <div className="flex flex-col md:flex-row">
-          <FolderListView onDropToFolder={onDropToFolder}/>
-          <NoteListView notes={notes}/>
+          <FolderListView />
+          <NoteListView />
         </div>
         <HotkeysProvider>
-          <NoteEditor notes={notes} saveChanges={saveChanges}/>
+          <NoteEditor />
         </HotkeysProvider>
       </div>
     </main>

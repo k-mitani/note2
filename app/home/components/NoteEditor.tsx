@@ -7,13 +7,15 @@ import {useNote} from "@/app/home/state";
 import ContentEditable from 'react-contenteditable'
 import {useDebounce, useLocalStorage} from "usehooks-ts";
 import {useHotkeys} from 'react-hotkeys-hook'
+import {useFolderAndNotes, useSaveChanges} from "@/app/home/hooks";
 
-export default function NoteEditor({saveChanges, notes}: {
-  saveChanges: () => void,
-  notes: Note[] | null,
-}) {
+export default function NoteEditor() {
   const note = useNote(state => state.selectedNote);
   const setNote = useNote(state => state.setSelectedNote);
+
+  const selectedFolder = useNote(state => state.selectedFolder);
+  const {notes, isLoading: isLoadingNotes} = useFolderAndNotes(selectedFolder?.id);
+  const saveChanges = useSaveChanges(selectedFolder?.id);
 
   const [autoSave, setAutoSave] = useLocalStorage("autoSave", true);
   const prevNote = useRef(note);
@@ -53,13 +55,13 @@ export default function NoteEditor({saveChanges, notes}: {
   }, [editingIsPaused]);
 
   useEffect(() => {
-    if (notes != null && note != null) {
+    if (!isLoadingNotes && note != null) {
       const noteInNotes = notes.find(n => n.id === note.id);
       if (noteInNotes != null && noteInNotes != note) {
         setNote(noteInNotes);
       }
     }
-  }, [note, notes, setNote]);
+  }, [isLoadingNotes, note, notes, setNote]);
 
 
   function addToChangedNotes(id: number, title: string, content: string, updatedAt: Date | null = null) {
