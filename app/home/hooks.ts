@@ -16,18 +16,22 @@ export function useFoldersAll() {
   }>('/api/rpc/getFoldersAll', fetcher);
 }
 
+function folderUrl(folderId: number | undefined) {
+  return `/api/folders/${folderId}`;
+}
+
 export function useFolderAndNotes(folderId: number | undefined) {
-  const swr = useSWR<Folder & { notes: Note[] }>(`/api/folders/${folderId}`, fetcher);
-  if (swr.data != null) {
-    swr.data.notes.forEach((n: Note) => {
+  const {data} = useSWR<Folder & { notes: Note[] }>(folderUrl(folderId), fetcher);
+  if (data != null) {
+    data.notes.forEach((n: Note) => {
       if (n != null && !(n.updatedAt instanceof Date)) n.updatedAt = new Date(n.updatedAt as any);
       if (!(n.createdAt instanceof Date)) n.createdAt = new Date(n.createdAt as any);
     });
   }
-  return swr;
+  return data?.notes ?? [];
 }
 
-export function useSaveChanges(mutateNotesParent: () => Promise<void>) {
+export function useSaveChanges(currentFolderId: number | undefined) {
   const [changedNotes] = useNote(state => state.changedNotes);
   const clearChangedNotes = useNote(state => state.clearChangedNotes);
 
@@ -42,13 +46,13 @@ export function useSaveChanges(mutateNotesParent: () => Promise<void>) {
     });
     clearChangedNotes()
     await Promise.all([
-      mutateNotesParent(),
+      mutate(folderUrl(currentFolderId)),
       mutate("/api/rpc/getFoldersAll"),
     ]);
   }
 }
 
-export function useOnCreateNewNote(mutateNotesParent: () => Promise<void>) {
+export function useOnCreateNewNote(currentFolderId: number | undefined) {
   const selectedFolder = useNote(state => state.selectedFolder);
   const setSelectedNote = useNote(state => state.setSelectedNote);
 
@@ -63,14 +67,14 @@ export function useOnCreateNewNote(mutateNotesParent: () => Promise<void>) {
     utils.coerceDate(newNote, "updatedAt");
     console.log(newNote);
     await Promise.all([
-      mutateNotesParent(),
+      mutate(folderUrl(currentFolderId)),
       mutate("/api/rpc/getFoldersAll"),
     ]);
     setSelectedNote(newNote);
   }
 }
 
-export function useOnDropToFolder(mutateNotesParent: () => Promise<void>) {
+export function useOnDropToFolder(currentFolderId: number | undefined) {
   return async function onDropToFolder(
     ev: { target: Folder, notes: Note[] | null, folders: Folder[] | null }
   ) {
@@ -87,7 +91,7 @@ export function useOnDropToFolder(mutateNotesParent: () => Promise<void>) {
         })
       });
 
-      mutateNotesParent();
+      mutate(folderUrl(currentFolderId));
       mutate("/api/rpc/getFoldersAll");
     }
     // フォルダーがドロップされた場合
@@ -103,7 +107,7 @@ export function useOnDropToFolder(mutateNotesParent: () => Promise<void>) {
         })
       });
 
-      mutateNotesParent();
+      mutate(folderUrl(currentFolderId));
       mutate("/api/rpc/getFoldersAll");
     }
   }

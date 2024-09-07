@@ -19,10 +19,10 @@ function HomeInternal() {
 
   // Data
   const {data: folders, error, isLoading} = useFoldersAll();
-  const {data: notesParent, mutate: mutateNotesParent} = useFolderAndNotes(selectedFolder?.id);
-  const saveChanges = useSaveChanges(mutateNotesParent as any);
-  const onCreateNewNote = useOnCreateNewNote(mutateNotesParent as any);
-  const onDropToFolder = useOnDropToFolder(mutateNotesParent as any);
+  const notes = useFolderAndNotes(selectedFolder?.id);
+  const saveChanges = useSaveChanges(selectedFolder?.id);
+  const onCreateNewNote = useOnCreateNewNote(selectedFolder?.id);
+  const onDropToFolder = useOnDropToFolder(selectedFolder?.id);
 
   // 初回のみ、最初のフォルダを選択する。
   useEffect(() => {
@@ -36,7 +36,6 @@ function HomeInternal() {
   if (isLoading) return <div className="h-full w-screen bg-gray-700 text-white">loading...</div>
   if (folders == null) return <div className="h-full w-screen bg-gray-700 text-white">folders is null</div>
 
-  const notes = notesParent?.notes ?? [];
   return (
     <main className='h-full w-screen bg-red-200 flex flex-col'>
       <Header onCreateNewNote={onCreateNewNote} saveChanges={saveChanges}/>
