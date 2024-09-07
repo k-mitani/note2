@@ -1,10 +1,8 @@
 import React, {useEffect, useMemo, useRef, useState} from "react";
 import * as utils from "@/app/utils";
 import {Note} from "@prisma/client";
-import {useRecoilState, useRecoilValue} from "recoil";
-import {atoms} from "@/app/home/atoms";
+import {useNote, useLocalPreferences} from "@/app/home/state";
 import classNames from "classnames";
-import {useRecoilLocalStorage} from "@/app/utils";
 import {useDrag} from "react-dnd";
 
 function NoteCard(
@@ -126,12 +124,14 @@ const orderItems = [
 export default function NoteListView({notes}: {
   notes: Note[] | null,
 }) {
-  const [selectedNote, setSelectedNote] = useRecoilState(atoms.selectedNote);
+  const selectedNote = useNote(state => state.selectedNote);
+  const [changedNotes] = useNote(state => state.changedNotes);
+  const showNoteListView = useLocalPreferences(state => state.showNoteListView);
+  const setSelectedNote = useNote(state => state.setSelectedNote);
+
   const [selectedOrder, setSelectedOrder] = useState(0);
   const [shouldScroll, setShouldScroll] = useState(true);
   const [showOrderItems, setShowOrderItems] = useState(false);
-  const [[changedNotes], setChangedNotes] = useRecoilState(atoms.changedNotes);
-  const [showNoteListView, setShowNoteListView] = useRecoilLocalStorage(atoms.showNoteListView);
   const [multiSelectionMode, setMultiSelectionMode] = useState(false);
   const [multiSelectionNotes, setMultiSelectionNotes] = useState<{ v: Set<Note> }>({v: new Set()});
 

@@ -1,7 +1,4 @@
 import {format} from "date-fns";
-import {RecoilState, SetterOrUpdater, useRecoilState} from "recoil";
-import {useLocalStorage} from "usehooks-ts";
-import {useEffect} from "react";
 
 export function parseDate(date: string): Date {
   const year = parseInt(date.substring(0, 4));
@@ -22,19 +19,4 @@ export function coerceDate(obj: any, key: string) {
     return;
   }
   obj[key] = new Date(obj[key]);
-}
-
-export function useRecoilLocalStorage<T>(atom: RecoilState<T>): [T, SetterOrUpdater<T>] {
-  const [state, setter] = useRecoilState(atom);
-  const [l, ls] = useLocalStorage(atom.key as string, state);
-  useEffect(() => {
-    if (l !== state) {
-      setter(l);
-    }
-  }, []);
-
-  return [state, (newValue) => {
-    setter(newValue);
-    ls(newValue);
-  }];
 }

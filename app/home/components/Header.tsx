@@ -1,7 +1,5 @@
 import {FaFloppyDisk, FaFolderClosed, FaList, FaSquarePlus, FaMoon, FaSun} from "react-icons/fa6";
-import {useRecoilState} from "recoil";
-import {atoms} from "@/app/home/atoms";
-import {useRecoilLocalStorage} from "@/app/utils";
+import {useNote, useLocalPreferences} from "@/app/home/state";
 import classNames from "classnames";
 import {useCallback, useEffect} from "react";
 import {useLocalStorage} from "usehooks-ts";
@@ -13,9 +11,14 @@ export function Header({onCreateNewNote, saveChanges}: {
   const [autoSave, setAutoSave] = useLocalStorage("autoSave", true);
   const [theme, setTheme] = useLocalStorage("theme", "");
   const themeIsDark = theme === "dark";
-  const [showSideBar, setShowSideBar] = useRecoilLocalStorage(atoms.showSideBar);
-  const [showNoteListView, setShowNoteListView] = useRecoilLocalStorage(atoms.showNoteListView);
-  const [[changedNotes], setChangedNotes] = useRecoilState(atoms.changedNotes);
+
+  const [changedNotes] = useNote(state => state.changedNotes);
+
+  const showSideBar = useLocalPreferences(state => state.showSideBar);
+  const showNoteListView = useLocalPreferences(state => state.showNoteListView);
+  const setShowSideBar = useLocalPreferences(state => state.setShowSideBar);
+  const setShowNoteListView = useLocalPreferences(state => state.setShowNoteListView);
+
 
   useEffect(() => {
     if (themeIsDark) {

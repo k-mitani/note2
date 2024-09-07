@@ -2,15 +2,14 @@
 
 import React, {useCallback, useEffect} from "react";
 import useSWR, {mutate} from "swr";
-import SideBar from "@/app/home/SideBar";
+import SideBar from "@/app/home/components/SideBar";
 import * as utils from "@/app/utils";
-import NoteEditor from "@/app/home/NoteEditor";
-import NoteListView from "@/app/home/NoteListView";
+import NoteEditor from "@/app/home/components/NoteEditor";
+import NoteListView from "@/app/home/components/NoteListView";
+import {useNote} from "@/app/home/state";
 import {Folder, Note} from "@prisma/client";
-import {RecoilRoot, useRecoilState} from "recoil";
-import {atoms} from "@/app/home/atoms";
 import {useFolderAndNotes, useFoldersAll} from "@/app/home/hooks";
-import {Header} from "@/app/home/Header";
+import {Header} from "@/app/home/components/Header";
 import {DndProvider} from "react-dnd";
 import {HTML5Backend} from "react-dnd-html5-backend";
 import {HotkeysProvider} from "react-hotkeys-hook";
@@ -18,15 +17,17 @@ import {HotkeysProvider} from "react-hotkeys-hook";
 
 function HomeInternal() {
   // State
-  const [selectedFolder, setSelectedFolder] = useRecoilState(atoms.selectedFolder);
-  const [selectedNote, setSelectedNote] = useRecoilState(atoms.selectedNote);
-  const [[changedNotes], setChangedNotes] = useRecoilState(atoms.changedNotes);
+  const selectedFolder = useNote(state => state.selectedFolder);
+  const [changedNotes] = useNote(state => state.changedNotes);
+  const setSelectedFolder = useNote(state => state.setSelectedFolder);
+  const setSelectedNote = useNote(state => state.setSelectedNote);
+  const clearChangedNotes = useNote(state => state.clearChangedNotes);
 
   // Data
   const {data: folders, error, isLoading} = useFoldersAll();
   const {data: notesParent, mutate: mutateNotesParent} = useFolderAndNotes(selectedFolder?.id);
 
-    // 初回のみ、最初のフォルダを選択する。
+  // 初回のみ、最初のフォルダを選択する。
   useEffect(() => {
     if (selectedFolder == null && folders != null && folders.folders.length > 0) {
       setSelectedFolder(folders.folders[0] as any);
@@ -57,7 +58,7 @@ function HomeInternal() {
   }
 
   async function saveChanges() {
-    console.log(changedNotes);
+    console.log("saveChanges", changedNotes);
     await fetch("/api/rpc/saveChanges", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
@@ -65,7 +66,7 @@ function HomeInternal() {
         notes: Array.from(changedNotes.values()),
       }),
     });
-    setChangedNotes([new Map<number, any>()]);
+    clearChangedNotes()
     await Promise.all([
       mutateNotesParent(),
       mutate("/api/rpc/getFoldersAll"),
@@ -126,9 +127,7 @@ function HomeInternal() {
 export default function Home() {
   return (
     <DndProvider backend={HTML5Backend}>
-      <RecoilRoot>
-        <HomeInternal/>
-      </RecoilRoot>
+      <HomeInternal/>
     </DndProvider>
   );
 }

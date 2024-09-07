@@ -3,8 +3,7 @@ import Link from "next/link";
 import * as utils from "@/app/utils";
 import {format} from "date-fns";
 import {Note} from "@prisma/client";
-import {atoms} from "@/app/home/atoms";
-import {useRecoilState, useRecoilValue} from "recoil";
+import {useNote} from "@/app/home/state";
 import ContentEditable from 'react-contenteditable'
 import {useDebounce, useLocalStorage} from "usehooks-ts";
 import {useHotkeys} from 'react-hotkeys-hook'
@@ -13,15 +12,20 @@ export default function NoteEditor({saveChanges, notes}: {
   saveChanges: () => void,
   notes: Note[] | null,
 }) {
-  const [note, setNote] = useRecoilState(atoms.selectedNote);
+  const note = useNote(state => state.selectedNote);
+  const setNote = useNote(state => state.setSelectedNote);
+
   const [autoSave, setAutoSave] = useLocalStorage("autoSave", true);
   const prevNote = useRef(note);
   const refHtml = useRef(note?.content ?? "");
   const [title, setTitle] = useState(note?.title ?? "");
   const [updatedAt, setUpdatedAt] = useState(note?.updatedAt ?? note?.createdAt);
-  const [changedNotesWrapper, setChangedNotes] = useRecoilState(atoms.changedNotes);
+
+  const changedNotesWrapper = useNote(state => state.changedNotes);
   const [changedNotes] = changedNotesWrapper;
+  const addChangedNote = useNote(state => state.addChangedNote);
   const editingIsPaused = useDebounce(changedNotesWrapper, 10000);
+
 
   // 変換候補選択中ならtrue
   const [isComposing, setIsComposing] = useState(false);
@@ -59,11 +63,15 @@ export default function NoteEditor({saveChanges, notes}: {
 
 
   function addToChangedNotes(id: number, title: string, content: string, updatedAt: Date | null = null) {
-    setChangedNotes(([prev]) => {
-      var prevData = prev.get(id);
-      prev.set(id, {id, title, content, updatedAt: updatedAt ?? prevData?.updatedAt ?? null});
-      return [prev];
-    });
+    // setChangedNotes(([prev]) => {
+    //   var prevData = prev.get(id);
+    //   prev.set(id, {id, title, content, updatedAt: updatedAt ?? prevData?.updatedAt ?? null});
+    //   return [prev];
+    // });
+    // var prevData = changedNotes.get(id);
+    // changedNotes.set(id, {id, title, content, updatedAt: updatedAt ?? prevData?.updatedAt ?? null});
+    // setChangedNotes([changedNotes]);
+    addChangedNote({id, title, content, updatedAt});
   }
 
   // noteが更新されたら、refHtml.currentを更新する。

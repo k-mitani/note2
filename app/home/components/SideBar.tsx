@@ -1,12 +1,10 @@
 import {useCallback, useEffect, useState} from "react";
 import {Folder, Note} from "@prisma/client";
-import {atoms} from "@/app/home/atoms";
-import {useRecoilState} from "recoil";
+import {useNote, useLocalPreferences} from "@/app/home/state";
 import classNames from "classnames";
 import {mutate} from "swr";
 import {useFoldersAll} from "@/app/home/hooks";
 import {useLocalStorage} from "usehooks-ts";
-import {useRecoilLocalStorage} from "@/app/utils";
 import {useDrag, useDrop} from "react-dnd";
 
 type FolderAndChild = Folder & { childFolders: FolderAndChild[] };
@@ -294,8 +292,10 @@ export default function SideBar({onDropToFolder}: {
   onDropToFolder: (ev: { target: Folder, notes: Note[] | null, folders: Folder[] | null }) => void,
 }) {
   const {data} = useFoldersAll();
-  const [selectedFolder, setSelectedFolder] = useRecoilState(atoms.selectedFolder);
-  const [showSideBar, setShowSideBar] = useRecoilLocalStorage(atoms.showSideBar);
+  const selectedFolder = useNote(state => state.selectedFolder);
+  const setSelectedFolder = useNote(state => state.setSelectedFolder);
+  const showSideBar = useLocalPreferences(state => state.showSideBar);
+
   const [isExpanded, setIsExpanded] = useLocalStorage<{
     [key: number]: boolean
   }>("SideBar.folders.isExpanded", {});
