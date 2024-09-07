@@ -288,7 +288,7 @@ function Folder({folder, onDrop, allFolders, selectedFolder, setSelectedFolder, 
 /**
  * スタックやノートを表示する。
  */
-export default function SideBar({onDropToFolder}: {
+export default function FolderListView({onDropToFolder}: {
   onDropToFolder: (ev: { target: Folder, notes: Note[] | null, folders: Folder[] | null }) => void,
 }) {
   const {data} = useFoldersAll();

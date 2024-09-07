@@ -2,7 +2,7 @@
 
 import React, {useCallback, useEffect} from "react";
 import useSWR, {mutate} from "swr";
-import SideBar from "@/app/home/components/SideBar";
+import FolderListView from "@/app/home/components/FolderListView";
 import * as utils from "@/app/utils";
 import NoteEditor from "@/app/home/components/NoteEditor";
 import NoteListView from "@/app/home/components/NoteListView";
@@ -113,7 +113,7 @@ function HomeInternal() {
       <Header onCreateNewNote={onCreateNewNote} saveChanges={saveChanges}/>
       <div className="flex flex-grow h-[0%]">
         <div className="flex flex-col md:flex-row">
-          <SideBar onDropToFolder={onDropToFolder}/>
+          <FolderListView onDropToFolder={onDropToFolder}/>
           <NoteListView notes={notes}/>
         </div>
         <HotkeysProvider>
