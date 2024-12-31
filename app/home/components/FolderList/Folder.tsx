@@ -4,6 +4,7 @@ import {useState} from "react";
 import {mutate} from "swr";
 import classNames from "classnames";
 import {FolderContextMenu} from "@/app/home/components/FolderList/FolderContextMenu";
+import * as utils from "@/app/utils";
 
 type FolderAndChild = Folder & { childFolders: FolderAndChild[] };
 
@@ -28,13 +29,7 @@ const INDENTS = [
 export async function createFolder(parentFolderId: number | null) {
   const newName = prompt("名前を入力してください", "新しいフォルダー");
   if (newName == null) return;
-  await fetch(`/api/rpc/createFolder/${parentFolderId}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    } as any,
-    body: JSON.stringify({name: newName}),
-  });
+  await utils.postJson(`/api/rpc/createFolder/${parentFolderId}`, {name: newName});
   await mutate('/api/rpc/getFoldersAll');
 }
 

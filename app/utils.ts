@@ -20,3 +20,29 @@ export function coerceDate(obj: any, key: string) {
   }
   obj[key] = new Date(obj[key]);
 }
+
+export function postJson(url: string, json: any = {}): Promise<Response> {
+  return fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(json),
+  });
+}
+
+export function putJson(url: string, json: any): Promise<Response> {
+  return fetch(url, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(json),
+  });
+}
+
+export function deleteJson(url: string): Promise<Response> {
+  return fetch(url, {
+    method: "DELETE",
+  });
+}

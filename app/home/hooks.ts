@@ -43,12 +43,8 @@ export function useSaveChanges(currentFolderId: number | undefined) {
 
   return useCallback(async function saveChanges() {
     console.log("saveChanges", changedNotes);
-    await fetch("/api/rpc/saveChanges", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        notes: Array.from(changedNotes.values()),
-      }),
+    await utils.postJson("/api/rpc/saveChanges", {
+      notes: Array.from(changedNotes.values()),
     });
     clearChangedNotes()
     await Promise.all([
@@ -64,9 +60,8 @@ export function useOnCreateNewNote(currentFolderId: number | undefined) {
 
   return useCallback(async function onCreateNewNote() {
     if (selectedFolder == null) return;
-    const res = await fetch(
-      `/api/folders/${selectedFolder.id}/createNote`,
-      {method: "POST"}
+    const res = await utils.postJson(
+      `/api/folders/${selectedFolder.id}/createNote`
     );
     const newNote = await res.json();
     utils.coerceDate(newNote, "createdAt");
@@ -86,33 +81,19 @@ export function useOnDropToFolder(currentFolderId: number | undefined) {
   ) {
     // ノートがドロップされた場合
     if (ev.notes != null) {
-      await fetch("/api/rpc/moveNotes/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          folderId: ev.target.id,
-          noteIds: ev.notes.map(n => n.id),
-        })
+      await utils.postJson("/api/rpc/moveNotes/", {
+        folderId: ev.target.id,
+        noteIds: ev.notes.map(n => n.id),
       });
-
       mutate(folderUrl(currentFolderId));
       mutate("/api/rpc/getFoldersAll");
     }
     // フォルダーがドロップされた場合
     if (ev.folders != null) {
-      await fetch("/api/rpc/moveFolders/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
+      await utils.postJson("/api/rpc/moveFolders/", {
           parentFolderId: ev.target.id,
           folderIds: ev.folders.map(n => n.id).filter(id => id !== ev.target.id),
-        })
       });
-
       mutate(folderUrl(currentFolderId));
       mutate("/api/rpc/getFoldersAll");
     }
