@@ -2,23 +2,37 @@ import {useLocalPreferences, useNote} from "@/app/home/state";
 import classNames from "classnames";
 import {useFoldersAll, useOnDropToFolder} from "@/app/home/hooks";
 import {useLocalStorage} from "usehooks-ts";
-import {Folder, createFolder} from "@/app/home/components/FolderList/Folder";
+import {Folder, createFolder, FolderCommonProps} from "@/app/home/components/FolderList/Folder";
 
 /**
  * スタックやノートを表示する。
  */
 export default function FolderListView() {
-  const {data} = useFoldersAll();
+  // フォルダーとゴミ箱
+  const {folders = [], trash = null} = useFoldersAll().data ?? {};
+  // 選択中のフォルダー
   const selectedFolder = useNote(state => state.selectedFolder);
   const setSelectedFolder = useNote(state => state.setSelectedFolder);
+  // サイドバーを表示するならtrue
   const showSideBar = useLocalPreferences(state => state.showSideBar);
-
+  // フォルダーにドロップされたときの処理
   const onDropToFolder = useOnDropToFolder(selectedFolder?.id);
+  // フォルダー開閉状態の辞書
+  const [isExpandedDict, setIsExpandedDict] =
+    useLocalStorage<{ [key: number]: boolean }>
+    ("SideBar.folders.isExpanded", {});
 
-  const [isExpanded, setIsExpanded] = useLocalStorage<{
-    [key: number]: boolean
-  }>("SideBar.folders.isExpanded", {});
-  const {folders, trash} = data ?? {folders: [], trash: null};
+  const common = {
+    onDrop: onDropToFolder,
+    allFolders: folders,
+    selectedFolder: selectedFolder as any,
+    setSelectedFolder: setSelectedFolder as any,
+    isExpanded: (id: number) => isExpandedDict[id] ?? false,
+    setIsExpanded: (id: number, expand: boolean) => {
+      setIsExpandedDict({...isExpandedDict, [id]: expand});
+    },
+  } as FolderCommonProps;
+
   return (
     <div className={classNames(
       'p-0.5 flex-1 flex flex-col h-0 basis-0.5 md:flex-none md:h-full w-48 md:w-72',
@@ -35,15 +49,7 @@ export default function FolderListView() {
         <ul className=''>
           {folders.map(folder => {
             return <li key={folder.id}>
-              <Folder folder={folder as any}
-                      onDrop={onDropToFolder}
-                      allFolders={folders}
-                      selectedFolder={selectedFolder as any}
-                      setSelectedFolder={setSelectedFolder as any}
-                      indent={0}
-                      isExpanded={(id) => isExpanded[id]}
-                      setIsExpanded={(id, expand) => setIsExpanded({...isExpanded, [id]: expand})}
-              />
+              <Folder folder={folder} indent={0} common={common}/>
             </li>
           })}
         </ul>
@@ -54,20 +60,11 @@ export default function FolderListView() {
             ➕フォルダー新規作成
           </button>
         </div>
-
         {/*ゴミ箱*/}
         <ul className='mt-2 flex-col overflow-y-auto'>
           {[trash!!].map(folder => {
             return <li key={folder.id}>
-              <Folder folder={folder as any}
-                      onDrop={onDropToFolder}
-                      allFolders={[trash!!]}
-                      selectedFolder={selectedFolder as any}
-                      setSelectedFolder={setSelectedFolder as any}
-                      indent={0}
-                      isExpanded={(id) => isExpanded[id]}
-                      setIsExpanded={(id, expand) => setIsExpanded({...isExpanded, [id]: expand})}
-              />
+              <Folder folder={folder} indent={0} common={common}/>
             </li>
           })}
         </ ul>

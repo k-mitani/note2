@@ -6,7 +6,15 @@ import classNames from "classnames";
 
 type FolderAndChild = Folder & { childFolders: FolderAndChild[] };
 
-const INDENT_WIDTH = 5;
+export type FolderCommonProps = {
+  onDrop: (ev: { target: Folder, notes: Note[] | null, folders: Folder[] | null }) => void,
+  allFolders: FolderAndChild[],
+  selectedFolder: FolderAndChild | undefined,
+  setSelectedFolder: (folder: FolderAndChild) => void,
+  isExpanded: (id: number) => boolean,
+  setIsExpanded: (id: number, expand: boolean) => void,
+};
+
 const INDENTS = [
   "ps-0",
   "ps-[0.625rem] md:ps-[1.25rem]",
@@ -29,16 +37,13 @@ export async function createFolder(parentFolderId: number | null) {
   await mutate('/api/rpc/getFoldersAll');
 }
 
-export function Folder({folder, onDrop, allFolders, selectedFolder, setSelectedFolder, indent, isExpanded, setIsExpanded}: {
+export function Folder({folder, indent, common}: {
   folder: FolderAndChild,
-  onDrop: (ev: { target: Folder, notes: Note[] | null, folders: Folder[] | null }) => void,
-  allFolders: FolderAndChild[],
-  selectedFolder: FolderAndChild | undefined,
-  setSelectedFolder: (folder: FolderAndChild) => void,
   indent: number,
-  isExpanded: (id: number) => boolean,
-  setIsExpanded: (id: number, expand: boolean) => void,
+  common: FolderCommonProps,
 }) {
+  const {onDrop, allFolders, selectedFolder, setSelectedFolder, isExpanded, setIsExpanded} = common;
+
   const [{canDrop, isOver}, refDrop] = useDrop({
     accept: ["note", "folder"],
     drop: (item: {}) => onDrop({target: folder, ...item} as any),
@@ -265,15 +270,7 @@ export function Folder({folder, onDrop, allFolders, selectedFolder, setSelectedF
       {folder.childFolders && <ul className={classNames({hidden: !isExpanded(folder.id)})}>
         {folder.childFolders.map(subFolder => {
           return <li key={subFolder.id}>
-            <Folder folder={subFolder}
-                    onDrop={onDrop}
-                    allFolders={allFolders}
-                    selectedFolder={selectedFolder}
-                    setSelectedFolder={setSelectedFolder}
-                    indent={indent + 1}
-                    isExpanded={isExpanded}
-                    setIsExpanded={setIsExpanded}
-            />
+            <Folder folder={subFolder} indent={indent + 1} common={common}/>
           </li>
         })}
       </ul>}
