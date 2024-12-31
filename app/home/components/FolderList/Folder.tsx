@@ -3,6 +3,7 @@ import {useDrag, useDrop} from "react-dnd";
 import {useState} from "react";
 import {mutate} from "swr";
 import classNames from "classnames";
+import {FolderContextMenu} from "@/app/home/components/FolderList/FolderContextMenu";
 
 type FolderAndChild = Folder & { childFolders: FolderAndChild[] };
 
@@ -61,55 +62,6 @@ export function Folder({folder, indent, common}: {
   }));
   const [showMenu, setShowMenu] = useState(false);
   const hasChildren = folder.childFolders?.length > 0 ?? false;
-
-  const menuItems = [
-    {
-      name: "共有先に設定", onClick: async () => {
-        await fetch(`/api/settings/ShareTargetFolder`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({folderId: folder.id}),
-        });
-      }
-    },
-    {
-      name: "名前変更", onClick: async () => {
-        const newName = prompt("名前を入力してください", folder.name)
-        if (newName == null) return;
-        await fetch(`/api/rpc/changeFolderName/${folder.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          } as any,
-          body: JSON.stringify({name: newName}),
-        });
-        await mutate('/api/rpc/getFoldersAll');
-      }
-    },
-    {
-      name: "ショートカットへ追加/削除", onClick: async () => {
-        await fetch(`/api/rpc/toggleShortcut/${folder.id}`, {
-          method: "POST",
-        });
-      }
-    },
-    {
-      name: "フォルダー作成", onClick: () => createFolder(folder.id),
-    },
-    {
-      name: "削除", onClick: async () => {
-        const yes = confirm("本当に削除しますか？");
-        if (!yes) return;
-        await fetch(`/api/folders/${folder.id}`, {
-          method: "DELETE",
-        });
-        await mutate('/api/rpc/getFoldersAll');
-      }
-    },
-  ];
-
 
   return (
     <div onMouseLeave={() => setShowMenu(false)}>
@@ -255,16 +207,7 @@ export function Folder({folder, indent, common}: {
       </button>
 
       {/*コンテキストメニュー*/}
-      {showMenu && <div className="bg-white text-black dark:bg-gray-700 dark:text-gray-200">
-        <ul className="flex-col p-0.5">
-          {menuItems.map(({name, onClick}) =>
-            <li key={name} className="hover:bg-gray-200 dark:hover:bg-gray-500 w-full cursor-pointer"
-                onClick={onClick}>
-              {name}
-            </li>
-          )}
-        </ul>
-      </div>}
+      {showMenu && FolderContextMenu(folder)}
 
       {/*サブフォルダー*/}
       {folder.childFolders && <ul className={classNames({hidden: !isExpanded(folder.id)})}>
