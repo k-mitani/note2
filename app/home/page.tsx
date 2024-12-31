@@ -1,7 +1,7 @@
 "use client";
 
 import React, {useEffect} from "react";
-import FolderListView from "@/app/home/components/FolderListView";
+import FolderListView from "@/app/home/components/FolderList/FolderListView";
 import NoteEditor from "@/app/home/components/NoteEditor";
 import NoteListView from "@/app/home/components/NoteList/NoteListView";
 import {useNote} from "@/app/home/state";
