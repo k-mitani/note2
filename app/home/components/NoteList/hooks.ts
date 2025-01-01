@@ -3,25 +3,12 @@ import {Note} from "@prisma/client";
 import {useNote} from "@/app/home/state";
 import {useNoteList} from "@/app/home/components/NoteList/state";
 
-export const orderItems = [
-  ["更新順↓", (a: Note, b: Note) => (b.updatedAt ?? b.createdAt).getTime() - (a.updatedAt ?? a.createdAt).getTime()],
-  ["更新順↑", (a: Note, b: Note) => (a.updatedAt ?? a.createdAt).getTime() - (b.updatedAt ?? b.createdAt).getTime()],
-  ["作成順↓", (a: Note, b: Note) => b.createdAt.getTime() - a.createdAt.getTime()],
-  ["作成順↑", (a: Note, b: Note) => a.createdAt.getTime() - b.createdAt.getTime()],
-  ["名前順↓", (a: Note, b: Note) => a.title.localeCompare(b.title)],
-  ["名前順↑", (a: Note, b: Note) => b.title.localeCompare(a.title)],
-];
-
-export function getOrderName(order: number): string {
-  return orderItems[order][0] as any;
-}
-
 export function useListOrder(notesRaw: Note[]) {
   const selectedOrder = useNoteList(state => state.selectedOrder);
   const shouldScroll = useNoteList(state => state.shouldScroll);
   const setShouldScroll = useNoteList(state => state.setShouldScroll);
 
-  const orderFunc = orderItems[selectedOrder][1];
+  const orderFunc = selectedOrder.comp;
   const refSelectedNoteElement = useRef<Element>(null);
   const notes = useMemo(() => {
     console.log("sort notes");

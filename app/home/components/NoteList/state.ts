@@ -1,9 +1,11 @@
 import {create} from 'zustand';
 import {Note} from "@prisma/client";
+import {$Enums} from ".prisma/client";
+import {NoteOrderItem, orderItems} from "@/app/home/components/NoteList/NoteListOrder";
 
 interface Store {
-  selectedOrder: number;
-  setSelectedOrder: (order: number) => void;
+  selectedOrder: NoteOrderItem;
+  setSelectedOrder: (order: NoteOrderItem) => void;
 
   shouldScroll: boolean;
   setShouldScroll: (b: boolean) => void;
@@ -26,7 +28,7 @@ interface Store {
 }
 
 export const useNoteList = create<Store>((set, get) => ({
-  selectedOrder: 0,
+  selectedOrder: orderItems[0],
   setSelectedOrder: (order) => set({selectedOrder: order}),
 
   shouldScroll: true,

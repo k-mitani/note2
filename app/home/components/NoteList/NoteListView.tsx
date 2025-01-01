@@ -7,6 +7,8 @@ import {useFolderAndNotes} from "@/app/home/hooks";
 import NoteCard from "@/app/home/components/NoteList/NoteCard";
 import NoteListHeader from "@/app/home/components/NoteList/NoteListHeader";
 import {useKeyEventHandlers} from "@/app/home/components/NoteList/hooks";
+import {$Enums} from ".prisma/client";
+import {orderItems} from "@/app/home/components/NoteList/NoteListOrder";
 
 /**
  * ノート一覧
@@ -25,6 +27,12 @@ export default function NoteListView() {
   const {notes, refSelectedNoteElement} = useListOrder(notesRaw);
 
   console.log("NoteListView prepare render for notes");
+  useEffect(() => {
+    // フォルダーのソート設定を反映する。
+    const orderKey = selectedFolder?.order ?? $Enums.NotesOrder.UPDATED_AT_DESC;
+    const order = orderItems.find(o => o.key === orderKey) ?? orderItems[0];
+    useNoteList.getState().setSelectedOrder(order);
+  }, [selectedFolder])
   const getDragSourceNotes = useNoteList(state => state.getDragSourceNotes);
   const multiSelectionMode = useNoteList(state => state.multiSelectionMode);
   const setMultiSelectionMode = useNoteList(state => state.setMultiSelectionMode);
@@ -43,7 +51,7 @@ export default function NoteListView() {
       {'hidden': !showNoteListView},
     )}>
       {/*ヘッダー*/}
-      <NoteListHeader noteCount={noteCount}/>
+      <NoteListHeader noteCount={noteCount} folderId={selectedFolder?.id ?? -1} />
 
       {/* ロード中の場合 */}
       {isLoading && <div className="flex-grow p-2">loading...</div>}

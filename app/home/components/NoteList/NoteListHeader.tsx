@@ -1,13 +1,15 @@
 import classNames from "classnames";
 import React from "react";
-import {orderItems, getOrderName} from "@/app/home/components/NoteList/hooks";
+import {orderItems} from "@/app/home/components/NoteList/NoteListOrder";
 import {useNoteList} from "@/app/home/components/NoteList/state";
+import {Folder} from "@prisma/client";
+import * as utils from "@/app/utils";
 
 
-export default function NoteListHeader({noteCount}: { noteCount: number }) {
+export default function NoteListHeader({noteCount, folderId}: { noteCount: number, folderId: number }) {
   const showOrderItems = useNoteList(state => state.showOrderItems);
   const toggleShowOrderItems = useNoteList(state => state.toggleShowOrderItems);
-  const orderName = getOrderName(useNoteList(state => state.selectedOrder));
+  const orderName = useNoteList(state => state.selectedOrder).label;
   const setSelectedOrder = useNoteList(state => state.setSelectedOrder);
   const multiSelectionMode = useNoteList(state => state.multiSelectionMode);
   const toggleMultiSelectionMode = useNoteList(state => state.toggleMultiSelectionMode);
@@ -25,10 +27,15 @@ export default function NoteListHeader({noteCount}: { noteCount: number }) {
             showOrderItems ? "" : " hidden",
           )}>
             <ul>
-              {orderItems.map((order: any, i) =>
+              {orderItems.map((order, i) =>
                 <li key={i}
                     className={"hover:bg-blue-300 dark:hover:bg-blue-800 p-0.5 cursor-pointer"}
-                    onClick={() => setSelectedOrder(i)}>{order[0]}</li>
+                    onClick={async () => {
+                      debugger
+                      setSelectedOrder(order);
+                      await utils.putJson(`/api/folders/${folderId}/updateOrder`, {order: order.key});
+                      toggleShowOrderItems();
+                    }}>{order.label}</li>
               )}
             </ul>
           </span>

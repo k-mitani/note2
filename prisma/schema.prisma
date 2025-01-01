@@ -24,10 +24,20 @@ model Note {
   folderId Int?
 }
 
+enum NotesOrder {
+  CREATED_AT_ASC
+  CREATED_AT_DESC
+  UPDATED_AT_ASC
+  UPDATED_AT_DESC
+  TITLE_ASC
+  TITLE_DESC
+}
+
 model Folder {
   id    Int    @id @default(autoincrement())
   name  String
   notes Note[]
+  order NotesOrder @default(UPDATED_AT_DESC)
 
   childFolders   Folder[] @relation("ParentFolder")
   parentFolder   Folder?  @relation("ParentFolder", fields: [parentFolderId], references: [id])
