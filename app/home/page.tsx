@@ -2,7 +2,7 @@
 
 import React, {useEffect} from "react";
 import FolderListView from "@/app/home/components/FolderList/FolderListView";
-import NoteEditor from "@/app/home/components/NoteEditor";
+import NoteEditor from "@/app/home/components/NoteEditor/NoteEditor";
 import NoteListView from "@/app/home/components/NoteList/NoteListView";
 import {useNote} from "@/app/home/state";
 import {useFolderAndNotes, useFoldersAll, useOnCreateNewNote, useOnDropToFolder, useSaveChanges} from "@/app/home/hooks";

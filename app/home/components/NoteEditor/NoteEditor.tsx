@@ -8,6 +8,8 @@ import ContentEditable from 'react-contenteditable'
 import {useDebounce, useLocalStorage} from "usehooks-ts";
 import {useHotkeys} from 'react-hotkeys-hook'
 import {useFolderAndNotes, useSaveChanges} from "@/app/home/hooks";
+import * as hooks from "@/app/home/components/NoteEditor/hooks";
+import {NoteHeader} from "@/app/home/components/NoteEditor/NoteHeader";
 
 export default function NoteEditor() {
   const note = useNote(state => state.selectedNote);
@@ -28,24 +30,8 @@ export default function NoteEditor() {
   const addChangedNote = useNote(state => state.addChangedNote);
   const editingIsPaused = useDebounce(changedNotesWrapper, 10000);
 
-
   // 変換候補選択中ならtrue
-  const [isComposing, setIsComposing] = useState(false);
-  useEffect(() => {
-    const handleCompositionStart = () => {
-      setIsComposing(true);
-    };
-    const handleCompositionEnd = () => {
-      setIsComposing(false);
-    };
-    document.addEventListener('compositionstart', handleCompositionStart);
-    document.addEventListener('compositionend', handleCompositionEnd);
-    // クリーンアップ関数を返す
-    return () => {
-      document.removeEventListener('compositionstart', handleCompositionStart);
-      document.removeEventListener('compositionend', handleCompositionEnd);
-    };
-  }, [isComposing]); // isComposingが変更されたときにeffectを再実行する
+  const showingImePopup = hooks.useShowingImePopup();
 
   useEffect(() => {
     if (changedNotes.size === 0) return;
@@ -90,22 +76,6 @@ export default function NoteEditor() {
       setTitle("");
       setUpdatedAt(new Date());
     }
-  }
-
-  let link = null;
-  let linkText = null;
-  let timeText = "";
-  if (note != null) {
-    // 参照元のURLを取得する。
-    for (let a of note.attributes as any[]) {
-      if (a.Item1 === "source-url") {
-        // URLのドメイン部だけを取得する。
-        link = a.Item2
-        linkText = a.Item2.replace(/^(https?:\/\/)([^\/]+).*$/, "$2");
-      }
-    }
-    // 日付を取得する。
-    timeText = updatedAt && format(updatedAt, "yyyy-MM-dd HH:mm") || "";
   }
 
   const hotkeysOptions = {
@@ -159,7 +129,7 @@ export default function NoteEditor() {
 
     if (range.startOffset === 0 || !range.collapsed) {
       document.execCommand("indent");
-    } else if (!isComposing) {
+    } else if (!showingImePopup) {
       document.execCommand("insertText", false, "\t")
     }
     ev.preventDefault();
@@ -183,7 +153,7 @@ export default function NoteEditor() {
     const range = document.getSelection()!.getRangeAt(0);
     const selection = range.startContainer;
     if (selection == null) return;
-    if (editable == null || !editable .contains(selection)) return;
+    if (editable == null || !editable.contains(selection)) return;
     if (!range.collapsed) return;
 
     const url = selection.textContent;
@@ -265,38 +235,13 @@ export default function NoteEditor() {
   (window as any)["__aa"] = note;
   return <div className="grow bg-white dark:bg-black flex flex-col">
     {/*ヘッダー*/}
-    <div className={"border-b-2 border-gray-200 dark:border-gray-600 p-2"}
-    >
-      <input className="text-blue-500 dark:bg-black dark:text-blue-500 w-full"
-             type="text"
-             onChange={ev => {
-               setTitle(ev.target.value);
-               if (note != null) {
-                 const content = changedNotes.get(note.id)?.content ?? note.content;
-                 addToChangedNotes(note.id, ev.target.value, content);
-               }
-             }}
-             value={title}></input>
-      <div>
-        <input type="datetime-local"
-               className="text-sm text-gray-500 border-gray-300"
-               onChange={ev => {
-                 const datetime = new Date(ev.target.value);
-                 if (note != null) {
-                   const title = changedNotes.get(note.id)?.title ?? note.title;
-                   const content = changedNotes.get(note.id)?.content ?? note.content;
-                   addToChangedNotes(note.id, title, content, datetime);
-                   setUpdatedAt(datetime);
-                 }
-               }}
-               value={timeText}/>
-        {link && (
-          <span className="ml-1 text-xs text-blue-700">
-            <Link href={link}>{linkText}</Link>
-          </span>
-        )}
-      </div>
-    </div>
+    <NoteHeader title={title}
+                setTitle={setTitle}
+                updatedAt={updatedAt}
+                setUpdatedAt={setUpdatedAt}
+                changedNotes={changedNotes}
+                addToChangedNotes={addToChangedNotes}
+    />
 
     {/*本文*/}
     <div className="p-2 grow overflow-y-scroll break-all dark:text-gray-300">
