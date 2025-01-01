@@ -27,6 +27,20 @@ html {
   text-decoration: revert;
 }
 
+.note-custom-foldable {
+  border-top: 30px solid #aaa;
+  border-bottom: 2px solid #aaa;
+}
+.note-custom-foldable.folded {
+  border-top: 30px solid #888;
+  height: 30px;
+  overflow: hidden;
+  border-bottom: 0;
+}
+.note-custom-foldable :first-child {
+  min-height: 1.7em; /* なぜかこうしないと要素挿入後にカーソルが当たらない。 */
+}
+
 .dark #NoteEditor-ContentEditable a {
   color: #08c;
 }

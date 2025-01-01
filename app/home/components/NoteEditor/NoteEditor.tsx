@@ -146,6 +146,49 @@ export default function NoteEditor() {
     ev.preventDefault();
   }, hotkeysOptions);
 
+  // Ctrl+Gで折りたたみ可能な枠で囲む。
+  useHotkeys("ctrl+g", (ev: KeyboardEvent) => {
+    ev.preventDefault();
+    const editable = document.getElementById("NoteEditor-ContentEditable");
+    const range = document.getSelection()?.getRangeAt(0);
+    if (range == null) return;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'note-custom-foldable';
+    const wrapperInner = document.createElement('div');
+    range.surroundContents(wrapper);
+    wrapper.appendChild(wrapperInner);
+    // カーソルをセットする。
+    const selection = window.getSelection()!;
+    const newRange = document.createRange();
+    newRange.setStart(wrapperInner, 0);
+    newRange.setEnd(wrapperInner, 0);
+    selection.removeAllRanges();
+    selection.addRange(newRange);
+    wrapperInner.focus();
+  }, hotkeysOptions);
+
+  // foldableの上部30pxをクリックすると折りたたむ。
+  useEffect(() => {
+    const editable = document.getElementById("NoteEditor-ContentEditable");
+    if (editable == null) return;
+    editable.addEventListener('click', onClick);
+
+    function onClick(ev: MouseEvent) {
+      const target = ev.target as HTMLElement;
+      if (target.classList.contains('note-custom-foldable')) {
+        ev.preventDefault();
+        // 上部30pxをクリックした場合のみ折りたたむ。
+        if (ev.offsetY < 30) {
+          target.classList.toggle('folded');
+        }
+      }
+    }
+
+    return () => {
+      editable.removeEventListener('click', onClick);
+    }
+  }, [note]);
+
 
   // EnterキーでURLをカードにする。
   useHotkeys("shift+enter", (ev: KeyboardEvent) => {
