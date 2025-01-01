@@ -23,7 +23,7 @@ export function FolderContextMenu(folder: Folder) {
       {MenuItem("名前変更", async () => {
         const newName = prompt("名前を入力してください", folder.name)
         if (newName == null) return;
-        await utils.putJson(`/api/rpc/changeFolderName/${folder.id}`, {name: newName});
+        await utils.putJson(`/api/folders/${folder.id}/changeName`, {name: newName});
         await mutate('/api/rpc/getFoldersAll');
       })}
 
