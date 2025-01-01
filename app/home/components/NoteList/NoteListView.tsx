@@ -53,7 +53,7 @@ export default function NoteListView() {
           return (
             <li key={note.name + "-" + i} id={`note-${i}`}>
               <NoteCard note={note}
-                        getDragSourceNotes={getDragSourceNotes as any}
+                        getDragSourceNotes={() => getDragSourceNotes(note)}
                         multiSelectionMode={multiSelectionMode}
                         setMultiSelectionMode={setMultiSelectionMode}
                         isMultiSelected={isMultiSelected(note)}
