@@ -1,7 +1,11 @@
+import {cookies} from "next/headers";
+
 export const dynamic = "force-dynamic";
 import {prisma} from '@/lib/prisma';
 import {NextResponse} from "next/server";
 import {Folder} from "@prisma/client";
+
+const FOLDER_LOCK_SECRET = process.env.FOLDER_LOCK_SECRET ?? null;
 
 export async function GET() {
   // 全フォルダーを取得する。
@@ -15,7 +19,7 @@ export async function GET() {
     }
   });
   // ゴミ箱を取得する。
-  const trash = foldersAll.find(f => f.id === -1);
+  let trash = foldersAll.find(f => f.id === -1);
 
   // 平坦な配列から木構造に直す。
   // まず辞書に直す。
@@ -30,7 +34,7 @@ export async function GET() {
     parent.childFolders.push(f);
   });
   // ルートのみの配列を作る。
-  const roots = foldersAll.filter(f => f.parentFolderId === null && f !== trash);
+  let roots = foldersAll.filter(f => f.parentFolderId === null && f !== trash);
   // 全部ソートしていく。
   function sortChildren(folders: any[]) {
     folders.sort((a: any, b: any) => a.name.localeCompare(b.name));
@@ -40,6 +44,25 @@ export async function GET() {
     });
   }
   sortChildren(roots);
+
+  const cookieStore = cookies();
+  const folderKey = cookieStore.get("FOLDER_KEY")?.value;
+  const shouldLock =
+    FOLDER_LOCK_SECRET == null ||
+    FOLDER_LOCK_SECRET.length === 0 ||
+    folderKey !== FOLDER_LOCK_SECRET;
+  // ロック状態ならlockedなフォルダーは除外する。
+  if (shouldLock) {
+    function removeLockedFolder(folders: any[]) {
+      return folders.filter((f: any) => {
+        if (f.isLocked) return false;
+        if (f.childFolders != null) f.childFolders = removeLockedFolder(f.childFolders);
+        return true;
+      });
+    }
+    roots = removeLockedFolder(roots);
+    trash = removeLockedFolder([trash])[0];
+  }
 
   return NextResponse.json({
     folders: roots,

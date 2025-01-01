@@ -10,6 +10,7 @@ import {Header} from "@/app/home/components/Header";
 import {DndProvider} from "react-dnd";
 import {HTML5Backend} from "react-dnd-html5-backend";
 import {HotkeysProvider} from "react-hotkeys-hook";
+import {SettingView} from "@/app/home/components/Setting/SettingView";
 
 
 function HomeInternal() {
@@ -35,7 +36,7 @@ function HomeInternal() {
   console.log("render HomeInternal");
 
   return (
-    <main className='h-full w-screen bg-red-200 flex flex-col'>
+    <main className='h-full w-screen bg-red-200 flex flex-col relative'>
       <Header />
       <div className="flex flex-grow h-[0%]">
         <div className="flex flex-col md:flex-row">
@@ -46,6 +47,8 @@ function HomeInternal() {
           <NoteEditor />
         </HotkeysProvider>
       </div>
+
+      <SettingView />
     </main>
   )
 }

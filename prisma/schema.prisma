@@ -38,6 +38,7 @@ model Folder {
   name  String
   notes Note[]
   order NotesOrder @default(UPDATED_AT_DESC)
+  isLocked Boolean @default(false)
 
   childFolders   Folder[] @relation("ParentFolder")
   parentFolder   Folder?  @relation("ParentFolder", fields: [parentFolderId], references: [id])

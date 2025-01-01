@@ -1,14 +1,16 @@
-import {FaFloppyDisk, FaFolderClosed, FaList, FaSquarePlus, FaMoon, FaSun} from "react-icons/fa6";
+import {FaFloppyDisk, FaFolderClosed, FaList, FaSquarePlus, FaMoon, FaSun, FaGear} from "react-icons/fa6";
 import {useNote, useLocalPreferences} from "@/app/home/state";
 import classNames from "classnames";
 import {useCallback, useEffect} from "react";
 import {useLocalStorage} from "usehooks-ts";
 import {useOnCreateNewNote, useOnDropToFolder, useSaveChanges} from "@/app/home/hooks";
+import {useSetting} from "@/app/home/components/Setting/state";
 
 export function Header() {
   const [autoSave, setAutoSave] = useLocalStorage("autoSave", true);
   const [theme, setTheme] = useLocalStorage("theme", "");
   const themeIsDark = theme === "dark";
+  const openSetting = useSetting(state => state.open);
 
   const [changedNotes] = useNote(state => state.changedNotes);
 
@@ -80,14 +82,20 @@ export function Header() {
         <span className="align-middle">自動保存</span>
       </button>
 
-      <button className="rounded bg-gray-500 dark:bg-gray-700 p-2 w-14 hover:bg-gray-400 ml-auto"
-              onClick={() => themeIsDark ? setTheme("") : setTheme("dark")}>
-        {themeIsDark ?
-          <FaSun className="m-auto"/> :
-          <FaMoon className="m-auto"/>
-        }
-      </button>
+      <div className="ml-auto">
+        <button className="rounded bg-gray-500 dark:bg-gray-700 p-2 w-14 hover:bg-gray-400 mr-1"
+                onClick={openSetting}>
+          <FaGear className="m-auto"/>
+        </button>
 
+        <button className="rounded bg-gray-500 dark:bg-gray-700 p-2 w-14 hover:bg-gray-400"
+                onClick={() => themeIsDark ? setTheme("") : setTheme("dark")}>
+          {themeIsDark ?
+            <FaSun className="m-auto"/> :
+            <FaMoon className="m-auto"/>
+          }
+        </button>
+      </div>
     </div>
   )
 }

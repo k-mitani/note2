@@ -27,6 +27,15 @@ export function FolderContextMenu(folder: Folder) {
         await mutate('/api/rpc/getFoldersAll');
       })}
 
+      {folder.isLocked && MenuItem("ロック解除", async () => {
+        await utils.putJson(`/api/folders/${folder.id}/setLock`, {shouldLock: false});
+        await mutate('/api/rpc/getFoldersAll');
+      })}
+      {!folder.isLocked && MenuItem("ロック", async () => {
+        await utils.putJson(`/api/folders/${folder.id}/setLock`, {shouldLock: true});
+        await mutate('/api/rpc/getFoldersAll');
+      })}
+
       {MenuItem("ショートカットへ追加/削除", async () => {
         await utils.postJson(`/api/rpc/toggleShortcut/${folder.id}`);
       })}
