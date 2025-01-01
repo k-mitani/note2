@@ -259,36 +259,6 @@ export default function NoteEditor() {
       }
       return;
     }
-    // 添付ファイルなしの場合
-    let html = ev.clipboardData.getData("text/html");
-    const note2FontFamilyCss = "font-family: sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;, &quot;Noto Color Emoji&quot;;";
-    const note2twCss = "--tw-sepia: revert;";
-    if (html.includes(note2FontFamilyCss) || html.includes(note2twCss)) {
-      ev.preventDefault();
-      const tmp = document.createElement("span");
-      // "<!--StartFragment-->"から<!--EndFragment-->"までを取得する。
-      const match = html.match("StartFragment-->(.*)<!--EndFragment");
-      html = match != null ? match[1] : html;
-      tmp.innerHTML = html;
-      function removeStyle(el: Element) {
-        const style = el.getAttribute("style");
-        if (style != null && (style.includes(note2FontFamilyCss.replaceAll("&quot;", '"')) || style.includes(note2twCss))) {
-          el.removeAttribute("style");
-        }
-        for (let child of el.children) {
-          removeStyle(child);
-        }
-      }
-      removeStyle(tmp);
-      const range = document.getSelection()!.getRangeAt(0);
-      range.deleteContents();
-      if (tmp.children.length === 1) range.insertNode(tmp.children[0]);
-      else range.insertNode(tmp);
-      range.collapse();
-      console.log("html", html);
-    }
-
-
   }
 
   (window as any)["__aa"] = note;
