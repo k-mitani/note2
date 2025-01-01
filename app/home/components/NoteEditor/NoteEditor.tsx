@@ -191,7 +191,7 @@ export default function NoteEditor() {
 
 
   // EnterキーでURLをカードにする。
-  useHotkeys("shift+enter", (ev: KeyboardEvent) => {
+  useHotkeys("ctrl+enter", (ev: KeyboardEvent) => {
     ev.preventDefault();
     const editable = document.getElementById("NoteEditor-ContentEditable");
     const range = document.getSelection()!.getRangeAt(0);
