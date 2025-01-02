@@ -14,8 +14,8 @@ export type FolderCommonProps = {
   allFolders: FolderAndChild[],
   selectedFolder: FolderAndChild | undefined,
   setSelectedFolder: (folder: FolderAndChild) => void,
-  isExpanded: (id: number) => boolean,
-  setIsExpanded: (id: number, expand: boolean) => void,
+  isFolding: (id: number) => boolean,
+  setFolding: (id: number, expand: boolean) => void,
 };
 
 const INDENTS = [
@@ -39,7 +39,7 @@ export function Folder({folder, indent, common}: {
   indent: number,
   common: FolderCommonProps,
 }) {
-  const {onDrop, allFolders, selectedFolder, setSelectedFolder, isExpanded, setIsExpanded} = common;
+  const {onDrop, allFolders, selectedFolder, setSelectedFolder, isFolding, setFolding} = common;
 
   const [{canDrop, isOver}, refDrop] = useDrop({
     accept: ["note", "folder"],
@@ -96,7 +96,7 @@ export function Folder({folder, indent, common}: {
               // currentを更新する。
               current = f;
               // 子フォルダーありでopen状態なら、その中を探す。
-              if (f.childFolders && isExpanded(f.id)) {
+              if (f.childFolders && !isFolding(f.id)) {
                 const found = findPrev(target, f.childFolders);
                 if (found) return found;
               }
@@ -109,7 +109,7 @@ export function Folder({folder, indent, common}: {
             for (let i = fs.length - 1; i >= 0; i--) {
               const f = fs[i];
               // 子フォルダーありでopen状態なら、その中を探す。
-              if (f.childFolders && isExpanded(f.id)) {
+              if (f.childFolders && !isFolding(f.id)) {
                 const found = findNext(target, f.childFolders);
                 if (found) return found;
               }
@@ -135,8 +135,8 @@ export function Folder({folder, indent, common}: {
           // 左キーの場合
           if (ev.key === "ArrowLeft") {
             // 子フォルダーありでopen状態なら閉じる。
-            if (hasChildren && isExpanded(folder.id)) {
-              setIsExpanded(folder.id, false);
+            if (hasChildren && !isFolding(folder.id)) {
+              setFolding(folder.id, true);
               ev.preventDefault();
             }
             // 親フォルダーを選択する。
@@ -161,8 +161,8 @@ export function Folder({folder, indent, common}: {
           // 右キーの場合
           if (ev.key === "ArrowRight") {
             // 子フォルダーありでclose状態なら開く。
-            if (hasChildren && !isExpanded(folder.id)) {
-              setIsExpanded(folder.id, true);
+            if (hasChildren && isFolding(folder.id)) {
+              setFolding(folder.id, false);
               ev.preventDefault();
             }
             // 次の要素を選択する。
@@ -186,10 +186,10 @@ export function Folder({folder, indent, common}: {
           "hover:bg-gray-500 w-5 ps-0.5 pe-0.5",
           {"hidden": !hasChildren}
         )} onClick={(ev) => {
-          setIsExpanded(folder.id, !isExpanded(folder.id));
+          setFolding(folder.id, !isFolding(folder.id));
           ev.stopPropagation();
         }}>
-          {isExpanded(folder.id) ? "▼" : "▶"}
+          {isFolding(folder.id) ? "▶" : "▼"}
         </div>
 
         {/*フォルダー名*/}
@@ -207,7 +207,7 @@ export function Folder({folder, indent, common}: {
       {showMenu && FolderContextMenu(folder)}
 
       {/*サブフォルダー*/}
-      {folder.childFolders && <ul className={classNames({hidden: !isExpanded(folder.id)})}>
+      {folder.childFolders && <ul className={classNames({hidden: isFolding(folder.id)})}>
         {folder.childFolders.map(subFolder => {
           return <li key={subFolder.id}>
             <Folder folder={subFolder} indent={indent + 1} common={common}/>

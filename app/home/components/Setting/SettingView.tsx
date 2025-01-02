@@ -2,10 +2,10 @@ import {useSetting} from "@/app/home/components/Setting/state";
 import {parseIni} from "@smithy/shared-ini-file-loader/dist-types/parseIni";
 import * as utils from "@/app/utils";
 import {mutate} from "swr";
-import {useLocalStorage} from "usehooks-ts";
+import {useLocalPrefs} from "@/app/home/useLocalPrefs";
 
 export function SettingView() {
-  const [autoSave, setAutoSave] = useLocalStorage("autoSave", true);
+  const [autoSave, setAutoSave] = useLocalPrefs(state => [state.autoSave, state.setAutoSave]);
   const isOpen = useSetting(state => state.isOpen);
   const close = useSetting(state => state.close);
 

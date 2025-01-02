@@ -1,7 +1,7 @@
-import {useLocalPreferences, useNote} from "@/app/home/state";
+import {useNote} from "@/app/home/state";
+import {useLocalPrefs} from "@/app/home/useLocalPrefs";
 import classNames from "classnames";
 import {useFoldersAll, useOnDropToFolder} from "@/app/home/hooks";
-import {useLocalStorage} from "usehooks-ts";
 import {Folder, createFolder, FolderCommonProps} from "@/app/home/components/FolderList/Folder";
 
 /**
@@ -14,23 +14,20 @@ export default function FolderListView() {
   const selectedFolder = useNote(state => state.selectedFolder);
   const setSelectedFolder = useNote(state => state.setSelectedFolder);
   // サイドバーを表示するならtrue
-  const showSideBar = useLocalPreferences(state => state.showSideBar);
+  const showSideBar = useLocalPrefs(state => state.showSideBar);
+  // フォルダー開閉状態の辞書
+  const foldingDict = useLocalPrefs(state => state.folderFoldingStateDict);
+  const setFolding = useLocalPrefs(state => state.setFolderFoldingState);
   // フォルダーにドロップされたときの処理
   const onDropToFolder = useOnDropToFolder(selectedFolder?.id);
-  // フォルダー開閉状態の辞書
-  const [isExpandedDict, setIsExpandedDict] =
-    useLocalStorage<{ [key: number]: boolean }>
-    ("SideBar.folders.isExpanded", {});
 
   const common = {
     onDrop: onDropToFolder,
     allFolders: folders,
     selectedFolder: selectedFolder as any,
     setSelectedFolder: setSelectedFolder as any,
-    isExpanded: (id: number) => isExpandedDict[id] ?? false,
-    setIsExpanded: (id: number, expand: boolean) => {
-      setIsExpandedDict({...isExpandedDict, [id]: expand});
-    },
+    isFolding: (id: number) => foldingDict[id] ?? true,
+    setFolding: setFolding,
   } as FolderCommonProps;
 
   return (

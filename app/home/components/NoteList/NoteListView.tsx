@@ -1,6 +1,7 @@
 import React, {useEffect} from "react";
 import classNames from "classnames";
-import {useNote, useLocalPreferences} from "@/app/home/state";
+import {useNote} from "@/app/home/state";
+import {useLocalPrefs} from "@/app/home/useLocalPrefs";
 import {useNoteList} from "@/app/home/components/NoteList/state";
 import {useListOrder} from "@/app/home/components/NoteList/hooks";
 import {useFolderAndNotes} from "@/app/home/hooks";
@@ -17,7 +18,7 @@ export default function NoteListView() {
   console.log("NoteListView prepare render");
   const selectedNote = useNote(state => state.selectedNote);
   const [changedNotes] = useNote(state => state.changedNotes);
-  const showNoteListView = useLocalPreferences(state => state.showNoteListView);
+  const showNoteListView = useLocalPrefs(state => state.showNoteListView);
 
   const selectedFolder = useNote(state => state.selectedFolder);
   const {notes: notesRaw, isLoading} = useFolderAndNotes(selectedFolder?.id);

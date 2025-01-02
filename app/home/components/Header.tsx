@@ -1,22 +1,21 @@
 import {FaFloppyDisk, FaFolderClosed, FaList, FaSquarePlus, FaMoon, FaSun, FaGear} from "react-icons/fa6";
-import {useNote, useLocalPreferences} from "@/app/home/state";
+import {useNote} from "@/app/home/state";
+import {useLocalPrefs} from "@/app/home/useLocalPrefs";
 import classNames from "classnames";
 import {useCallback, useEffect} from "react";
-import {useLocalStorage} from "usehooks-ts";
 import {useOnCreateNewNote, useOnDropToFolder, useSaveChanges} from "@/app/home/hooks";
 import {useSetting} from "@/app/home/components/Setting/state";
 
 export function Header() {
-  const [theme, setTheme] = useLocalStorage("theme", "");
-  const themeIsDark = theme === "dark";
   const openSetting = useSetting(state => state.open);
-
   const [changedNotes] = useNote(state => state.changedNotes);
 
-  const showSideBar = useLocalPreferences(state => state.showSideBar);
-  const showNoteListView = useLocalPreferences(state => state.showNoteListView);
-  const setShowSideBar = useLocalPreferences(state => state.setShowSideBar);
-  const setShowNoteListView = useLocalPreferences(state => state.setShowNoteListView);
+  const [theme, setTheme] = useLocalPrefs(state => [state.theme, state.setTheme]);
+  const themeIsDark = theme === "dark";
+  const showSideBar = useLocalPrefs(state => state.showSideBar);
+  const showNoteListView = useLocalPrefs(state => state.showNoteListView);
+  const setShowSideBar = useLocalPrefs(state => state.setShowSideBar);
+  const setShowNoteListView = useLocalPrefs(state => state.setShowNoteListView);
 
   const selectedFolder = useNote(state => state.selectedFolder);
   const saveChanges = useSaveChanges(selectedFolder?.id);

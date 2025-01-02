@@ -1,16 +1,13 @@
 import React, {useCallback, useDebugValue, useEffect, useRef, useState} from "react";
-import Link from "next/link";
-import * as utils from "@/app/utils";
-import {format} from "date-fns";
-import {Note} from "@prisma/client";
 import {useNote} from "@/app/home/state";
 import ContentEditable from 'react-contenteditable'
-import {useDebounce, useLocalStorage} from "usehooks-ts";
+import {useDebounce} from "usehooks-ts";
 import {useHotkeys} from 'react-hotkeys-hook'
 import {useFolderAndNotes, useSaveChanges} from "@/app/home/hooks";
 import * as hooks from "@/app/home/components/NoteEditor/hooks";
 import {NoteHeader} from "@/app/home/components/NoteEditor/NoteHeader";
 import {useEnableImageResize} from "@/app/home/components/NoteEditor/hooks";
+import {useLocalPrefs} from "@/app/home/useLocalPrefs";
 
 export default function NoteEditor() {
   const note = useNote(state => state.selectedNote);
@@ -20,7 +17,7 @@ export default function NoteEditor() {
   const {notes, isLoading: isLoadingNotes} = useFolderAndNotes(selectedFolder?.id);
   const saveChanges = useSaveChanges(selectedFolder?.id);
 
-  const [autoSave, setAutoSave] = useLocalStorage("autoSave", true);
+  const autoSave = useLocalPrefs(state => state.autoSave);
   const prevNote = useRef(note);
   const refHtml = useRef(note?.content ?? "");
   const [title, setTitle] = useState(note?.title ?? "");

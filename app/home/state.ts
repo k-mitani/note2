@@ -1,6 +1,5 @@
 import {create} from 'zustand';
 import {Folder, Note} from '@prisma/client';
-import {persist} from "zustand/middleware";
 
 type ChangedNote = { id: number, title: string, content: string, updatedAt: Date | null };
 
@@ -42,26 +41,3 @@ export const useNote = create<Store>((set) => ({
   clearChangedNotes: () => set({changedNotes: [new Map()]}),
 }));
 
-interface LocalPreferencesStore {
-  showSideBar: boolean;
-  showNoteListView: boolean;
-  setShowSideBar: (show: boolean) => void;
-  setShowNoteListView: (show: boolean) => void;
-}
-
-export const useLocalPreferences = create<LocalPreferencesStore>()(
-  persist(
-    (set, get) => ({
-      // サイドバーの表示/非表示を設定するアクション
-      showSideBar: true,
-      setShowSideBar: (show) => set({showSideBar: show}),
-
-      // ノートリストビューの表示/非表示を設定するアクション
-      showNoteListView: true,
-      setShowNoteListView: (show) => set({showNoteListView: show}),
-    }),
-    {
-      name: 'preferences',
-    },
-  ),
-);
