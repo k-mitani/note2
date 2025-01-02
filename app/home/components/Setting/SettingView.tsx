@@ -30,7 +30,7 @@ export function SettingView() {
           $message.textContent = await res.text();
           await mutate('/api/rpc/getFoldersAll');
         }}>
-          <h2 className="text-lg pb-2">Folder Lock</h2>
+          <h2 className="text-lg pb-2">Folder Unlock</h2>
           <label className="flex items-center mb-2">
             <span className="w-20">Key</span>
             <input id="setting-key" type="password" className="border border-gray-300 rounded-md ml-2 p-1 w-80"/>
