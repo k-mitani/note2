@@ -16,7 +16,17 @@ export function SettingView() {
       <div className="bg-white rounded-lg p-6 pt-3 w-11/12 max-w-2xl max-h-[90vh] overflow-y-auto">
         <h1 className="text-2xl">Settings</h1>
 
-        <div className="mt-4">
+        <form className="mt-4" onSubmit={async (ev) => {
+          const $message = document.getElementById("setting-message")!;
+          $message.textContent = "sending...";
+          ev.preventDefault();
+          const key = (document.getElementById("setting-key") as HTMLInputElement).value;
+          const expiration = parseInt((document.getElementById("setting-expiration") as HTMLInputElement).value);
+          const res = await utils.putJson("/api/rpc/setFolderKey", {key, expiration});
+
+          $message.textContent = await res.text();
+          await mutate('/api/rpc/getFoldersAll');
+        }}>
           <h2 className="text-lg pb-2">Folder Lock</h2>
           <label className="flex items-center mb-2">
             <span className="w-20">Key</span>
@@ -26,21 +36,11 @@ export function SettingView() {
             <span className="w-20">Expiration</span>
             <input id="setting-expiration" defaultValue={600} type="number" className="border border-gray-300 rounded-md ml-2 p-1 w-80"/>
           </label>
-          <button
-            className="mt-4 bg-blue-500 text-white rounded-md p-2 w-20 hover:bg-blue-400"
-            onClick={async () => {
-              const key = (document.getElementById("setting-key") as HTMLInputElement).value;
-              const expiration = parseInt((document.getElementById("setting-expiration") as HTMLInputElement).value);
-              const res = await utils.putJson("/api/rpc/setFolderKey", {key, expiration});
-
-              const message = document.getElementById("setting-message")!;
-              message.textContent = await res.text();
-              await mutate('/api/rpc/getFoldersAll');
-            }}>
+          <button type="submit" className="mt-4 bg-blue-500 text-white rounded-md p-2 w-20 hover:bg-blue-400">
             Set
           </button>
           <p id="setting-message" className="text-sm text-gray-500 mt-2"></p>
-        </div>
+        </form>
       </div>
     </div>
   );
