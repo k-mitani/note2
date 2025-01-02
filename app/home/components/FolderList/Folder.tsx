@@ -181,17 +181,6 @@ export function Folder({folder, indent, common}: {
           ev.preventDefault();
         }}
       >
-        {/*サブフォルダー展開ボタン*/}
-        <div className={classNames(
-          "hover:bg-gray-500 w-5 ps-0.5 pe-0.5",
-          {"hidden": !hasChildren}
-        )} onClick={(ev) => {
-          setFolding(folder.id, !isFolding(folder.id));
-          ev.stopPropagation();
-        }}>
-          {isFolding(folder.id) ? "▶" : "▼"}
-        </div>
-
         {/*フォルダー名*/}
         <div className="text-sm md:text-base line-clamp-1"
              ref={refDrag as any}>
@@ -200,6 +189,17 @@ export function Folder({folder, indent, common}: {
             &nbsp;({(folder as any)._count.notes})
           </span>}
           {folder.isLocked && (<FaLockOpen className="pl-1 inline text-gray-400" />)}
+        </div>
+
+        {/*サブフォルダー展開ボタン*/}
+        <div className={classNames(
+          "hover:bg-gray-500 w-5 ml-1 ps-0.5 pe-0.5 text-gray-400",
+          {"hidden": !hasChildren}
+        )} onClick={(ev) => {
+          setFolding(folder.id, !isFolding(folder.id));
+          ev.stopPropagation();
+        }}>
+          {isFolding(folder.id) ? "▶" : "▼"}
         </div>
       </button>
 
