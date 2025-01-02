@@ -33,13 +33,9 @@ export default function NoteListView() {
     const order = orderItems.find(o => o.key === orderKey) ?? orderItems[0];
     useNoteList.getState().setSelectedOrder(order);
   }, [selectedFolder])
-  const getDragSourceNotes = useNoteList(state => state.getDragSourceNotes);
-  const multiSelectionMode = useNoteList(state => state.multiSelectionMode);
-  const setMultiSelectionMode = useNoteList(state => state.setMultiSelectionMode);
-  const setMultiSelection = useNoteList(state => state.setMultiSelection);
-  const setShouldScroll = useNoteList(state => state.setShouldScroll);
-  const isMultiSelected = useNoteList(state => state.isMultiSelected);
+
   const setSelectedNote = useNote(state => state.setSelectedNote);
+  const noteListState = useNoteList();
   const {onKeyDown, onCtrlClick, onShiftClick} = useKeyEventHandlers(notesRaw);
 
   console.log("NoteListView render");
@@ -61,12 +57,7 @@ export default function NoteListView() {
           return (
             <li key={note.name + "-" + i} id={`note-${i}`}>
               <NoteCard note={note}
-                        getDragSourceNotes={() => getDragSourceNotes(note)}
-                        multiSelectionMode={multiSelectionMode}
-                        setMultiSelectionMode={setMultiSelectionMode}
-                        isMultiSelected={isMultiSelected(note)}
-                        setMultiSelection={setMultiSelection}
-                        setShouldScroll={setShouldScroll}
+                        noteListState={noteListState}
                         setSelectedNote={setSelectedNote}
                         _ref={selectedNote === note ? refSelectedNoteElement : null as any}
                         changed={changedNotes.get(note.id)}

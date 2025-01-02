@@ -3,16 +3,12 @@ import React from "react";
 import {useDrag} from "react-dnd";
 import * as utils from "@/app/utils";
 import classNames from "classnames";
+import {NoteListStore} from "@/app/home/components/NoteList/state";
 
 export default function NoteCard(
   {
     note,
-    getDragSourceNotes,
-    multiSelectionMode,
-    setMultiSelectionMode,
-    isMultiSelected,
-    setMultiSelection,
-    setShouldScroll,
+    noteListState,
     setSelectedNote,
     _ref,
     changed,
@@ -22,12 +18,7 @@ export default function NoteCard(
     onShiftClick,
   }: {
     note: Note,
-    getDragSourceNotes: () => { notes: Note[] } | null
-    multiSelectionMode: boolean,
-    setMultiSelectionMode: (b: boolean) => void,
-    isMultiSelected: boolean,
-    setMultiSelection: (note: Note, b: boolean) => void,
-    setShouldScroll: (b: boolean) => void,
+    noteListState: NoteListStore,
     setSelectedNote: (note: Note) => void,
     _ref: React.Ref<HTMLButtonElement>,
     changed: { title: string, content: string } | undefined,
@@ -36,54 +27,58 @@ export default function NoteCard(
     onCtrlClick: (note: Note) => void,
     onShiftClick: (note: Note) => void,
   }) {
+  const isMultiSelected = noteListState.isMultiSelected(note);
+
   const [{}, refDrag] = useDrag(() => ({
     type: "note",
-    item: getDragSourceNotes,
+    item: noteListState.getDragSourceNotes(note),
     end: (item, monitor) => {
       if (monitor.didDrop()) {
-        if (multiSelectionMode) {
-          setMultiSelectionMode(false);
+        if (noteListState.multiSelectionMode) {
+          noteListState.setMultiSelectionMode(false);
         }
       }
     },
     collect: (monitor) => ({
       isDragging: monitor.isDragging()
     }),
-  }), [getDragSourceNotes]);
+  }), [noteListState]);
 
   const dateText = utils.dateToText(note.updatedAt ?? note.createdAt);
   const text = (changed ?? note).content.replace(/<("[^"]*"|'[^']*'|[^'">])*>/g, "")
   return (
-    <button className="relative w-full text-start block border-gray-300 dark:border-gray-700 border-b-2"
-            onMouseDown={(ev) => {
-              // Ctrl+クリックで通常選択モードなら、
-              // 複数選択モードに入り現在のノートとクリックされたノートを選択状態にする。
-              if (ev.ctrlKey) {
-                onCtrlClick(note);
-              }
-                // Shift+クリックで通常選択モードなら、
-              // 複数選択モードに入り現在のノートからクリックされたノートまでのノートを選択状態にする。
-              else if (ev.shiftKey) {
-                onShiftClick(note);
-              }
-              setShouldScroll(false);
+    <button
+      className="relative w-full text-start block border-gray-300 dark:border-gray-700 border-b-2"
+      onMouseDown={(ev) => {
+        // Ctrl+クリックで通常選択モードなら、
+        // 複数選択モードに入り現在のノートとクリックされたノートを選択状態にする。
+        if (ev.ctrlKey) {
+          onCtrlClick(note);
+        }
+        // Shift+クリックで通常選択モードなら、
+        // 複数選択モードに入り現在のノートからクリックされたノートまでのノートを選択状態にする。
+        else if (ev.shiftKey) {
+          onShiftClick(note);
+        }
+        noteListState.setShouldScroll(false);
 
-              setSelectedNote(note);
-            }}
+        setSelectedNote(note);
+      }}
       // ドラッグするためのマウスダウンで選択状態が変わらないように
       // 選択状態の変更はクリックイベントで行う。
-            onClick={() => {
-              if (multiSelectionMode) {
-                setMultiSelection(note, !isMultiSelected);
-              }
-            }}
+      onClick={() => {
+        if (noteListState.multiSelectionMode) {
+          noteListState.setMultiSelection(note, !isMultiSelected);
+        }
+      }}
       // onFocus={() => setSelectedNote(note)}
-            onKeyDown={onKeyDown}
-            ref={_ref}>
+      onKeyDown={onKeyDown}
+      ref={_ref}>
+
       {/*複数選択チェックボックス*/}
       <div className="absolute p-2 right-0">
         <input type="checkbox"
-               className={classNames("w-4 h-4", {hidden: !multiSelectionMode})}
+               className={classNames("w-4 h-4", {hidden: !noteListState.multiSelectionMode})}
                readOnly={true}
                checked={isMultiSelected}/>
       </div>

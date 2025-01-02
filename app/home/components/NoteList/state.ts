@@ -3,7 +3,7 @@ import {Note} from "@prisma/client";
 import {$Enums} from ".prisma/client";
 import {NoteOrderItem, orderItems} from "@/app/home/components/NoteList/NoteListOrder";
 
-interface Store {
+export interface NoteListStore {
   selectedOrder: NoteOrderItem;
   setSelectedOrder: (order: NoteOrderItem) => void;
 
@@ -27,7 +27,7 @@ interface Store {
   getDragSourceNotes: (selectedNote: Note) => { notes: Note[] } | null;
 }
 
-export const useNoteList = create<Store>((set, get) => ({
+export const useNoteList = create<NoteListStore>((set, get) => ({
   selectedOrder: orderItems[0],
   setSelectedOrder: (order) => set({selectedOrder: order}),
 
