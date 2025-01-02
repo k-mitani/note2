@@ -88,7 +88,7 @@ export default function NoteCard(
         "flex flex-col hover:bg-white dark:hover:bg-black hover:border-cyan-400 dark:hover:border-cyan-600 border-2 p-0.5 md:p-2",
         isSelected ? "border-blue-500 dark:border-blue-600 bg-white dark:bg-gray-900" : " border-gray-100 dark:border-gray-900",
       )}
-           ref={refDrag}>
+           ref={refDrag as any}>
         {/*タイトル*/}
         <strong className="text-xs md:text-base line-clamp-2">{(changed ?? note).title}</strong>
 

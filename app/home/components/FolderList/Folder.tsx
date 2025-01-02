@@ -63,7 +63,7 @@ export function Folder({folder, indent, common}: {
     <div onMouseLeave={() => setShowMenu(false)}>
       {/*フォルダー項目*/}
       <button
-        ref={refDrop}
+        ref={refDrop as any}
         className={classNames(
           `js-folder-${folder.id}`,
           "cursor-pointer select-none w-full text-start h-7 flex items-center",
@@ -194,7 +194,7 @@ export function Folder({folder, indent, common}: {
 
         {/*フォルダー名*/}
         <div className="text-sm md:text-base line-clamp-1"
-             ref={refDrag}>
+             ref={refDrag as any}>
           {folder.name}
           {(folder as any)._count.notes != 0 && <span className="text-gray-400">
             &nbsp;({(folder as any)._count.notes})
