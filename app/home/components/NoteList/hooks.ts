@@ -12,8 +12,10 @@ export function useListOrder(notesRaw: Note[]) {
   const refSelectedNoteElement = useRef<Element>(null);
   const notes = useMemo(() => {
     console.log("sort notes");
-    setShouldScroll(true);
     return notesRaw.sort(orderFunc as any);
+  }, [notesRaw, selectedOrder]);
+  useEffect(() => {
+    setShouldScroll(true);
   }, [notesRaw, selectedOrder]);
 
   useEffect(() => {
