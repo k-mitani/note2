@@ -5,6 +5,7 @@ import {mutate} from "swr";
 import classNames from "classnames";
 import {FolderContextMenu} from "@/app/home/components/FolderList/FolderContextMenu";
 import * as utils from "@/app/utils";
+import {FaLockOpen} from "react-icons/fa6";
 
 type FolderAndChild = Folder & { childFolders: FolderAndChild[] };
 
@@ -198,6 +199,7 @@ export function Folder({folder, indent, common}: {
           {(folder as any)._count.notes != 0 && <span className="text-gray-400">
             &nbsp;({(folder as any)._count.notes})
           </span>}
+          {folder.isLocked && (<FaLockOpen className="pl-1 inline text-gray-400" />)}
         </div>
       </button>
 
