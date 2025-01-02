@@ -18,6 +18,7 @@ export function FolderContextMenu(folder: Folder) {
     <ul className="flex-col p-0.5">
       {MenuItem("共有先に設定", async () => {
         await utils.putJson(`/api/settings/ShareTargetFolder`, {folderId: folder.id});
+        alert(`「${folder.name}」を共有先に設定しました。`);
       })}
 
       {MenuItem("名前変更", async () => {
@@ -28,10 +29,14 @@ export function FolderContextMenu(folder: Folder) {
       })}
 
       {folder.isLocked && MenuItem("ロック解除", async () => {
+        const yes = confirm("ロックを解除します。よろしいですか？");
+        if (!yes) return;
         await utils.putJson(`/api/folders/${folder.id}/setLock`, {shouldLock: false});
         await mutate('/api/rpc/getFoldersAll');
       })}
       {!folder.isLocked && MenuItem("ロック", async () => {
+        const yes = confirm("フォルダーをロックしますか？");
+        if (!yes) return;
         await utils.putJson(`/api/folders/${folder.id}/setLock`, {shouldLock: true});
         await mutate('/api/rpc/getFoldersAll');
       })}
