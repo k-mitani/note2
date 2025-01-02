@@ -7,7 +7,6 @@ import {useOnCreateNewNote, useOnDropToFolder, useSaveChanges} from "@/app/home/
 import {useSetting} from "@/app/home/components/Setting/state";
 
 export function Header() {
-  const [autoSave, setAutoSave] = useLocalStorage("autoSave", true);
   const [theme, setTheme] = useLocalStorage("theme", "");
   const themeIsDark = theme === "dark";
   const openSetting = useSetting(state => state.open);
@@ -75,11 +74,6 @@ export function Header() {
           <FaFloppyDisk className="m-auto"></FaFloppyDisk>
           {/*<span className="absolute text-white right-0"> {changedNotes.size}</span>*/}
         </div>
-      </button>
-
-      <button className="ms-1 text-sm" onClick={() => setAutoSave(!autoSave)}>
-        <input className="align-middle" type="checkbox" checked={autoSave}/>
-        <span className="align-middle">自動保存</span>
       </button>
 
       <div className="ml-auto">

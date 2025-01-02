@@ -2,8 +2,10 @@ import {useSetting} from "@/app/home/components/Setting/state";
 import {parseIni} from "@smithy/shared-ini-file-loader/dist-types/parseIni";
 import * as utils from "@/app/utils";
 import {mutate} from "swr";
+import {useLocalStorage} from "usehooks-ts";
 
 export function SettingView() {
+  const [autoSave, setAutoSave] = useLocalStorage("autoSave", true);
   const isOpen = useSetting(state => state.isOpen);
   const close = useSetting(state => state.close);
 
@@ -16,6 +18,7 @@ export function SettingView() {
       <div className="bg-white rounded-lg p-6 pt-3 w-11/12 max-w-2xl max-h-[90vh] overflow-y-auto">
         <h1 className="text-2xl">Settings</h1>
 
+        {/* フォルダーロック */}
         <form className="mt-4" onSubmit={async (ev) => {
           const $message = document.getElementById("setting-message")!;
           $message.textContent = "sending...";
@@ -41,6 +44,16 @@ export function SettingView() {
           </button>
           <p id="setting-message" className="text-sm text-gray-500 mt-2"></p>
         </form>
+
+        {/* その他 */}
+        <div className="mt-4">
+          <h2 className="text-lg pb-2">Others</h2>
+          <button className="ms-1 text-sm" onClick={() => setAutoSave(!autoSave)}>
+            <input className="align-middle" type="checkbox" checked={autoSave}/>
+            <span className="align-middle">自動保存</span>
+          </button>
+        </div>
+
       </div>
     </div>
   );
