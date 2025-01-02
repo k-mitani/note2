@@ -193,7 +193,7 @@ export function Folder({folder, indent, common}: {
 
         {/*サブフォルダー展開ボタン*/}
         <div className={classNames(
-          "hover:bg-gray-500 w-5 ml-1 ps-0.5 pe-0.5 text-gray-400",
+          "hover:bg-gray-500 w-5 ml-1 ps-0.5 pe-0.5 text-gray-500",
           {"hidden": !hasChildren}
         )} onClick={(ev) => {
           setFolding(folder.id, !isFolding(folder.id));
