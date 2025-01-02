@@ -3,10 +3,8 @@ import {NextRequest, NextResponse} from "next/server";
 import {$Enums, Prisma} from ".prisma/client";
 import NotesOrder = $Enums.NotesOrder;
 
-export async function PUT(
-  req: NextRequest,
-  {params}: { params: { folderId: string } }
-) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ folderId: string }> }) {
+  const params = await props.params;
   const folderId = parseInt(params.folderId);
   if (isNaN(folderId)) {
     return NextResponse.json(null);

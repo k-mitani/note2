@@ -18,11 +18,12 @@ function pathNameToContentType(pathName: string): string {
   return "image/png";
 }
 
-export default async function Page({
-  searchParams
-}: {
-  searchParams: { [key: string]: string | string[] | undefined }
-}) {
+export default async function Page(
+  props: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+  }
+) {
+  const searchParams = await props.searchParams;
   const url = searchParams["url"] as string;
   console.log("unfurl url", url);
   try {

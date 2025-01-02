@@ -45,7 +45,7 @@ export async function GET() {
   }
   sortChildren(roots);
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const folderKey = cookieStore.get("FOLDER_KEY")?.value;
   const shouldLock =
     FOLDER_LOCK_SECRET == null ||

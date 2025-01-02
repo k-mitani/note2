@@ -4,10 +4,8 @@ import {NextRequest, NextResponse} from "next/server";
 
 const FOLDER_LOCK_SECRET = process.env.FOLDER_LOCK_SECRET ?? null;
 
-export async function DELETE(
-  req: NextRequest,
-  {params}: { params: { folderId: string } }
-) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ folderId: string }> }) {
+  const params = await props.params;
   const folder = await prisma.folder.update({
     data: {parentFolderId: -1},
     where: {id: parseInt(params.folderId)},
@@ -15,10 +13,8 @@ export async function DELETE(
   return NextResponse.json(folder);
 }
 
-export async function GET(
-  _req: NextRequest,
-  {params}: { params: { folderId: string } }
-) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ folderId: string }> }) {
+  const params = await props.params;
   const folderId = parseInt(params.folderId);
   if (isNaN(folderId)) {
     return NextResponse.json(null);
@@ -32,7 +28,7 @@ export async function GET(
   });
 
   if (folder?.isLocked) {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const folderKey = cookieStore.get("FOLDER_KEY")?.value;
     if (FOLDER_LOCK_SECRET == null ||
       FOLDER_LOCK_SECRET.length === 0 ||

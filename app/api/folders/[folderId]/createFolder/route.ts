@@ -1,10 +1,8 @@
 import {prisma} from '@/lib/prisma';
 import {NextRequest, NextResponse} from "next/server";
 
-export async function POST(
-  req: NextRequest,
-  {params}: { params: { folderId: string } }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ folderId: string }> }) {
+  const params = await props.params;
   const folderId = params.folderId === "null" ?
     null :
     parseInt(params.folderId);

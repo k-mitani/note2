@@ -6,7 +6,7 @@ export async function PUT(
 ) {
   const {key, expiration} = await req.json();
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   cookieStore.set("FOLDER_KEY", key, {
     maxAge: expiration,
     httpOnly: true,
