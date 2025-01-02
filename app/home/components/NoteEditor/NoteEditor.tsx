@@ -1,12 +1,10 @@
 import React, {useCallback, useDebugValue, useEffect, useRef, useState} from "react";
 import {useNote} from "@/app/home/state";
 import ContentEditable from 'react-contenteditable'
-import {useDebounce} from "usehooks-ts";
 import {useHotkeys} from 'react-hotkeys-hook'
 import {useFolderAndNotes, useSaveChanges} from "@/app/home/hooks";
 import * as hooks from "@/app/home/components/NoteEditor/hooks";
 import {NoteHeader} from "@/app/home/components/NoteEditor/NoteHeader";
-import {useEnableImageResize} from "@/app/home/components/NoteEditor/hooks";
 import {useLocalPrefs} from "@/app/home/useLocalPrefs";
 
 export default function NoteEditor() {
@@ -17,26 +15,39 @@ export default function NoteEditor() {
   const {notes, isLoading: isLoadingNotes} = useFolderAndNotes(selectedFolder?.id);
   const saveChanges = useSaveChanges(selectedFolder?.id);
 
-  const autoSave = useLocalPrefs(state => state.autoSave);
   const prevNote = useRef(note);
   const refHtml = useRef(note?.content ?? "");
   const [title, setTitle] = useState(note?.title ?? "");
   const [updatedAt, setUpdatedAt] = useState(note?.updatedAt ?? note?.createdAt);
 
-  const changedNotesWrapper = useNote(state => state.changedNotes);
-  const [changedNotes] = changedNotesWrapper;
+  const [changedNotes] = useNote(state => state.changedNotes);
   const addChangedNote = useNote(state => state.addChangedNote);
-  const editingIsPaused = useDebounce(changedNotesWrapper, 10000);
-
   // 変換候補選択中ならtrue
   const showingImePopup = hooks.useShowingImePopup();
 
+  // 10秒間何も変更がなければ自動保存する。
   useEffect(() => {
-    if (changedNotes.size === 0) return;
-    if (!autoSave) return;
-    console.log("do auto save");
-    saveChanges();
-  }, [editingIsPaused]);
+    let notChangeCount = 0;
+    let wrapper = null as any;
+    const intervalId = setInterval(() => {
+      console.log("tick")
+      const prevCount = notChangeCount;
+      notChangeCount = 0;
+      const autoSave = useLocalPrefs.getState().autoSave;
+      if (!autoSave) return;
+      const prevWrapper = wrapper;
+      wrapper = useNote.getState().changedNotes;
+      const [changedNotes] = wrapper;
+      if (changedNotes.size === 0) return;
+      if (prevWrapper !== wrapper) return;
+      notChangeCount = prevCount + 1;
+      if (notChangeCount > 10) {
+        console.log("do auto save");
+        saveChanges();
+      }
+    }, 1000);
+    return () => clearInterval(intervalId);
+  }, [saveChanges]);
 
   useEffect(() => {
     if (!isLoadingNotes && note != null) {
@@ -49,14 +60,6 @@ export default function NoteEditor() {
 
 
   function addToChangedNotes(id: number, title: string, content: string, updatedAt: Date | null = null) {
-    // setChangedNotes(([prev]) => {
-    //   var prevData = prev.get(id);
-    //   prev.set(id, {id, title, content, updatedAt: updatedAt ?? prevData?.updatedAt ?? null});
-    //   return [prev];
-    // });
-    // var prevData = changedNotes.get(id);
-    // changedNotes.set(id, {id, title, content, updatedAt: updatedAt ?? prevData?.updatedAt ?? null});
-    // setChangedNotes([changedNotes]);
     addChangedNote({id, title, content, updatedAt});
   }
 
@@ -258,13 +261,9 @@ export default function NoteEditor() {
                        }}
                        onPaste={hooks.onPaste}
                        onChange={ev => {
-                         // console.log("onchange");
                          refHtml.current = ev.target.value
                          if (note != null) {
                            const title = changedNotes.get(note.id)?.title ?? note.title;
-                           // console.log("タイトル", changedNotes.get(note.id)?.title)
-                           // console.log("note.title", note.title);
-                           // console.log("title", title);
                            addToChangedNotes(note.id, title, ev.target.value);
                          }
                        }}
