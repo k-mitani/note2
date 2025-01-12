@@ -75,6 +75,10 @@ export function Folder({folder, indent, common}: {
           selectedFolder?.id === folder.id ? "bg-gray-500 dark:bg-gray-700" : "hover:bg-gray-600",
         )}
         onClick={() => setSelectedFolder(folder)}
+        onDoubleClick={(ev) => {
+          setFolding(folder.id, !isFolding(folder.id));
+          ev.stopPropagation();
+        }}
         onKeyDown={(ev) => {
           let current: FolderAndChild | null = null;
 
@@ -197,8 +201,9 @@ export function Folder({folder, indent, common}: {
           {"hidden": !hasChildren},
           selectedFolder?.id === folder.id ? "text-gray-400" : "text-gray-500",
         )} onClick={(ev) => {
-          setFolding(folder.id, !isFolding(folder.id));
-          ev.stopPropagation();
+          // 誤操作が気になるのでコメントアウト。ダブルクリックにする。
+          // setFolding(folder.id, !isFolding(folder.id));
+          // ev.stopPropagation();
         }}>
           {isFolding(folder.id) ? "▶" : "▼"}
         </div>
