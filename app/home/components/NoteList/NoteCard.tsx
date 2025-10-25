@@ -4,6 +4,7 @@ import {useDrag} from "react-dnd";
 import * as utils from "@/app/utils";
 import classNames from "classnames";
 import {NoteListStore} from "@/app/home/components/NoteList/state";
+import {mutate} from "swr";
 
 export default function NoteCard(
   {
@@ -49,6 +50,15 @@ export default function NoteCard(
     .replace(/<("[^"]*"|'[^']*'|[^'">])*>/g, "")
     .trim()
     .substring(0, 100);
+
+  const toggleBookmark = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    await fetch(`/api/notes/${note.id}/toggleBookmark`, { method: 'POST' });
+    mutate(`/api/folders/${note.folderId}`);
+    mutate('/api/bookmarks');
+  };
+
   return (
     <button
       className="relative w-full text-start block border-gray-300 dark:border-gray-700 border-b-2"
@@ -98,8 +108,17 @@ export default function NoteCard(
         {/*サマリー*/}
         <div className={"mt-2 h-16 line-clamp-3 text-gray-600 dark:text-gray-400 text-xs md:text-sm"}>{text}</div>
 
-        {/*日付*/}
-        <div className={"mt-2 text-[12px] text-gray-500"}>{dateText}</div>
+        {/*日付とブックマーク*/}
+        <div className={"mt-2 flex items-center justify-between"}>
+          <div className={"text-[12px] text-gray-500"}>{dateText}</div>
+          <div
+            onMouseDown={toggleBookmark}
+            className="text-sm cursor-pointer"
+            title={note.bookmarked ? "ブックマークを解除" : "ブックマークに追加"}
+          >
+            {note.bookmarked ? '★' : '☆'}
+          </div>
+        </div>
       </div>
     </button>);
 }

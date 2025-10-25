@@ -2,6 +2,7 @@ import Link from "next/link";
 import React from "react";
 import {format} from "date-fns";
 import {useNote} from "@/app/home/state";
+import {mutate} from "swr";
 
 export function NoteHeader({
   title,
@@ -20,6 +21,14 @@ export function NoteHeader({
 }) {
   const note = useNote(state => state.selectedNote);
 
+  const toggleBookmark = async () => {
+    if (!note) return;
+    await fetch(`/api/notes/${note.id}/toggleBookmark`, { method: 'POST' });
+    // フォルダーとブックマーク一覧を再取得
+    mutate(`/api/folders/${note.folderId}`);
+    mutate('/api/bookmarks');
+  };
+
   let link = null;
   let linkText = null;
   let timeText = "";
@@ -37,16 +46,27 @@ export function NoteHeader({
   }
 
   return <div className={"border-b-2 border-gray-200 dark:border-gray-600 p-2"}>
-    <input className="text-blue-500 dark:bg-black dark:text-blue-500 w-full"
-           type="text"
-           onChange={ev => {
-             setTitle(ev.target.value);
-             if (note != null) {
-               const content = changedNotes.get(note.id)?.content ?? note.content;
-               addToChangedNotes(note.id, ev.target.value, content, null);
-             }
-           }}
-           value={title}></input>
+    <div className="flex items-center gap-2">
+      <input className="text-blue-500 dark:bg-black dark:text-blue-500 flex-1"
+             type="text"
+             onChange={ev => {
+               setTitle(ev.target.value);
+               if (note != null) {
+                 const content = changedNotes.get(note.id)?.content ?? note.content;
+                 addToChangedNotes(note.id, ev.target.value, content, null);
+               }
+             }}
+             value={title}></input>
+      {note && (
+        <button
+          onClick={toggleBookmark}
+          className="text-xl"
+          title={note.bookmarked ? "ブックマークを解除" : "ブックマークに追加"}
+        >
+          {note.bookmarked ? '★' : '☆'}
+        </button>
+      )}
+    </div>
     <div>
       <input type="datetime-local"
              className="text-sm text-gray-500 border-gray-300"
