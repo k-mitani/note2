@@ -45,7 +45,10 @@ export default function NoteCard(
   }), [noteListState]);
 
   const dateText = utils.dateToText(note.updatedAt ?? note.createdAt);
-  const text = (changed ?? note).content.replace(/<("[^"]*"|'[^']*'|[^'">])*>/g, "")
+  const text = (changed ?? note).content
+    .replace(/<("[^"]*"|'[^']*'|[^'">])*>/g, "")
+    .trim()
+    .substring(0, 100);
   return (
     <button
       className="relative w-full text-start block border-gray-300 dark:border-gray-700 border-b-2"
