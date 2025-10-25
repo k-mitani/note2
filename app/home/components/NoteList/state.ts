@@ -25,6 +25,9 @@ export interface NoteListStore {
   setMultiSelection: (note: Note, on: boolean) => void;
 
   getDragSourceNotes: (selectedNote: Note) => { notes: Note[] } | null;
+
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
 }
 
 export const useNoteList = create<NoteListStore>((set, get) => ({
@@ -77,4 +80,7 @@ export const useNoteList = create<NoteListStore>((set, get) => ({
     const notes = Array.from(multiSelectionNotes.v);
     return notes.length > 0 ? {notes} : null;
   },
+
+  searchQuery: '',
+  setSearchQuery: (query) => set({searchQuery: query}),
 }));

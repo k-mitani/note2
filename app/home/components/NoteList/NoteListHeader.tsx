@@ -14,6 +14,8 @@ export default function NoteListHeader({noteCount, folderId}: { noteCount: numbe
   const multiSelectionMode = useNoteList(state => state.multiSelectionMode);
   const toggleMultiSelectionMode = useNoteList(state => state.toggleMultiSelectionMode);
   const multiSelectionNotes = useNoteList(state => state.multiSelectionNotes);
+  const searchQuery = useNoteList(state => state.searchQuery);
+  const setSearchQuery = useNoteList(state => state.setSearchQuery);
 
   return (
     <div className={"flex-none p-1 border-b-2 border-gray-300 dark:border-gray-700"}>
@@ -59,7 +61,13 @@ export default function NoteListHeader({noteCount, folderId}: { noteCount: numbe
       </button>
 
       {/*検索*/}
-      <input className={"m-1 border-2 dark:bg-gray-950 dark:border-gray-900"} type="text" placeholder="ノートを検索"/>
+      <input
+        className={"m-1 border-2 dark:bg-gray-950 dark:border-gray-900"}
+        type="text"
+        placeholder="ノートを検索"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+      />
     </div>
   )
 }

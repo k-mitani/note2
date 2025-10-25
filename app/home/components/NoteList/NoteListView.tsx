@@ -25,7 +25,21 @@ export default function NoteListView() {
   const noteCount = notesRaw.length;
 
   console.log("NoteListView prepare render for sort");
-  const {notes, refSelectedNoteElement} = useListOrder(notesRaw);
+  const {notes: notesSorted, refSelectedNoteElement} = useListOrder(notesRaw);
+
+  // 検索クエリでフィルタリング
+  const searchQuery = useNoteList(state => state.searchQuery);
+  const notes = React.useMemo(() => {
+    if (!searchQuery.trim()) {
+      return notesSorted;
+    }
+    const query = searchQuery.toLowerCase();
+    return notesSorted.filter((note: any) => {
+      const title = (changedNotes.get(note.id)?.title ?? note.title).toLowerCase();
+      const content = (changedNotes.get(note.id)?.content ?? note.content).toLowerCase();
+      return title.includes(query) || content.includes(query);
+    });
+  }, [notesSorted, searchQuery, changedNotes]);
 
   console.log("NoteListView prepare render for notes");
   useEffect(() => {
