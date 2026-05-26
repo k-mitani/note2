@@ -40,3 +40,7 @@ public/sw.js
 public/workbox-*
 .idea/deployment.xml
 public/objects/
+backup.custom
+
+# AI agents
+.antigravitycli/
