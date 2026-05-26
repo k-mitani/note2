@@ -1,4 +1,4 @@
-import {Folder, Note} from "@prisma/client";
+import type {Folder, Note} from "@prisma/client";
 import {useDrag, useDrop} from "react-dnd";
 import {useState} from "react";
 import {mutate} from "swr";
@@ -57,7 +57,7 @@ export function Folder({folder, indent, common}: {
     }),
   }));
   const [showMenu, setShowMenu] = useState(false);
-  const hasChildren = folder.childFolders?.length > 0 ?? false;
+  const hasChildren = (folder.childFolders?.length ?? 0) > 0;
 
   return (
     <div onMouseLeave={() => setShowMenu(false)}>

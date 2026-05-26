@@ -19,6 +19,7 @@ export default function NoteEditor() {
   const refHtml = useRef(note?.content ?? "");
   const [title, setTitle] = useState(note?.title ?? "");
   const [updatedAt, setUpdatedAt] = useState(note?.updatedAt ?? note?.createdAt);
+  const [createdAt, setCreatedAt] = useState(note?.createdAt);
 
   const [changedNotes] = useNote(state => state.changedNotes);
   const addChangedNote = useNote(state => state.addChangedNote);
@@ -59,8 +60,8 @@ export default function NoteEditor() {
   }, [isLoadingNotes, note, notes, setNote]);
 
 
-  function addToChangedNotes(id: number, title: string, content: string, updatedAt: Date | null = null) {
-    addChangedNote({id, title, content, updatedAt});
+  function addToChangedNotes(id: number, title: string, content: string, updatedAt: Date | null = null, createdAt: Date | null = null) {
+    addChangedNote({id, title, content, updatedAt, createdAt});
   }
 
   // noteが更新されたら、refHtml.currentを更新する。
@@ -72,6 +73,7 @@ export default function NoteEditor() {
       refHtml.current = n.content;
       setTitle(n.title);
       setUpdatedAt(n.updatedAt ?? (n as any).createdAt);
+      setCreatedAt((n as any).createdAt);
     } else {
       refHtml.current = "";
       setTitle("");
@@ -128,7 +130,15 @@ export default function NoteEditor() {
     // editableの中の要素が選択されていないなら何もしない。
     if (editable == null || !editable.contains(range.startContainer)) return;
 
-    if (range.startOffset === 0 || !range.collapsed) {
+    const startElement = range.startContainer.nodeType === Node.ELEMENT_NODE
+      ? range.startContainer as Element
+      : range.startContainer.parentElement;
+    // foldable内の非リスト要素でexecCommand("indent")を呼ぶと、foldable全体が
+    // blockquoteで囲まれて構造が壊れるため、その場合はtab文字を挿入する。
+    const inFoldableNonList = startElement?.closest('.ncf-20260403') != null
+      && startElement?.closest('li') == null;
+
+    if (!inFoldableNonList && (range.startOffset === 0 || !range.collapsed)) {
       document.execCommand("indent");
     } else if (!showingImePopup) {
       document.execCommand("insertText", false, "\t")
@@ -150,24 +160,76 @@ export default function NoteEditor() {
   useHotkeys("ctrl+g", (ev: KeyboardEvent) => {
     ev.preventDefault();
     const editable = document.getElementById("NoteEditor-ContentEditable");
-    const range = document.getSelection()?.getRangeAt(0);
-    if (range == null) return;
+    const selection = window.getSelection();
+    if (selection == null || selection.rangeCount === 0) return;
+    const range = selection.getRangeAt(0);
+    if (editable == null || !editable.contains(range.startContainer)) return;
+
+    // 選択範囲のコンテンツを取り出す（複数要素にまたがっていても安全）。
+    const fragment = range.extractContents();
+
+    // 折りたたみコンポーネントを作成する。
     const wrapper = document.createElement('div');
-    wrapper.className = 'note-custom-foldable';
-    const wrapperInner = document.createElement('div');
-    range.surroundContents(wrapper);
-    wrapper.appendChild(wrapperInner);
-    // カーソルをセットする。
-    const selection = window.getSelection()!;
+    wrapper.className = 'ncf-20260403';
+
+    // ヘッダー（タイトル入力エリアを含む）。
+    const header = document.createElement('div');
+    header.className = 'ncf-header-20260403';
+
+    // contenteditable="false"の三角マーク（クリックで折りたたむ）。
+    const toggle = document.createElement('span');
+    toggle.className = 'ncf-toggle-20260403';
+    toggle.contentEditable = 'false';
+
+    // 編集可能なタイトルエリア。
+    const titleSpan = document.createElement('span');
+    titleSpan.className = 'ncf-title-20260403';
+
+    header.appendChild(toggle);
+    header.appendChild(titleSpan);
+
+    // コンテンツエリア。
+    const content = document.createElement('div');
+    content.className = 'ncf-content-20260403';
+    content.appendChild(fragment);
+
+    wrapper.appendChild(header);
+    wrapper.appendChild(content);
+    range.insertNode(wrapper);
+
+    // カーソルをタイトル入力エリアに置く。
     const newRange = document.createRange();
-    newRange.setStart(wrapperInner, 0);
-    newRange.setEnd(wrapperInner, 0);
+    newRange.selectNodeContents(titleSpan);
+    newRange.collapse(false);
     selection.removeAllRanges();
     selection.addRange(newRange);
-    wrapperInner.focus();
   }, hotkeysOptions);
 
-  // foldableの上部30pxをクリックすると折りたたむ。
+  // foldableのヘッダー内でEnterを押すと、コンテンツエリアの先頭にカーソルを移動する。
+  useHotkeys("enter", (ev: KeyboardEvent) => {
+    const editable = document.getElementById("NoteEditor-ContentEditable");
+    const range = document.getSelection()?.getRangeAt(0);
+    if (range == null || editable == null || !editable.contains(range.startContainer)) return;
+
+    const startElement = range.startContainer.nodeType === Node.ELEMENT_NODE
+      ? range.startContainer as Element
+      : range.startContainer.parentElement;
+    const header = startElement?.closest('.ncf-header-20260403');
+    if (header != null) {
+      ev.preventDefault();
+      const content = header.parentElement?.querySelector('.ncf-content-20260403') as HTMLElement | null;
+      if (content != null) {
+        const newRange = document.createRange();
+        newRange.selectNodeContents(content);
+        newRange.collapse(true);
+        const sel = window.getSelection()!;
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+      }
+    }
+  }, hotkeysOptions);
+
+  // foldableの三角マークをクリックすると折りたたむ。
   useEffect(() => {
     const editable = document.getElementById("NoteEditor-ContentEditable");
     if (editable == null) return;
@@ -175,12 +237,9 @@ export default function NoteEditor() {
 
     function onClick(ev: MouseEvent) {
       const target = ev.target as HTMLElement;
-      if (target.classList.contains('note-custom-foldable')) {
-        ev.preventDefault();
-        // 上部30pxをクリックした場合のみ折りたたむ。
-        if (ev.offsetY < 30) {
-          target.classList.toggle('folded');
-        }
+      const toggle = target.closest('.ncf-toggle-20260403');
+      if (toggle != null) {
+        toggle.closest('.ncf-20260403')?.classList.toggle('folded-20260403');
       }
     }
 
@@ -245,6 +304,8 @@ export default function NoteEditor() {
                 setTitle={setTitle}
                 updatedAt={updatedAt}
                 setUpdatedAt={setUpdatedAt}
+                createdAt={createdAt}
+                setCreatedAt={setCreatedAt}
                 changedNotes={changedNotes}
                 addToChangedNotes={addToChangedNotes}
     />

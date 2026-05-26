@@ -1,7 +1,7 @@
 import {create} from 'zustand';
 import {Folder, Note} from '@prisma/client';
 
-type ChangedNote = { id: number, title: string, content: string, updatedAt: Date | null };
+type ChangedNote = { id: number, title: string, content: string, updatedAt: Date | null, createdAt: Date | null };
 
 interface Store {
   selectedFolder: (Folder & { notes: Note[] }) | null;
@@ -28,11 +28,12 @@ export const useNote = create<Store>((set) => ({
   // 変更されたノートを追加するアクション
   addChangedNote: (note) => set((state) => {
     const prev = state.changedNotes[0];
-    if (note.updatedAt == null) {
-      const prevNote = prev.get(note.id);
-      if (prevNote != null) {
-        note.updatedAt = prevNote.updatedAt;
-      }
+    const prevNote = prev.get(note.id);
+    if (note.updatedAt == null && prevNote != null) {
+      note.updatedAt = prevNote.updatedAt;
+    }
+    if (note.createdAt == null && prevNote != null) {
+      note.createdAt = prevNote.createdAt;
     }
     prev.set(note.id, note);
     console.log("addChangedNote", prev);

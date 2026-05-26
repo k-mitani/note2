@@ -27,18 +27,64 @@ html {
   text-decoration: revert;
 }
 
-.note-custom-foldable {
-  border-top: 30px solid #aaa;
-  border-bottom: 2px solid #aaa;
+.ncf-20260403 {
+  border: 1px solid #aaa;
+  border-radius: 4px;
+  margin: 4px 0;
+  display: block;
 }
-.note-custom-foldable.folded {
-  border-top: 30px solid #888;
-  height: 30px;
-  overflow: hidden;
-  border-bottom: 0;
+
+.ncf-header-20260403 {
+  display: flex;
+  align-items: center;
+  background-color: #ddd;
+  border-radius: 3px 3px 0 0;
 }
-.note-custom-foldable :first-child {
-  min-height: 1.7em; /* なぜかこうしないと要素挿入後にカーソルが当たらない。 */
+
+.ncf-20260403.folded-20260403 .ncf-header-20260403 {
+  border-radius: 3px;
+}
+
+/* 折りたたみトグル（三角マーク）- contenteditable="false"で編集不可 */
+.ncf-toggle-20260403 {
+  padding: 5px 8px;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.ncf-toggle-20260403::before {
+  content: '▼';
+}
+
+.ncf-20260403.folded-20260403 .ncf-toggle-20260403::before {
+  content: '▶';
+}
+
+/* タイトル入力エリア */
+.ncf-title-20260403 {
+  flex: 1;
+  padding: 5px 4px;
+  min-width: 0;
+  outline: none;
+}
+
+.ncf-content-20260403 {
+  padding: 4px 8px;
+  min-height: 1.7em;
+}
+
+.ncf-20260403.folded-20260403 .ncf-content-20260403 {
+  display: none;
+}
+
+.dark .ncf-20260403 {
+  border-color: #555;
+}
+
+.dark .ncf-header-20260403 {
+  background-color: #333;
+  color: #ccc;
 }
 
 .dark #NoteEditor-ContentEditable a {

@@ -9,6 +9,8 @@ export function NoteHeader({
   setTitle,
   updatedAt,
   setUpdatedAt,
+  createdAt,
+  setCreatedAt,
   changedNotes,
   addToChangedNotes,
 }: {
@@ -16,8 +18,10 @@ export function NoteHeader({
   setTitle: (title: string) => void,
   updatedAt: Date | undefined,
   setUpdatedAt: (date: Date) => void,
-  changedNotes: Map<number, { title: string, content: string, updatedAt: Date | null }>,
-  addToChangedNotes: (id: number, title: string, content: string, updatedAt: Date | null) => void,
+  createdAt: Date | undefined,
+  setCreatedAt: (date: Date) => void,
+  changedNotes: Map<number, { title: string, content: string, updatedAt: Date | null, createdAt: Date | null }>,
+  addToChangedNotes: (id: number, title: string, content: string, updatedAt: Date | null, createdAt: Date | null) => void,
 }) {
   const note = useNote(state => state.selectedNote);
 
@@ -32,6 +36,7 @@ export function NoteHeader({
   let link = null;
   let linkText = null;
   let timeText = "";
+  let createdAtText = "";
   if (note != null) {
     // 参照元のURLを取得する。
     for (let a of note.attributes as any[]) {
@@ -43,6 +48,7 @@ export function NoteHeader({
     }
     // 日付を取得する。
     timeText = updatedAt && format(updatedAt, "yyyy-MM-dd HH:mm") || "";
+    createdAtText = createdAt && format(createdAt, "yyyy-MM-dd HH:mm") || "";
   }
 
   return <div className={"border-b-2 border-gray-200 dark:border-gray-600 p-2"}>
@@ -53,7 +59,7 @@ export function NoteHeader({
                setTitle(ev.target.value);
                if (note != null) {
                  const content = changedNotes.get(note.id)?.content ?? note.content;
-                 addToChangedNotes(note.id, ev.target.value, content, null);
+                 addToChangedNotes(note.id, ev.target.value, content, null, null);
                }
              }}
              value={title}></input>
@@ -67,21 +73,41 @@ export function NoteHeader({
         </button>
       )}
     </div>
-    <div>
-      <input type="datetime-local"
-             className="text-sm text-gray-500 border-gray-300"
-             onChange={ev => {
-               const datetime = new Date(ev.target.value);
-               if (note != null) {
-                 const title = changedNotes.get(note.id)?.title ?? note.title;
-                 const content = changedNotes.get(note.id)?.content ?? note.content;
-                 addToChangedNotes(note.id, title, content, datetime);
-                 setUpdatedAt(datetime);
-               }
-             }}
-             value={timeText}/>
+    <div className="flex items-center gap-3 flex-wrap">
+      <label className="flex items-center gap-1 text-sm text-gray-500">
+        <span>作成</span>
+        <input type="datetime-local"
+               className="text-sm text-gray-500 border-gray-300"
+               onChange={ev => {
+                 const datetime = new Date(ev.target.value);
+                 if (note != null) {
+                   const title = changedNotes.get(note.id)?.title ?? note.title;
+                   const content = changedNotes.get(note.id)?.content ?? note.content;
+                   const prevUpdatedAt = changedNotes.get(note.id)?.updatedAt ?? null;
+                   addToChangedNotes(note.id, title, content, prevUpdatedAt, datetime);
+                   setCreatedAt(datetime);
+                 }
+               }}
+               value={createdAtText}/>
+      </label>
+      <label className="flex items-center gap-1 text-sm text-gray-500">
+        <span>更新</span>
+        <input type="datetime-local"
+               className="text-sm text-gray-500 border-gray-300"
+               onChange={ev => {
+                 const datetime = new Date(ev.target.value);
+                 if (note != null) {
+                   const title = changedNotes.get(note.id)?.title ?? note.title;
+                   const content = changedNotes.get(note.id)?.content ?? note.content;
+                   const prevCreatedAt = changedNotes.get(note.id)?.createdAt ?? null;
+                   addToChangedNotes(note.id, title, content, datetime, prevCreatedAt);
+                   setUpdatedAt(datetime);
+                 }
+               }}
+               value={timeText}/>
+      </label>
       {link && (
-        <span className="ml-1 text-xs text-blue-700">
+        <span className="text-xs text-blue-700">
           <Link href={link}>{linkText}</Link>
         </span>
       )}
