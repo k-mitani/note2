@@ -1,4 +1,4 @@
-import React, {useCallback, useDebugValue, useEffect, useRef, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import {useNote} from "@/app/home/state";
 import ContentEditable from 'react-contenteditable'
 import {useHotkeys} from 'react-hotkeys-hook'
@@ -6,6 +6,26 @@ import {useFolderAndNotes, useSaveChanges} from "@/app/home/hooks";
 import * as hooks from "@/app/home/components/NoteEditor/hooks";
 import {NoteHeader} from "@/app/home/components/NoteEditor/NoteHeader";
 import {useLocalPrefs} from "@/app/home/useLocalPrefs";
+import {FOLDABLE_CLASS} from "@/app/home/constants";
+
+const AUTO_SAVE_DELAY_MS = 10_000;
+
+const hotkeysOptions = {
+  enableOnFormTags: true,
+  enableOnContentEditable: true,
+};
+const hotkeysOptionsPreventDefault = {
+  preventDefault: true,
+  ...hotkeysOptions,
+};
+
+/** Ctrl系のフォーマット系コマンドをexecCommandで実行するためのフック。 */
+function useExecCommandHotkey(key: string, args: [string, boolean?, string?]) {
+  useHotkeys(key, () => {
+    // @ts-ignore
+    document.execCommand(...args);
+  }, hotkeysOptionsPreventDefault);
+}
 
 export default function NoteEditor() {
   const note = useNote(state => state.selectedNote);
@@ -21,34 +41,22 @@ export default function NoteEditor() {
   const [updatedAt, setUpdatedAt] = useState(note?.updatedAt ?? note?.createdAt);
   const [createdAt, setCreatedAt] = useState(note?.createdAt);
 
-  const [changedNotes] = useNote(state => state.changedNotes);
+  const changedNotes = useNote(state => state.changedNotes);
   const addChangedNote = useNote(state => state.addChangedNote);
   // 変換候補選択中ならtrue
   const showingImePopup = hooks.useShowingImePopup();
 
-  // 10秒間何も変更がなければ自動保存する。
+  // 未保存の変更がある場合、最後の変更から AUTO_SAVE_DELAY_MS 経過したら自動保存する。
   useEffect(() => {
-    let notChangeCount = 0;
-    let wrapper = null as any;
-    const intervalId = setInterval(() => {
-      console.log("tick")
-      const prevCount = notChangeCount;
-      notChangeCount = 0;
-      const autoSave = useLocalPrefs.getState().autoSave;
-      if (!autoSave) return;
-      const prevWrapper = wrapper;
-      wrapper = useNote.getState().changedNotes;
-      const [changedNotes] = wrapper;
-      if (changedNotes.size === 0) return;
-      if (prevWrapper !== wrapper) return;
-      notChangeCount = prevCount + 1;
-      if (notChangeCount > 10) {
+    if (changedNotes.size === 0) return;
+    const id = setTimeout(() => {
+      if (useLocalPrefs.getState().autoSave) {
         console.log("do auto save");
         saveChanges();
       }
-    }, 1000);
-    return () => clearInterval(intervalId);
-  }, [saveChanges]);
+    }, AUTO_SAVE_DELAY_MS);
+    return () => clearTimeout(id);
+  }, [changedNotes, saveChanges]);
 
   useEffect(() => {
     if (!isLoadingNotes && note != null) {
@@ -66,14 +74,14 @@ export default function NoteEditor() {
 
   // noteが更新されたら、refHtml.currentを更新する。
   if (note !== prevNote.current) {
-    console.log("noteupdated", refHtml.current)
+    console.log("noteupdated", refHtml.current);
     prevNote.current = note;
     if (note != null) {
       const n = changedNotes.get(note.id) ?? note;
       refHtml.current = n.content;
       setTitle(n.title);
-      setUpdatedAt(n.updatedAt ?? (n as any).createdAt);
-      setCreatedAt((n as any).createdAt);
+      setUpdatedAt(n.updatedAt ?? note.createdAt);
+      setCreatedAt(n.createdAt ?? note.createdAt);
     } else {
       refHtml.current = "";
       setTitle("");
@@ -81,44 +89,26 @@ export default function NoteEditor() {
     }
   }
 
-  const hotkeysOptions = {
-    enableOnFormTags: true,
-    enableOnContentEditable: true,
-  };
-  const hotkeysOptionsPreventDefault = {
-    preventDefault: true,
-    ...hotkeysOptions,
-  }
-
-  const a = {
-    "ctrl+b": ["bold"],
-    "ctrl+u": ["underline"],
-    "alt+shift+5": ["strikeThrough"],
-    "ctrl+h": ["backColor", false, "yellow"],
-    "ctrl+shift+r": ["foreColor", false, "red"],
-    "ctrl+k": ["removeFormat"],
-    "ctrl+o": ["insertOrderedList"],
-    "ctrl+l": ["insertUnorderedList"],
-    "ctrl+shift+h": ["insertHorizontalRule"],
-    "ctrl+alt+1": ["formatBlock", false, "h1"],
-    "ctrl+alt+2": ["formatBlock", false, "h2"],
-    "ctrl+alt+3": ["formatBlock", false, "h3"],
-    "ctrl+alt+4": ["formatBlock", false, "h4"],
-    "ctrl+alt+5": ["formatBlock", false, "h5"],
-    "ctrl+alt+6": ["formatBlock", false, "h6"],
-  }
-  for (let [key, args] of Object.entries(a)) {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useHotkeys(key, () => {
-      // @ts-ignore
-      const result = document.execCommand(...args);
-      console.log(key, result)
-    }, hotkeysOptionsPreventDefault);
-  }
+  // フォーマット系のショートカット
+  useExecCommandHotkey("ctrl+b", ["bold"]);
+  useExecCommandHotkey("ctrl+u", ["underline"]);
+  useExecCommandHotkey("alt+shift+5", ["strikeThrough"]);
+  useExecCommandHotkey("ctrl+h", ["backColor", false, "yellow"]);
+  useExecCommandHotkey("ctrl+shift+r", ["foreColor", false, "red"]);
+  useExecCommandHotkey("ctrl+k", ["removeFormat"]);
+  useExecCommandHotkey("ctrl+o", ["insertOrderedList"]);
+  useExecCommandHotkey("ctrl+l", ["insertUnorderedList"]);
+  useExecCommandHotkey("ctrl+shift+h", ["insertHorizontalRule"]);
+  useExecCommandHotkey("ctrl+alt+1", ["formatBlock", false, "h1"]);
+  useExecCommandHotkey("ctrl+alt+2", ["formatBlock", false, "h2"]);
+  useExecCommandHotkey("ctrl+alt+3", ["formatBlock", false, "h3"]);
+  useExecCommandHotkey("ctrl+alt+4", ["formatBlock", false, "h4"]);
+  useExecCommandHotkey("ctrl+alt+5", ["formatBlock", false, "h5"]);
+  useExecCommandHotkey("ctrl+alt+6", ["formatBlock", false, "h6"]);
 
   // ctrl+sで保存する。
-  useHotkeys("ctrl+s", (ev: KeyboardEvent) => {
-    console.log("ctrl+s")
+  useHotkeys("ctrl+s", () => {
+    console.log("ctrl+s");
     saveChanges();
   }, hotkeysOptionsPreventDefault);
 
@@ -135,7 +125,7 @@ export default function NoteEditor() {
       : range.startContainer.parentElement;
     // foldable内の非リスト要素でexecCommand("indent")を呼ぶと、foldable全体が
     // blockquoteで囲まれて構造が壊れるため、その場合はtab文字を挿入する。
-    const inFoldableNonList = startElement?.closest('.ncf-20260403') != null
+    const inFoldableNonList = startElement?.closest(`.${FOLDABLE_CLASS.WRAPPER}`) != null
       && startElement?.closest('li') == null;
 
     if (!inFoldableNonList && (range.startOffset === 0 || !range.collapsed)) {
@@ -145,12 +135,12 @@ export default function NoteEditor() {
     }
     ev.preventDefault();
   }, hotkeysOptions);
+
   // shift+tabキーでアンインデントする。
   useHotkeys("shift+tab", (ev: KeyboardEvent) => {
     const editable = document.getElementById("NoteEditor-ContentEditable");
     const range = document.getSelection()?.getRangeAt(0);
     if (range == null) return;
-    // editableの中の要素が選択されていないなら何もしない。
     if (editable == null || !editable.contains(range.startContainer)) return;
     document.execCommand("outdent");
     ev.preventDefault();
@@ -170,27 +160,25 @@ export default function NoteEditor() {
 
     // 折りたたみコンポーネントを作成する。
     const wrapper = document.createElement('div');
-    wrapper.className = 'ncf-20260403';
+    wrapper.className = FOLDABLE_CLASS.WRAPPER;
 
-    // ヘッダー（タイトル入力エリアを含む）。
     const header = document.createElement('div');
-    header.className = 'ncf-header-20260403';
+    header.className = FOLDABLE_CLASS.HEADER;
 
     // contenteditable="false"の三角マーク（クリックで折りたたむ）。
     const toggle = document.createElement('span');
-    toggle.className = 'ncf-toggle-20260403';
+    toggle.className = FOLDABLE_CLASS.TOGGLE;
     toggle.contentEditable = 'false';
 
     // 編集可能なタイトルエリア。
     const titleSpan = document.createElement('span');
-    titleSpan.className = 'ncf-title-20260403';
+    titleSpan.className = FOLDABLE_CLASS.TITLE;
 
     header.appendChild(toggle);
     header.appendChild(titleSpan);
 
-    // コンテンツエリア。
     const content = document.createElement('div');
-    content.className = 'ncf-content-20260403';
+    content.className = FOLDABLE_CLASS.CONTENT;
     content.appendChild(fragment);
 
     wrapper.appendChild(header);
@@ -214,10 +202,10 @@ export default function NoteEditor() {
     const startElement = range.startContainer.nodeType === Node.ELEMENT_NODE
       ? range.startContainer as Element
       : range.startContainer.parentElement;
-    const header = startElement?.closest('.ncf-header-20260403');
+    const header = startElement?.closest(`.${FOLDABLE_CLASS.HEADER}`);
     if (header != null) {
       ev.preventDefault();
-      const content = header.parentElement?.querySelector('.ncf-content-20260403') as HTMLElement | null;
+      const content = header.parentElement?.querySelector(`.${FOLDABLE_CLASS.CONTENT}`) as HTMLElement | null;
       if (content != null) {
         const newRange = document.createRange();
         newRange.selectNodeContents(content);
@@ -237,9 +225,9 @@ export default function NoteEditor() {
 
     function onClick(ev: MouseEvent) {
       const target = ev.target as HTMLElement;
-      const toggle = target.closest('.ncf-toggle-20260403');
+      const toggle = target.closest(`.${FOLDABLE_CLASS.TOGGLE}`);
       if (toggle != null) {
-        toggle.closest('.ncf-20260403')?.classList.toggle('folded-20260403');
+        toggle.closest(`.${FOLDABLE_CLASS.WRAPPER}`)?.classList.toggle(FOLDABLE_CLASS.FOLDED);
       }
     }
 
@@ -297,7 +285,6 @@ export default function NoteEditor() {
   // 画像のリサイズ
   hooks.useEnableImageResize();
 
-  (window as any)["__aa"] = note;
   return <div className="grow bg-white dark:bg-black flex flex-col">
     {/*ヘッダー*/}
     <NoteHeader title={title}
@@ -328,7 +315,6 @@ export default function NoteEditor() {
                            addToChangedNotes(note.id, title, ev.target.value);
                          }
                        }}
-        // onBlur={() => console.log("onblur", refHtml.current)}
       />
     </div>
   </div>
