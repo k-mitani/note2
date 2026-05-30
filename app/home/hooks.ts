@@ -2,44 +2,44 @@ import useSWR, {mutate} from "swr";
 import {Folder, Note} from "@prisma/client";
 import {useNote} from "@/app/home/state";
 import * as utils from "@/app/utils";
-import {useCallback} from "react";
-import {NoteWithPinned} from "@/app/home/types";
+import {useCallback, useMemo} from "react";
 
 type FolderAndChild = Folder & { childFolders: FolderAndChild[] };
-
-function fetcher(url: string) {
-  return fetch(url).then(res => res.json())
-}
 
 export function useFoldersAll() {
   return useSWR<{
     folders: FolderAndChild[],
     trash: FolderAndChild
-  }>('/api/rpc/getFoldersAll', fetcher);
+  }>('/api/rpc/getFoldersAll', utils.jsonFetcher);
 }
 
 function folderUrl(folderId: number | undefined) {
   return `/api/folders/${folderId}`;
 }
 
-const emptyNoteList: NoteWithPinned[] = [];
-export function useFolderAndNotes(folderId: number | undefined): {notes: NoteWithPinned[], isLoading: boolean} {
-  const {data, isLoading} = useSWR<Folder & { notes: NoteWithPinned[] }>(folderUrl(folderId), fetcher);
-  if (data != null) {
-    data.notes.forEach((n: NoteWithPinned) => {
-      if (n != null && !(n.updatedAt instanceof Date)) n.updatedAt = new Date(n.updatedAt as any);
-      if (!(n.createdAt instanceof Date)) n.createdAt = new Date(n.createdAt as any);
-    });
-  }
+/** SWRから取得したnoteは日付が文字列なので、Dateに正規化する。 */
+function normalizeNoteDates(note: Note): Note {
   return {
-    notes: data?.notes ?? emptyNoteList,
-    isLoading,
-  }
+    ...note,
+    createdAt: note.createdAt instanceof Date ? note.createdAt : new Date(note.createdAt as any),
+    updatedAt: note.updatedAt == null
+      ? null
+      : (note.updatedAt instanceof Date ? note.updatedAt : new Date(note.updatedAt as any)),
+  };
+}
+
+const emptyNoteList: Note[] = [];
+export function useFolderAndNotes(folderId: number | undefined): {notes: Note[], isLoading: boolean} {
+  const {data, isLoading} = useSWR<Folder & { notes: Note[] }>(folderUrl(folderId), utils.jsonFetcher);
+  const notes = useMemo(() => {
+    if (data == null) return emptyNoteList;
+    return data.notes.map(normalizeNoteDates);
+  }, [data]);
+  return {notes, isLoading};
 }
 
 export function useSaveChanges(currentFolderId: number | undefined) {
-  const changedNotesWrapper = useNote(state => state.changedNotes);
-  const [changedNotes] = changedNotesWrapper;
+  const changedNotes = useNote(state => state.changedNotes);
   const clearChangedNotes = useNote(state => state.clearChangedNotes);
 
   return useCallback(async function saveChanges() {
@@ -47,12 +47,12 @@ export function useSaveChanges(currentFolderId: number | undefined) {
     await utils.postJson("/api/rpc/saveChanges", {
       notes: Array.from(changedNotes.values()),
     });
-    clearChangedNotes()
+    clearChangedNotes();
     await Promise.all([
       mutate(folderUrl(currentFolderId)),
       mutate("/api/rpc/getFoldersAll"),
     ]);
-  }, [currentFolderId, changedNotesWrapper, clearChangedNotes]);
+  }, [currentFolderId, changedNotes, clearChangedNotes]);
 }
 
 export function useOnCreateNewNote(currentFolderId: number | undefined) {
@@ -64,9 +64,7 @@ export function useOnCreateNewNote(currentFolderId: number | undefined) {
     const res = await utils.postJson(
       `/api/folders/${selectedFolder.id}/createNote`
     );
-    const newNote = await res.json();
-    utils.coerceDate(newNote, "createdAt");
-    utils.coerceDate(newNote, "updatedAt");
+    const newNote = normalizeNoteDates(await res.json());
     console.log(newNote);
     await Promise.all([
       mutate(folderUrl(currentFolderId)),

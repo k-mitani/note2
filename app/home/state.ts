@@ -1,12 +1,18 @@
 import {create} from 'zustand';
 import {Folder, Note} from '@prisma/client';
 
-type ChangedNote = { id: number, title: string, content: string, updatedAt: Date | null, createdAt: Date | null };
+export type ChangedNote = {
+  id: number,
+  title: string,
+  content: string,
+  updatedAt: Date | null,
+  createdAt: Date | null,
+};
 
 interface Store {
   selectedFolder: (Folder & { notes: Note[] }) | null;
   selectedNote: Note | null;
-  changedNotes: Map<number, ChangedNote>[];
+  changedNotes: Map<number, ChangedNote>;
 
   setSelectedFolder: (folder: (Folder & { notes: Note[] }) | null) => void;
   setSelectedNote: (note: Note | null) => void;
@@ -17,28 +23,25 @@ interface Store {
 export const useNote = create<Store>((set) => ({
   selectedFolder: null,
   selectedNote: null,
-  changedNotes: [new Map()],
+  changedNotes: new Map(),
 
-  // フォルダーを選択するアクション
   setSelectedFolder: (folder) => set({selectedFolder: folder}),
 
-  // ノートを選択するアクション
   setSelectedNote: (note) => set({selectedNote: note}),
 
-  // 変更されたノートを追加するアクション
   addChangedNote: (note) => set((state) => {
-    const prev = state.changedNotes[0];
-    const prevNote = prev.get(note.id);
+    const next = new Map(state.changedNotes);
+    const prevNote = next.get(note.id);
     if (note.updatedAt == null && prevNote != null) {
       note.updatedAt = prevNote.updatedAt;
     }
     if (note.createdAt == null && prevNote != null) {
       note.createdAt = prevNote.createdAt;
     }
-    prev.set(note.id, note);
-    console.log("addChangedNote", prev);
-    return {changedNotes: [prev]};
+    next.set(note.id, note);
+    console.log("addChangedNote", next);
+    return {changedNotes: next};
   }),
-  clearChangedNotes: () => set({changedNotes: [new Map()]}),
-}));
 
+  clearChangedNotes: () => set({changedNotes: new Map()}),
+}));
