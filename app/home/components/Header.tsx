@@ -10,7 +10,8 @@ export function Header() {
   const openSetting = useSetting(state => state.open);
   const changedNotes = useNote(state => state.changedNotes);
 
-  const [theme, setTheme] = useLocalPrefs(state => [state.theme, state.setTheme]);
+  const theme = useLocalPrefs(state => state.theme);
+  const setTheme = useLocalPrefs(state => state.setTheme);
   const themeIsDark = theme === "dark";
   const showSideBar = useLocalPrefs(state => state.showSideBar);
   const showNoteListView = useLocalPrefs(state => state.showNoteListView);

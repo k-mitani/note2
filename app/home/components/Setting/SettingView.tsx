@@ -5,7 +5,8 @@ import {useLocalPrefs} from "@/app/home/useLocalPrefs";
 import {useState} from "react";
 
 export function SettingView() {
-  const [autoSave, setAutoSave] = useLocalPrefs(state => [state.autoSave, state.setAutoSave]);
+  const autoSave = useLocalPrefs(state => state.autoSave);
+  const setAutoSave = useLocalPrefs(state => state.setAutoSave);
   const isOpen = useSetting(state => state.isOpen);
   const close = useSetting(state => state.close);
 
