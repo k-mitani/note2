@@ -95,6 +95,30 @@ html {
   color: #94a;
 }
 
+#note-list {
+  scrollbar-color: #9ca3af #f3f4f6;
+}
+
+#note-list::-webkit-scrollbar-track {
+  background: #f3f4f6;
+}
+
+#note-list::-webkit-scrollbar-thumb {
+  background: #9ca3af;
+}
+
+.dark #note-list {
+  scrollbar-color: #4b5563 #111827;
+}
+
+.dark #note-list::-webkit-scrollbar-track {
+  background: #111827;
+}
+
+.dark #note-list::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
 #NoteEditor-ContentEditable h1
 , #NoteEditor-ContentEditable h2
 , #NoteEditor-ContentEditable h3

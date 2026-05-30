@@ -6,7 +6,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html className="dark">
+    <html className="dark h-full">
       <head>
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icon.png"></link>
@@ -14,7 +14,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#444" />
         <title>note2</title>
       </head>
-      <body className='h-screen'>{children}</body>
+      <body className='h-full'>{children}</body>
     </html>
   )
 }
