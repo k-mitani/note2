@@ -40,6 +40,7 @@ export type NoteMinAggregateOutputType = {
   id: number | null
   title: string | null
   content: string | null
+  summary: string | null
   bookmarked: boolean | null
   pinned: boolean | null
   createdAt: Date | null
@@ -51,6 +52,7 @@ export type NoteMaxAggregateOutputType = {
   id: number | null
   title: string | null
   content: string | null
+  summary: string | null
   bookmarked: boolean | null
   pinned: boolean | null
   createdAt: Date | null
@@ -62,6 +64,7 @@ export type NoteCountAggregateOutputType = {
   id: number
   title: number
   content: number
+  summary: number
   tags: number
   resource: number
   attributes: number
@@ -88,6 +91,7 @@ export type NoteMinAggregateInputType = {
   id?: true
   title?: true
   content?: true
+  summary?: true
   bookmarked?: true
   pinned?: true
   createdAt?: true
@@ -99,6 +103,7 @@ export type NoteMaxAggregateInputType = {
   id?: true
   title?: true
   content?: true
+  summary?: true
   bookmarked?: true
   pinned?: true
   createdAt?: true
@@ -110,6 +115,7 @@ export type NoteCountAggregateInputType = {
   id?: true
   title?: true
   content?: true
+  summary?: true
   tags?: true
   resource?: true
   attributes?: true
@@ -211,6 +217,7 @@ export type NoteGroupByOutputType = {
   id: number
   title: string
   content: string
+  summary: string
   tags: string[]
   resource: runtime.JsonValue | null
   attributes: runtime.JsonValue | null
@@ -248,6 +255,7 @@ export type NoteWhereInput = {
   id?: Prisma.IntFilter<"Note"> | number
   title?: Prisma.StringFilter<"Note"> | string
   content?: Prisma.StringFilter<"Note"> | string
+  summary?: Prisma.StringFilter<"Note"> | string
   tags?: Prisma.StringNullableListFilter<"Note">
   resource?: Prisma.JsonNullableFilter<"Note">
   attributes?: Prisma.JsonNullableFilter<"Note">
@@ -263,6 +271,7 @@ export type NoteOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   content?: Prisma.SortOrder
+  summary?: Prisma.SortOrder
   tags?: Prisma.SortOrder
   resource?: Prisma.SortOrderInput | Prisma.SortOrder
   attributes?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -281,6 +290,7 @@ export type NoteWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.NoteWhereInput | Prisma.NoteWhereInput[]
   title?: Prisma.StringFilter<"Note"> | string
   content?: Prisma.StringFilter<"Note"> | string
+  summary?: Prisma.StringFilter<"Note"> | string
   tags?: Prisma.StringNullableListFilter<"Note">
   resource?: Prisma.JsonNullableFilter<"Note">
   attributes?: Prisma.JsonNullableFilter<"Note">
@@ -296,6 +306,7 @@ export type NoteOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   content?: Prisma.SortOrder
+  summary?: Prisma.SortOrder
   tags?: Prisma.SortOrder
   resource?: Prisma.SortOrderInput | Prisma.SortOrder
   attributes?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -318,6 +329,7 @@ export type NoteScalarWhereWithAggregatesInput = {
   id?: Prisma.IntWithAggregatesFilter<"Note"> | number
   title?: Prisma.StringWithAggregatesFilter<"Note"> | string
   content?: Prisma.StringWithAggregatesFilter<"Note"> | string
+  summary?: Prisma.StringWithAggregatesFilter<"Note"> | string
   tags?: Prisma.StringNullableListFilter<"Note">
   resource?: Prisma.JsonNullableWithAggregatesFilter<"Note">
   attributes?: Prisma.JsonNullableWithAggregatesFilter<"Note">
@@ -331,6 +343,7 @@ export type NoteScalarWhereWithAggregatesInput = {
 export type NoteCreateInput = {
   title: string
   content: string
+  summary?: string
   tags?: Prisma.NoteCreatetagsInput | string[]
   resource?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   attributes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -345,6 +358,7 @@ export type NoteUncheckedCreateInput = {
   id?: number
   title: string
   content: string
+  summary?: string
   tags?: Prisma.NoteCreatetagsInput | string[]
   resource?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   attributes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -358,6 +372,7 @@ export type NoteUncheckedCreateInput = {
 export type NoteUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
   tags?: Prisma.NoteUpdatetagsInput | string[]
   resource?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   attributes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -372,6 +387,7 @@ export type NoteUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
   tags?: Prisma.NoteUpdatetagsInput | string[]
   resource?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   attributes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -386,6 +402,7 @@ export type NoteCreateManyInput = {
   id?: number
   title: string
   content: string
+  summary?: string
   tags?: Prisma.NoteCreatetagsInput | string[]
   resource?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   attributes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -399,6 +416,7 @@ export type NoteCreateManyInput = {
 export type NoteUpdateManyMutationInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
   tags?: Prisma.NoteUpdatetagsInput | string[]
   resource?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   attributes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -412,6 +430,7 @@ export type NoteUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
   tags?: Prisma.NoteUpdatetagsInput | string[]
   resource?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   attributes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -434,6 +453,7 @@ export type NoteCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   content?: Prisma.SortOrder
+  summary?: Prisma.SortOrder
   tags?: Prisma.SortOrder
   resource?: Prisma.SortOrder
   attributes?: Prisma.SortOrder
@@ -453,6 +473,7 @@ export type NoteMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   content?: Prisma.SortOrder
+  summary?: Prisma.SortOrder
   bookmarked?: Prisma.SortOrder
   pinned?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -464,6 +485,7 @@ export type NoteMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   content?: Prisma.SortOrder
+  summary?: Prisma.SortOrder
   bookmarked?: Prisma.SortOrder
   pinned?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -572,6 +594,7 @@ export type NoteUncheckedUpdateManyWithoutFolderNestedInput = {
 export type NoteCreateWithoutFolderInput = {
   title: string
   content: string
+  summary?: string
   tags?: Prisma.NoteCreatetagsInput | string[]
   resource?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   attributes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -585,6 +608,7 @@ export type NoteUncheckedCreateWithoutFolderInput = {
   id?: number
   title: string
   content: string
+  summary?: string
   tags?: Prisma.NoteCreatetagsInput | string[]
   resource?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   attributes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -627,6 +651,7 @@ export type NoteScalarWhereInput = {
   id?: Prisma.IntFilter<"Note"> | number
   title?: Prisma.StringFilter<"Note"> | string
   content?: Prisma.StringFilter<"Note"> | string
+  summary?: Prisma.StringFilter<"Note"> | string
   tags?: Prisma.StringNullableListFilter<"Note">
   resource?: Prisma.JsonNullableFilter<"Note">
   attributes?: Prisma.JsonNullableFilter<"Note">
@@ -641,6 +666,7 @@ export type NoteCreateManyFolderInput = {
   id?: number
   title: string
   content: string
+  summary?: string
   tags?: Prisma.NoteCreatetagsInput | string[]
   resource?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   attributes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -653,6 +679,7 @@ export type NoteCreateManyFolderInput = {
 export type NoteUpdateWithoutFolderInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
   tags?: Prisma.NoteUpdatetagsInput | string[]
   resource?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   attributes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -666,6 +693,7 @@ export type NoteUncheckedUpdateWithoutFolderInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
   tags?: Prisma.NoteUpdatetagsInput | string[]
   resource?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   attributes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -679,6 +707,7 @@ export type NoteUncheckedUpdateManyWithoutFolderInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
   tags?: Prisma.NoteUpdatetagsInput | string[]
   resource?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   attributes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -694,6 +723,7 @@ export type NoteSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   id?: boolean
   title?: boolean
   content?: boolean
+  summary?: boolean
   tags?: boolean
   resource?: boolean
   attributes?: boolean
@@ -709,6 +739,7 @@ export type NoteSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   id?: boolean
   title?: boolean
   content?: boolean
+  summary?: boolean
   tags?: boolean
   resource?: boolean
   attributes?: boolean
@@ -724,6 +755,7 @@ export type NoteSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   id?: boolean
   title?: boolean
   content?: boolean
+  summary?: boolean
   tags?: boolean
   resource?: boolean
   attributes?: boolean
@@ -739,6 +771,7 @@ export type NoteSelectScalar = {
   id?: boolean
   title?: boolean
   content?: boolean
+  summary?: boolean
   tags?: boolean
   resource?: boolean
   attributes?: boolean
@@ -749,7 +782,7 @@ export type NoteSelectScalar = {
   folderId?: boolean
 }
 
-export type NoteOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "content" | "tags" | "resource" | "attributes" | "bookmarked" | "pinned" | "createdAt" | "updatedAt" | "folderId", ExtArgs["result"]["note"]>
+export type NoteOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "content" | "summary" | "tags" | "resource" | "attributes" | "bookmarked" | "pinned" | "createdAt" | "updatedAt" | "folderId", ExtArgs["result"]["note"]>
 export type NoteInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   folder?: boolean | Prisma.Note$folderArgs<ExtArgs>
 }
@@ -769,6 +802,7 @@ export type $NotePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     id: number
     title: string
     content: string
+    summary: string
     tags: string[]
     resource: runtime.JsonValue | null
     attributes: runtime.JsonValue | null
@@ -1204,6 +1238,7 @@ export interface NoteFieldRefs {
   readonly id: Prisma.FieldRef<"Note", 'Int'>
   readonly title: Prisma.FieldRef<"Note", 'String'>
   readonly content: Prisma.FieldRef<"Note", 'String'>
+  readonly summary: Prisma.FieldRef<"Note", 'String'>
   readonly tags: Prisma.FieldRef<"Note", 'String[]'>
   readonly resource: Prisma.FieldRef<"Note", 'Json'>
   readonly attributes: Prisma.FieldRef<"Note", 'Json'>
