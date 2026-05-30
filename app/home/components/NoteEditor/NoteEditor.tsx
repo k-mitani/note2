@@ -32,7 +32,7 @@ export default function NoteEditor() {
   const setNote = useNote(state => state.setSelectedNote);
 
   const selectedFolder = useNote(state => state.selectedFolder);
-  const {notes, isLoading: isLoadingNotes} = useFolderAndNotes(selectedFolder?.id);
+  const {notes, isFullLoaded} = useFolderAndNotes(selectedFolder?.id);
   const saveChanges = useSaveChanges(selectedFolder?.id);
 
   const prevNote = useRef(note);
@@ -58,14 +58,16 @@ export default function NoteEditor() {
     return () => clearTimeout(id);
   }, [changedNotes, saveChanges]);
 
+  // フル版（content込み）が揃ったら、選択中ノートを content を持つ最新オブジェクトに差し替える。
+  // 軽量版（content無し）のオブジェクトには差し替えない＝空本文での誤編集・誤保存を防ぐ。
   useEffect(() => {
-    if (!isLoadingNotes && note != null) {
+    if (isFullLoaded && note != null) {
       const noteInNotes = notes.find(n => n.id === note.id);
       if (noteInNotes != null && noteInNotes != note) {
         setNote(noteInNotes);
       }
     }
-  }, [isLoadingNotes, note, notes, setNote]);
+  }, [isFullLoaded, note, notes, setNote]);
 
 
   function addToChangedNotes(id: number, title: string, content: string, updatedAt: Date | null = null, createdAt: Date | null = null) {
@@ -284,6 +286,14 @@ export default function NoteEditor() {
 
   // 画像のリサイズ
   hooks.useEnableImageResize();
+
+  // ノート選択中だがフル版（content）がまだ取得できていない間は、本文を編集させない。
+  // 軽量版の空contentを編集・保存して本文を消してしまうのを防ぐため。
+  if (note != null && !isFullLoaded) {
+    return <div className="flex min-h-0 min-w-0 grow flex-col items-center justify-center bg-white dark:bg-black dark:text-gray-400">
+      loading...
+    </div>;
+  }
 
   return <div className="flex min-h-0 min-w-0 grow flex-col bg-white dark:bg-black">
     {/*ヘッダー*/}

@@ -21,6 +21,8 @@ function folderUrl(folderId: number | undefined) {
 function normalizeNoteDates(note: Note): Note {
   return {
     ...note,
+    // 軽量取得(light)ではcontentを含まないので空文字で補う。
+    content: note.content ?? "",
     createdAt: note.createdAt instanceof Date ? note.createdAt : new Date(note.createdAt as any),
     updatedAt: note.updatedAt == null
       ? null
@@ -29,13 +31,49 @@ function normalizeNoteDates(note: Note): Note {
 }
 
 const emptyNoteList: Note[] = [];
-export function useFolderAndNotes(folderId: number | undefined): {notes: Note[], isLoading: boolean} {
-  const {data, isLoading} = useSWR<Folder & { notes: Note[] }>(folderUrl(folderId), utils.jsonFetcher);
-  const notes = useMemo(() => {
-    if (data == null) return emptyNoteList;
-    return data.notes.map(normalizeNoteDates);
-  }, [data]);
-  return {notes, isLoading};
+
+// 同じfetch結果(data)に対しては同じ正規化済み配列を返すことで、
+// リストとエディターなど複数のコンポーネント間で note のオブジェクト同一性を一致させる。
+// selectedNote === note の比較（選択ハイライト等）が安定して動くために重要。
+const normalizedNotesCache = new WeakMap<object, Note[]>();
+function getNormalizedNotes(data: (Folder & { notes: Note[] }) | undefined): Note[] {
+  if (data == null) return emptyNoteList;
+  let cached = normalizedNotesCache.get(data);
+  if (cached == null) {
+    cached = data.notes.map(normalizeNoteDates);
+    normalizedNotesCache.set(data, cached);
+  }
+  return cached;
+}
+
+/**
+ * フォルダー内のノート一覧を二段階で取得する。
+ * - まず content を含まない軽量版(?light=1)を取得して一覧を素早く描画する。
+ * - 並行してフル版（content/resource込み）を取得し、揃ったら全体を差し替える。
+ *
+ * 返り値:
+ * - notes: フル版があればフル版、無ければ軽量版を正規化したもの。
+ * - isLoading: 軽量版すら未取得（一覧を出せない）状態。
+ * - isFullLoaded: フル版が取得済みで content が利用可能な状態。
+ *   （本文の編集や検索はフル版が揃ってから有効にする。）
+ */
+export function useFolderAndNotes(folderId: number | undefined): {
+  notes: Note[], isLoading: boolean, isFullLoaded: boolean,
+} {
+  const lightKey = folderId != null ? `${folderUrl(folderId)}?light=1` : null;
+  const fullKey = folderId != null ? folderUrl(folderId) : null;
+
+  const {data: lightData} = useSWR<Folder & { notes: Note[] }>(lightKey, utils.jsonFetcher);
+  const {data: fullData} = useSWR<Folder & { notes: Note[] }>(fullKey, utils.jsonFetcher);
+
+  const data = fullData ?? lightData;
+  const notes = useMemo(() => getNormalizedNotes(data), [data]);
+
+  return {
+    notes,
+    isLoading: folderId != null && data == null,
+    isFullLoaded: fullData != null,
+  };
 }
 
 export function useSaveChanges(currentFolderId: number | undefined) {
