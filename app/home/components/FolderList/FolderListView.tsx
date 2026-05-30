@@ -2,20 +2,22 @@ import {useNote} from "@/app/home/state";
 import {useLocalPrefs} from "@/app/home/useLocalPrefs";
 import classNames from "classnames";
 import {useFoldersAll, useOnDropToFolder} from "@/app/home/hooks";
-import {Folder, createFolder, FolderCommonProps} from "@/app/home/components/FolderList/Folder";
+import {Folder, FolderCommonProps, FolderAndChild} from "@/app/home/components/FolderList/Folder";
 import useSWR from "swr";
 import {Note} from "@prisma/client";
-
-const fetcher = (url: string) => fetch(url).then(r => r.json());
+import {createFolder} from "@/lib/folder";
+import {findFolderById} from "@/lib/folderTree";
+import {SHORTCUTS_FOLDING_KEY} from "@/app/home/constants";
+import * as utils from "@/app/utils";
 
 /**
- * スタックやノートを表示する。
+ * フォルダーやノートを表示する。
  */
 export default function FolderListView() {
   // フォルダーとゴミ箱
   const {folders = [], trash = null} = useFoldersAll().data ?? {};
   // ブックマーク一覧
-  const {data: bookmarks = []} = useSWR<Note[]>('/api/bookmarks', fetcher);
+  const {data: bookmarks = []} = useSWR<Note[]>('/api/bookmarks', utils.jsonFetcher);
   // 選択中のフォルダー
   const selectedFolder = useNote(state => state.selectedFolder);
   const setSelectedFolder = useNote(state => state.setSelectedFolder);
@@ -26,18 +28,18 @@ export default function FolderListView() {
   const foldingDict = useLocalPrefs(state => state.folderFoldingStateDict);
   const setFolding = useLocalPrefs(state => state.setFolderFoldingState);
   // ショートカット開閉状態
-  const isBookmarksFolded = foldingDict[-2] ?? false;
+  const isBookmarksFolded = foldingDict[SHORTCUTS_FOLDING_KEY] ?? false;
   // フォルダーにドロップされたときの処理
   const onDropToFolder = useOnDropToFolder(selectedFolder?.id);
 
-  const common = {
+  const common: FolderCommonProps = {
     onDrop: onDropToFolder,
     allFolders: folders,
     selectedFolder: selectedFolder as any,
     setSelectedFolder: setSelectedFolder as any,
     isFolding: (id: number) => foldingDict[id] ?? true,
     setFolding: setFolding,
-  } as FolderCommonProps;
+  };
 
   return (
     <div className={classNames(
@@ -51,7 +53,7 @@ export default function FolderListView() {
           className="hover:bg-gray-600 w-full text-start text-sm md:text-base mb-2"
           onDoubleClick={(e) => {
             e.stopPropagation();
-            setFolding(-2, !isBookmarksFolded);
+            setFolding(SHORTCUTS_FOLDING_KEY, !isBookmarksFolded);
           }}
         >
           🔖ショートカット <span className="text-gray-400">({bookmarks.length})</span>
@@ -68,22 +70,11 @@ export default function FolderListView() {
                 <button
                   className="hover:bg-gray-600 w-full text-start text-xs md:text-sm px-2 py-1 truncate"
                   onClick={() => {
-                    setSelectedNote(note as any);
+                    setSelectedNote(note);
                     if (note.folderId) {
-                      // フォルダーを再帰的に検索
-                      const findFolder = (folders: any[], id: number): any => {
-                        for (const folder of folders) {
-                          if (folder.id === id) return folder;
-                          if (folder.childFolders?.length > 0) {
-                            const found = findFolder(folder.childFolders, id);
-                            if (found) return found;
-                          }
-                        }
-                        return null;
-                      };
-                      const folder = findFolder(folders, note.folderId);
+                      const folder = findFolderById(note.folderId, folders);
                       if (folder) {
-                        setSelectedFolder(folder);
+                        setSelectedFolder(folder as any);
                       }
                     }
                   }}
@@ -113,13 +104,13 @@ export default function FolderListView() {
           </button>
         </div>
         {/*ゴミ箱*/}
-        <ul className='mt-2 flex-col overflow-y-auto'>
-          {[trash!!].map(folder => {
-            return <li key={folder.id}>
-              <Folder folder={folder} indent={0} common={common}/>
+        {trash && (
+          <ul className='mt-2 flex-col overflow-y-auto'>
+            <li key={trash.id}>
+              <Folder folder={trash} indent={0} common={common}/>
             </li>
-          })}
-        </ ul>
+          </ul>
+        )}
       </div>
     </div>
   );

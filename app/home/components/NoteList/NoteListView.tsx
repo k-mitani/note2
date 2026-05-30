@@ -3,12 +3,11 @@ import classNames from "classnames";
 import {useNote} from "@/app/home/state";
 import {useLocalPrefs} from "@/app/home/useLocalPrefs";
 import {useNoteList} from "@/app/home/components/NoteList/state";
-import {useListOrder} from "@/app/home/components/NoteList/hooks";
+import {useListOrder, useKeyEventHandlers} from "@/app/home/components/NoteList/hooks";
 import {useFolderAndNotes} from "@/app/home/hooks";
 import NoteCard from "@/app/home/components/NoteList/NoteCard";
 import NoteListHeader from "@/app/home/components/NoteList/NoteListHeader";
-import {useKeyEventHandlers} from "@/app/home/components/NoteList/hooks";
-import {$Enums} from ".prisma/client";
+import {$Enums} from "@prisma/client";
 import {orderItems} from "@/app/home/components/NoteList/NoteListOrder";
 import {NOTE_LIST_VIEW_MODE_SUMMARY, viewModeItems} from "@/app/home/components/NoteList/NoteListViewMode";
 
@@ -18,7 +17,7 @@ import {NOTE_LIST_VIEW_MODE_SUMMARY, viewModeItems} from "@/app/home/components/
 export default function NoteListView() {
   console.log("NoteListView prepare render");
   const selectedNote = useNote(state => state.selectedNote);
-  const [changedNotes] = useNote(state => state.changedNotes);
+  const changedNotes = useNote(state => state.changedNotes);
   const showNoteListView = useLocalPrefs(state => state.showNoteListView);
 
   const selectedFolder = useNote(state => state.selectedFolder);
@@ -35,7 +34,7 @@ export default function NoteListView() {
       return notesSorted;
     }
     const query = searchQuery.toLowerCase();
-    return notesSorted.filter((note: any) => {
+    return notesSorted.filter(note => {
       const title = (changedNotes.get(note.id)?.title ?? note.title).toLowerCase();
       const content = (changedNotes.get(note.id)?.content ?? note.content).toLowerCase();
       return title.includes(query) || content.includes(query);
@@ -50,7 +49,7 @@ export default function NoteListView() {
     useNoteList.getState().setSelectedOrder(order);
 
     // フォルダーの表示形式を反映する。
-    const viewModeKey = (selectedFolder as any)?.noteListViewMode ?? NOTE_LIST_VIEW_MODE_SUMMARY;
+    const viewModeKey = selectedFolder?.noteListViewMode ?? NOTE_LIST_VIEW_MODE_SUMMARY;
     const viewMode = viewModeItems.find(o => o.key === viewModeKey) ?? viewModeItems[0];
     useNoteList.getState().setSelectedViewMode(viewMode);
   }, [selectedFolder])
@@ -74,13 +73,13 @@ export default function NoteListView() {
       {isLoading && <div className="flex-grow p-2">loading...</div>}
       {!isLoading && notes.length === 0 && <div className="flex-grow p-2">no notes</div>}
       {!isLoading && notes.length > 0 && <ul id="note-list" className="flex-grow overflow-y-scroll">
-        {notes?.map((note: any, i: number) => {
+        {notes.map((note, i) => {
           return (
-            <li key={note.name + "-" + i} id={`note-${i}`}>
+            <li key={note.id} id={`note-${i}`}>
               <NoteCard note={note}
                         noteListState={noteListState}
                         setSelectedNote={setSelectedNote}
-                        _ref={selectedNote === note ? refSelectedNoteElement : null as any}
+                        _ref={selectedNote === note ? refSelectedNoteElement : null}
                         changed={changedNotes.get(note.id)}
                         isSelected={selectedNote === note}
                         onKeyDown={onKeyDown}

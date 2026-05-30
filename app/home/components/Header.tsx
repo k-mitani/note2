@@ -3,12 +3,12 @@ import {useNote} from "@/app/home/state";
 import {useLocalPrefs} from "@/app/home/useLocalPrefs";
 import classNames from "classnames";
 import {useCallback, useEffect} from "react";
-import {useOnCreateNewNote, useOnDropToFolder, useSaveChanges} from "@/app/home/hooks";
+import {useOnCreateNewNote, useSaveChanges} from "@/app/home/hooks";
 import {useSetting} from "@/app/home/components/Setting/state";
 
 export function Header() {
   const openSetting = useSetting(state => state.open);
-  const [changedNotes] = useNote(state => state.changedNotes);
+  const changedNotes = useNote(state => state.changedNotes);
 
   const [theme, setTheme] = useLocalPrefs(state => [state.theme, state.setTheme]);
   const themeIsDark = theme === "dark";

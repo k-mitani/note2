@@ -2,15 +2,14 @@ import React, {useEffect, useMemo, useRef} from "react";
 import {Note} from "@prisma/client";
 import {useNote} from "@/app/home/state";
 import {useNoteList} from "@/app/home/components/NoteList/state";
-import {NoteWithPinned} from "@/app/home/types";
 
-export function useListOrder(notesRaw: NoteWithPinned[]) {
+export function useListOrder(notesRaw: Note[]) {
   const selectedOrder = useNoteList(state => state.selectedOrder);
   const shouldScroll = useNoteList(state => state.shouldScroll);
   const setShouldScroll = useNoteList(state => state.setShouldScroll);
 
   const orderFunc = selectedOrder.comp;
-  const refSelectedNoteElement = useRef<Element>(null);
+  const refSelectedNoteElement = useRef<HTMLButtonElement>(null);
   const notes = useMemo(() => {
     console.log("sort notes");
     return [...notesRaw].sort((a, b) => {
@@ -31,7 +30,7 @@ export function useListOrder(notesRaw: NoteWithPinned[]) {
     // 他の場所にフォーカスがあるならフォーカスしない。
     if (document.activeElement == null ||
       document.getElementById("note-list")?.contains(document.activeElement)) {
-      (refSelectedNoteElement.current as HTMLElement).focus();
+      refSelectedNoteElement.current.focus();
     }
 
     console.log("scroll", refSelectedNoteElement.current)
@@ -45,7 +44,7 @@ export function useListOrder(notesRaw: NoteWithPinned[]) {
 }
 
 
-export function useKeyEventHandlers(notes: NoteWithPinned[]) {
+export function useKeyEventHandlers(notes: Note[]) {
   const selectedNote = useNote(state => state.selectedNote);
   const setSelectedNote = useNote(state => state.setSelectedNote);
   const multiSelectionMode = useNoteList(state => state.multiSelectionMode);

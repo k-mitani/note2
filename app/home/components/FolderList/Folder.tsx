@@ -1,13 +1,13 @@
 import type {Folder, Note} from "@prisma/client";
 import {useDrag, useDrop} from "react-dnd";
 import {useState} from "react";
-import {mutate} from "swr";
 import classNames from "classnames";
 import {FolderContextMenu} from "@/app/home/components/FolderList/FolderContextMenu";
-import * as utils from "@/app/utils";
 import {FaLockOpen} from "react-icons/fa6";
+import {FOLDER_INDENT_CLASSES} from "@/app/home/constants";
+import {findFolderById, findNextFolder, findPrevFolder} from "@/lib/folderTree";
 
-type FolderAndChild = Folder & { childFolders: FolderAndChild[] };
+export type FolderAndChild = Folder & { childFolders: FolderAndChild[], _count?: { notes: number } };
 
 export type FolderCommonProps = {
   onDrop: (ev: { target: Folder, notes: Note[] | null, folders: Folder[] | null }) => void,
@@ -18,20 +18,10 @@ export type FolderCommonProps = {
   setFolding: (id: number, expand: boolean) => void,
 };
 
-const INDENTS = [
-  "ps-0",
-  "ps-[0.625rem] md:ps-[1.25rem]",
-  "ps-[1.25rem] md:ps-[2.5rem]",
-  "ps-[1.875rem] md:ps-[3.75rem]",
-  "ps-[2.5rem] md:ps-[5rem]",
-  "ps-[3.125rem] md:ps-[6.25rem]"
-];
-
-export async function createFolder(parentFolderId: number | null) {
-  const newName = prompt("名前を入力してください", "新しいフォルダー");
-  if (newName == null) return;
-  await utils.postJson(`/api/folders/${parentFolderId}/createFolder`, {name: newName});
-  await mutate('/api/rpc/getFoldersAll');
+/** id付きフォルダー要素にフォーカスする。 */
+function focusFolder(id: number) {
+  const el = document.getElementById(`folder-${id}`);
+  el?.focus();
 }
 
 export function Folder({folder, indent, common}: {
@@ -58,16 +48,18 @@ export function Folder({folder, indent, common}: {
   }));
   const [showMenu, setShowMenu] = useState(false);
   const hasChildren = (folder.childFolders?.length ?? 0) > 0;
+  const noteCount = folder._count?.notes ?? 0;
+  const indentClass = FOLDER_INDENT_CLASSES[Math.min(indent, FOLDER_INDENT_CLASSES.length - 1)];
 
   return (
     <div onMouseLeave={() => setShowMenu(false)}>
       {/*フォルダー項目*/}
       <button
         ref={refDrop as any}
+        id={`folder-${folder.id}`}
         className={classNames(
-          `js-folder-${folder.id}`,
           "cursor-pointer select-none w-full text-start h-7 flex items-center",
-          INDENTS[indent],
+          indentClass,
           {
             "bg-blue-300": isOver,
             "bg-cyan-500": isDragging,
@@ -80,60 +72,14 @@ export function Folder({folder, indent, common}: {
           ev.stopPropagation();
         }}
         onKeyDown={(ev) => {
-          let current: FolderAndChild | null = null;
-
-          function find(tagetId: number, fs: FolderAndChild[]): FolderAndChild | null {
-            for (const f of fs) {
-              if (f.id === tagetId) return f;
-              if (f.childFolders) {
-                const found = find(tagetId, f.childFolders);
-                if (found) return found;
-              }
-            }
-            return null;
-          }
-
-          function findPrev(target: FolderAndChild, fs: FolderAndChild[]): FolderAndChild | null {
-            for (const f of fs) {
-              // targetが見つかったら、その一つ前の要素を返す。
-              if (f === target) return current;
-              // currentを更新する。
-              current = f;
-              // 子フォルダーありでopen状態なら、その中を探す。
-              if (f.childFolders && !isFolding(f.id)) {
-                const found = findPrev(target, f.childFolders);
-                if (found) return found;
-              }
-            }
-            return null;
-          }
-
-          function findNext(target: FolderAndChild, fs: FolderAndChild[]): FolderAndChild | null {
-            // 逆から調べていく。
-            for (let i = fs.length - 1; i >= 0; i--) {
-              const f = fs[i];
-              // 子フォルダーありでopen状態なら、その中を探す。
-              if (f.childFolders && !isFolding(f.id)) {
-                const found = findNext(target, f.childFolders);
-                if (found) return found;
-              }
-              // targetが見つかったら、その一つ次の要素を返す。
-              if (f === target) return current;
-              // currentを更新する。
-              current = f;
-            }
-            return null;
-          }
-
           // 上下キーなら選択を移動する。
           if (ev.key === "ArrowUp" || ev.key === "ArrowDown") {
             const target = ev.key === "ArrowUp" ?
-              findPrev(folder, allFolders) :
-              findNext(folder, allFolders);
+              findPrevFolder(folder, allFolders, isFolding) :
+              findNextFolder(folder, allFolders, isFolding);
             if (target) {
               ev.preventDefault();
-              const el = document.getElementsByClassName(`js-folder-${target.id}`)[0];
-              (el as HTMLElement)?.focus()
+              focusFolder(target.id);
             }
           }
           // 左キーの場合
@@ -145,20 +91,18 @@ export function Folder({folder, indent, common}: {
             }
             // 親フォルダーを選択する。
             else if (folder.parentFolderId != null) {
-              const parent = find(folder.parentFolderId, allFolders);
+              const parent = findFolderById(folder.parentFolderId, allFolders);
               if (parent) {
                 ev.preventDefault();
-                const el = document.getElementsByClassName(`js-folder-${parent.id}`)[0];
-                (el as HTMLElement)?.focus()
+                focusFolder(parent.id);
               }
             }
             // 前の要素を選択する。
             else {
-              const prev = findPrev(folder, allFolders);
+              const prev = findPrevFolder(folder, allFolders, isFolding);
               if (prev) {
                 ev.preventDefault();
-                const el = document.getElementsByClassName(`js-folder-${prev.id}`)[0];
-                (el as HTMLElement)?.focus()
+                focusFolder(prev.id);
               }
             }
           }
@@ -171,11 +115,10 @@ export function Folder({folder, indent, common}: {
             }
             // 次の要素を選択する。
             else {
-              const next = findNext(folder, allFolders);
+              const next = findNextFolder(folder, allFolders, isFolding);
               if (next) {
                 ev.preventDefault();
-                const el = document.getElementsByClassName(`js-folder-${next.id}`)[0];
-                (el as HTMLElement)?.focus()
+                focusFolder(next.id);
               }
             }
           }
@@ -189,8 +132,8 @@ export function Folder({folder, indent, common}: {
         <div className="text-sm md:text-base line-clamp-1"
              ref={refDrag as any}>
           {folder.name}
-          {(folder as any)._count.notes != 0 && <span className="text-gray-400">
-            &nbsp;({(folder as any)._count.notes})
+          {noteCount !== 0 && <span className="text-gray-400">
+            &nbsp;({noteCount})
           </span>}
           {folder.isLocked && (<FaLockOpen className="pl-1 inline text-gray-400" />)}
         </div>
@@ -206,7 +149,7 @@ export function Folder({folder, indent, common}: {
       </button>
 
       {/*コンテキストメニュー*/}
-      {showMenu && FolderContextMenu(folder)}
+      {showMenu && <FolderContextMenu folder={folder} />}
 
       {/*サブフォルダー*/}
       {folder.childFolders && <ul className={classNames({hidden: isFolding(folder.id)})}>

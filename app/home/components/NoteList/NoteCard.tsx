@@ -4,7 +4,7 @@ import * as utils from "@/app/utils";
 import classNames from "classnames";
 import {NoteListStore} from "@/app/home/components/NoteList/state";
 import {mutate} from "swr";
-import {NoteWithPinned} from "@/app/home/types";
+import {Note} from "@prisma/client";
 import {NOTE_LIST_VIEW_MODE_TITLE_ONLY} from "@/app/home/components/NoteList/NoteListViewMode";
 
 export default function NoteCard(
@@ -19,15 +19,15 @@ export default function NoteCard(
     onCtrlClick,
     onShiftClick,
   }: {
-    note: NoteWithPinned,
+    note: Note,
     noteListState: NoteListStore,
-    setSelectedNote: (note: NoteWithPinned) => void,
+    setSelectedNote: (note: Note) => void,
     _ref: React.Ref<HTMLButtonElement>,
     changed: { title: string, content: string } | undefined,
     isSelected: boolean,
     onKeyDown: (e: React.KeyboardEvent<HTMLButtonElement>) => void,
-    onCtrlClick: (note: NoteWithPinned) => void,
-    onShiftClick: (note: NoteWithPinned) => void,
+    onCtrlClick: (note: Note) => void,
+    onShiftClick: (note: Note) => void,
   }) {
   const isMultiSelected = noteListState.isMultiSelected(note);
   const isTitleOnly = noteListState.selectedViewMode.key === NOTE_LIST_VIEW_MODE_TITLE_ONLY;
