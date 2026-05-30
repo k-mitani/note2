@@ -40,19 +40,25 @@ export function useFolderAndNotes(folderId: number | undefined): {notes: Note[],
 
 export function useSaveChanges(currentFolderId: number | undefined) {
   const changedNotes = useNote(state => state.changedNotes);
-  const clearChangedNotes = useNote(state => state.clearChangedNotes);
+  const removeSavedNotes = useNote(state => state.removeSavedNotes);
 
   return useCallback(async function saveChanges() {
+    const saved = Array.from(changedNotes.values());
+    if (saved.length === 0) return;
     console.log("saveChanges", changedNotes);
-    await utils.postJson("/api/rpc/saveChanges", {
-      notes: Array.from(changedNotes.values()),
-    });
-    clearChangedNotes();
+    const res = await utils.postJson("/api/rpc/saveChanges", {notes: saved});
+    // 保存に失敗した場合は変更を保持し、再取得もしない（次回保存で再送する）。
+    if (!res.ok) {
+      console.error("saveChanges failed", res.status);
+      return;
+    }
+    // 全消しではなく送信した分だけ消す。保存中に追加された編集を保持するため。
+    removeSavedNotes(saved);
     await Promise.all([
       mutate(folderUrl(currentFolderId)),
       mutate("/api/rpc/getFoldersAll"),
     ]);
-  }, [currentFolderId, changedNotes, clearChangedNotes]);
+  }, [currentFolderId, changedNotes, removeSavedNotes]);
 }
 
 export function useOnCreateNewNote(currentFolderId: number | undefined) {
