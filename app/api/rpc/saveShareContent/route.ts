@@ -2,13 +2,11 @@ import {prisma} from '@/lib/prisma';
 import {NextRequest, NextResponse} from "next/server";
 import settings from "@/lib/settings";
 import {Prisma} from ".prisma/client";
-import * as child_process from "child_process";
 import {buildLinkPreviewCardHtml} from "@/lib/linkPreview";
+import {archiveUrl} from "@/lib/archive";
 import JsonNull = Prisma.JsonNull;
 
 const LINK_PREVIEW_TIMEOUT_MS = 8000;
-
-const ARCHIVE_COMMAND = process.env.ARCHIVE_COMMAND;
 
 const URL_PATTERN = /https?:\/\/[^\s<>"']+/;
 
@@ -87,26 +85,6 @@ function extractUrl(params: Params): string | null {
     }
   }
   return null;
-}
-
-function archiveUrl(url: string) {
-  if (ARCHIVE_COMMAND == null) return;
-  // URLのschemeを検証（http/httpsのみ許可）してコマンドインジェクションを防ぐ
-  if (!/^https?:\/\//i.test(url)) {
-    console.warn("archive skipped: invalid URL scheme", url);
-    return;
-  }
-  // ARCHIVE_COMMANDをスペース区切りで分割し、URLを別引数として渡す。
-  // exec()（シェル経由）の代わりにexecFile()を使うことで、
-  // URLに含まれる ;, &, | 等のシェル特殊文字によるコマンドインジェクションを防ぐ。
-  const [cmd, ...cmdArgs] = ARCHIVE_COMMAND.split(/\s+/).filter(Boolean);
-  const args = [...cmdArgs, url];
-  console.log("archive", cmd, args);
-  child_process.execFile(cmd, args, (error, stdout, stderr) => {
-    if (error) console.error("archive error", error);
-    if (stdout) console.log("archive stdout", stdout);
-    if (stderr) console.error("archive stderr", stderr);
-  });
 }
 
 export async function GET(
