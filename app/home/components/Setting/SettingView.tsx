@@ -20,7 +20,7 @@ export function SettingView() {
          onMouseDown={(ev) => {
            if (ev.target === ev.currentTarget) close();
          }}>
-      <div className="bg-white rounded-lg p-6 pt-3 w-11/12 max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-200 rounded-lg p-6 pt-3 w-11/12 max-w-2xl max-h-[90vh] overflow-y-auto">
         <h1 className="text-2xl">Settings</h1>
 
         {/* フォルダーロック */}
@@ -35,21 +35,21 @@ export function SettingView() {
           <label className="flex items-center mb-2">
             <span className="w-20">Key</span>
             <input type="password"
-                   className="border border-gray-300 rounded-md ml-2 p-1 w-80"
+                   className="border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-200 rounded-md ml-2 p-1 w-80"
                    value={key}
                    onChange={ev => setKey(ev.target.value)}/>
           </label>
           <label className="flex items-center">
             <span className="w-20">Expiration</span>
             <input type="number"
-                   className="border border-gray-300 rounded-md ml-2 p-1 w-80"
+                   className="border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-200 rounded-md ml-2 p-1 w-80"
                    value={expiration}
                    onChange={ev => setExpiration(parseInt(ev.target.value) || 0)}/>
           </label>
           <button type="submit" className="mt-4 bg-blue-500 text-white rounded-md p-2 w-20 hover:bg-blue-400">
             Set
           </button>
-          <p className="text-sm text-gray-500 mt-2">{message}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{message}</p>
         </form>
 
         {/* その他 */}

@@ -285,7 +285,7 @@ export default function NoteEditor() {
   // 画像のリサイズ
   hooks.useEnableImageResize();
 
-  return <div className="grow bg-white dark:bg-black flex flex-col">
+  return <div className="flex min-h-0 min-w-0 grow flex-col bg-white dark:bg-black">
     {/*ヘッダー*/}
     <NoteHeader title={title}
                 setTitle={setTitle}
@@ -298,10 +298,10 @@ export default function NoteEditor() {
     />
 
     {/*本文*/}
-    <div className="p-2 grow overflow-y-scroll break-all dark:text-gray-300">
+    <div className="min-h-0 min-w-0 grow overflow-y-scroll break-all p-2 dark:text-gray-300">
       <ContentEditable html={refHtml.current}
                        id="NoteEditor-ContentEditable"
-                       className="w-full h-full"
+                       className="h-full w-full min-w-0"
                        style={{
                          outline: "0px solid #fff",
                          whiteSpace: "pre-wrap",

@@ -51,9 +51,9 @@ export function NoteHeader({
     createdAtText = createdAt && format(createdAt, "yyyy-MM-dd HH:mm") || "";
   }
 
-  return <div className={"border-b-2 border-gray-200 dark:border-gray-600 p-2"}>
-    <div className="flex items-center gap-2">
-      <input className="text-blue-500 dark:bg-black dark:text-blue-500 flex-1"
+  return <div className={"min-w-0 flex-none border-b-2 border-gray-200 p-2 dark:border-gray-600"}>
+    <div className="flex h-7 items-center gap-2">
+      <input className="h-7 min-w-0 flex-1 bg-transparent leading-7 text-blue-500 dark:text-blue-500"
              type="text"
              onChange={ev => {
                setTitle(ev.target.value);
@@ -66,18 +66,18 @@ export function NoteHeader({
       {note && (
         <button
           onClick={toggleBookmark}
-          className="text-xl"
+          className="h-7 w-7 shrink-0 text-xl leading-7"
           title={note.bookmarked ? "ブックマークを解除" : "ブックマークに追加"}
         >
           {note.bookmarked ? '★' : '☆'}
         </button>
       )}
     </div>
-    <div className="flex items-center gap-3 flex-wrap">
-      <label className="flex items-center gap-1 text-sm text-gray-500">
-        <span>作成</span>
+    <div className="mt-1 flex flex-col items-start gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-2">
+      <label className="flex max-w-full items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+        <span className="shrink-0">作成</span>
         <input type="datetime-local"
-               className="text-sm text-gray-500 border-gray-300"
+               className="w-40 max-w-[calc(100vw-2.5rem)] rounded border border-gray-300 bg-white px-1 py-0.5 text-xs text-gray-700 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-300 sm:w-36"
                onChange={ev => {
                  const datetime = new Date(ev.target.value);
                  if (note != null) {
@@ -90,10 +90,10 @@ export function NoteHeader({
                }}
                value={createdAtText}/>
       </label>
-      <label className="flex items-center gap-1 text-sm text-gray-500">
-        <span>更新</span>
+      <label className="flex max-w-full items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+        <span className="shrink-0">更新</span>
         <input type="datetime-local"
-               className="text-sm text-gray-500 border-gray-300"
+               className="w-40 max-w-[calc(100vw-2.5rem)] rounded border border-gray-300 bg-white px-1 py-0.5 text-xs text-gray-700 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-300 sm:w-36"
                onChange={ev => {
                  const datetime = new Date(ev.target.value);
                  if (note != null) {
@@ -107,7 +107,7 @@ export function NoteHeader({
                value={timeText}/>
       </label>
       {link && (
-        <span className="text-xs text-blue-700">
+        <span className="min-w-0 text-xs text-blue-700 dark:text-blue-400">
           <Link href={link}>{linkText}</Link>
         </span>
       )}
