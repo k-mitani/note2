@@ -18,6 +18,14 @@ export async function GET() {
       }
     }
   });
+  const viewModes = await prisma.$queryRaw<{ id: number, noteListViewMode: string }[]>`
+    SELECT "id", "noteListViewMode"
+    FROM "Folder"
+  `;
+  const viewModeById = new Map(viewModes.map(row => [row.id, row.noteListViewMode]));
+  foldersAll.forEach((folder: any) => {
+    folder.noteListViewMode = viewModeById.get(folder.id) ?? "SUMMARY";
+  });
   // ゴミ箱を取得する。
   let trash = foldersAll.find(f => f.id === -1);
 

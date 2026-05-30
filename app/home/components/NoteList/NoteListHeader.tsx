@@ -2,8 +2,9 @@ import classNames from "classnames";
 import React from "react";
 import {orderItems} from "@/app/home/components/NoteList/NoteListOrder";
 import {useNoteList} from "@/app/home/components/NoteList/state";
-import {Folder} from "@prisma/client";
 import * as utils from "@/app/utils";
+import {getNextViewMode} from "@/app/home/components/NoteList/NoteListViewMode";
+import {mutate} from "swr";
 
 
 export default function NoteListHeader({noteCount, folderId}: { noteCount: number, folderId: number }) {
@@ -11,6 +12,8 @@ export default function NoteListHeader({noteCount, folderId}: { noteCount: numbe
   const toggleShowOrderItems = useNoteList(state => state.toggleShowOrderItems);
   const orderName = useNoteList(state => state.selectedOrder).label;
   const setSelectedOrder = useNoteList(state => state.setSelectedOrder);
+  const selectedViewMode = useNoteList(state => state.selectedViewMode);
+  const setSelectedViewMode = useNoteList(state => state.setSelectedViewMode);
   const multiSelectionMode = useNoteList(state => state.multiSelectionMode);
   const toggleMultiSelectionMode = useNoteList(state => state.toggleMultiSelectionMode);
   const multiSelectionNotes = useNoteList(state => state.multiSelectionNotes);
@@ -33,7 +36,6 @@ export default function NoteListHeader({noteCount, folderId}: { noteCount: numbe
                 <li key={i}
                     className={"hover:bg-blue-300 dark:hover:bg-blue-800 p-0.5 cursor-pointer"}
                     onClick={async () => {
-                      debugger
                       setSelectedOrder(order);
                       await utils.putJson(`/api/folders/${folderId}/updateOrder`, {order: order.key});
                       toggleShowOrderItems();
@@ -50,7 +52,18 @@ export default function NoteListHeader({noteCount, folderId}: { noteCount: numbe
       </button>
 
       {/*表示形式*/}
-      {/*<button className={"text-sm m-1 p-0.5 bg-gray-500 text-white"}>サマリー</button>*/}
+      <button className={"text-sm m-1 p-0.5 bg-gray-500 text-white dark:bg-gray-600 dark:text-gray-300"}
+              title={`表示形式: ${selectedViewMode.label}`}
+              onClick={async () => {
+                const nextViewMode = getNextViewMode(selectedViewMode);
+                setSelectedViewMode(nextViewMode);
+                await utils.putJson(`/api/folders/${folderId}/updateNoteListViewMode`, {
+                  noteListViewMode: nextViewMode.key,
+                });
+                mutate("/api/rpc/getFoldersAll");
+              }}>
+        {selectedViewMode.label}
+      </button>
 
       {/*複数選択*/}
       <button className={classNames(

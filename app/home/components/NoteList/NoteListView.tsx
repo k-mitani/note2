@@ -10,6 +10,7 @@ import NoteListHeader from "@/app/home/components/NoteList/NoteListHeader";
 import {useKeyEventHandlers} from "@/app/home/components/NoteList/hooks";
 import {$Enums} from ".prisma/client";
 import {orderItems} from "@/app/home/components/NoteList/NoteListOrder";
+import {NOTE_LIST_VIEW_MODE_SUMMARY, viewModeItems} from "@/app/home/components/NoteList/NoteListViewMode";
 
 /**
  * ノート一覧
@@ -47,11 +48,16 @@ export default function NoteListView() {
     const orderKey = selectedFolder?.order ?? $Enums.NotesOrder.UPDATED_AT_DESC;
     const order = orderItems.find(o => o.key === orderKey) ?? orderItems[0];
     useNoteList.getState().setSelectedOrder(order);
+
+    // フォルダーの表示形式を反映する。
+    const viewModeKey = (selectedFolder as any)?.noteListViewMode ?? NOTE_LIST_VIEW_MODE_SUMMARY;
+    const viewMode = viewModeItems.find(o => o.key === viewModeKey) ?? viewModeItems[0];
+    useNoteList.getState().setSelectedViewMode(viewMode);
   }, [selectedFolder])
 
   const setSelectedNote = useNote(state => state.setSelectedNote);
   const noteListState = useNoteList();
-  const {onKeyDown, onCtrlClick, onShiftClick} = useKeyEventHandlers(notesRaw);
+  const {onKeyDown, onCtrlClick, onShiftClick} = useKeyEventHandlers(notes);
 
   console.log("NoteListView render");
 
