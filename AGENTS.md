@@ -1,11 +1,15 @@
 # AGENTS.md
 
-## Deployment
+## デプロイ
 
-After changes that include Prisma migrations or production code updates, use:
+Prisma マイグレーションや本番コードの変更を含む作業では、変更完了後に必ず以下を実行する。
 
 ```bash
 ./commands/deploy-note2.sh
 ```
 
-This applies pending Prisma migrations, builds the Next.js app, restarts `note2.service`, and prints the service status.
+このコマンドは、未適用の Prisma マイグレーション適用、Next.js の本番ビルド、`note2.service` の再起動、サービス状態の表示をまとめて行う。
+
+デプロイ前に個別の `npm run build` は実行しないこと。上記コマンド内で本番ビルドも実行される。
+
+ユーザーからデプロイを依頼された場合は、事前に `git diff` を表示せず、このコマンドを直接実行する。
