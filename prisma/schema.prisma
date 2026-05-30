@@ -14,6 +14,7 @@ model Note {
   id          Int       @id @default(autoincrement())
   title       String
   content     String
+  summary     String    @default("")
   tags        String[]
   resource    Json?
   attributes  Json?
