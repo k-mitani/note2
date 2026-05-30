@@ -50,7 +50,7 @@ export default function FolderListView() {
       {/*固定ヘッダー*/}
       <div>
         <button
-          className="hover:bg-gray-600 w-full text-start text-sm md:text-base mb-2"
+          className="hover:bg-gray-600 w-full text-start text-sm md:text-base"
           onDoubleClick={(e) => {
             e.stopPropagation();
             setFolding(SHORTCUTS_FOLDING_KEY, !isBookmarksFolded);
@@ -64,7 +64,7 @@ export default function FolderListView() {
           )}
         </button>
         {!isBookmarksFolded && bookmarks.length > 0 && (
-          <ul className="mb-2">
+          <ul>
             {bookmarks.map(note => (
               <li key={note.id}>
                 <button
@@ -87,7 +87,7 @@ export default function FolderListView() {
         )}
       </div>
 
-      <div className='mt-4 pt-0.5 flex-col overflow-y-auto'>
+      <div className='pt-0.5 flex-col overflow-y-auto'>
         {/*フォルダー一覧*/}
         <ul className=''>
           {folders.map(folder => {
