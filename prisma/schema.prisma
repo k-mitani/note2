@@ -18,6 +18,7 @@ model Note {
   resource    Json?
   attributes  Json?
   bookmarked  Boolean   @default(false)
+  pinned      Boolean   @default(false)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime? @updatedAt
 
@@ -34,11 +35,17 @@ enum NotesOrder {
   TITLE_DESC
 }
 
+enum NoteListViewMode {
+  SUMMARY
+  TITLE_ONLY
+}
+
 model Folder {
   id    Int    @id @default(autoincrement())
   name  String
   notes Note[]
   order NotesOrder @default(UPDATED_AT_DESC)
+  noteListViewMode NoteListViewMode @default(SUMMARY)
   isLocked Boolean @default(false)
 
   childFolders   Folder[] @relation("ParentFolder")

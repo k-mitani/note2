@@ -1,0 +1,3 @@
+CREATE TYPE "NoteListViewMode" AS ENUM ('SUMMARY', 'TITLE_ONLY');
+
+ALTER TABLE "Folder" ADD COLUMN "noteListViewMode" "NoteListViewMode" NOT NULL DEFAULT 'SUMMARY';
