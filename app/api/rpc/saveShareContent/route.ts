@@ -5,6 +5,7 @@ import {Prisma} from "@/app/generated/prisma/client";
 import {buildLinkPreviewCardHtml} from "@/lib/linkPreview";
 import {archiveUrl} from "@/lib/archive";
 import {normalizeNoteContent} from "@/lib/normalizeNoteContent";
+import {toSummary} from "@/lib/noteSummary";
 import JsonNull = Prisma.JsonNull;
 
 const LINK_PREVIEW_TIMEOUT_MS = 8000;
@@ -120,7 +121,7 @@ export async function GET(
 
   await prisma.note.update({
     where: {id: inbox.id},
-    data: {content: newContent},
+    data: {content: newContent, summary: toSummary(newContent)},
   });
 
   // URLが含まれていればarchiveboxへ保存
