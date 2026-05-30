@@ -18,10 +18,10 @@ export function useListOrder(notesRaw: Note[]) {
       }
       return orderFunc(a, b);
     });
-  }, [notesRaw, selectedOrder]);
+  }, [notesRaw, orderFunc]);
   useEffect(() => {
     setShouldScroll(true);
-  }, [notesRaw, selectedOrder]);
+  }, [notesRaw, selectedOrder, setShouldScroll]);
 
   useEffect(() => {
     console.log("scroll b", refSelectedNoteElement.current)
@@ -38,7 +38,7 @@ export function useListOrder(notesRaw: Note[]) {
       refSelectedNoteElement.current.scrollIntoView({block: "center"});
       setShouldScroll(false);
     }
-  }, [refSelectedNoteElement.current]);
+  }, [notes, shouldScroll, setShouldScroll]);
 
   return {notes, refSelectedNoteElement};
 }
