@@ -9,27 +9,26 @@ export async function POST(
   const noteId = parseInt(params.noteId);
 
   if (isNaN(noteId)) {
-    return NextResponse.json({ error: 'Invalid note ID' }, { status: 400 });
+    return NextResponse.json({error: 'Invalid note ID'}, {status: 400});
   }
 
-  const notes = await prisma.$queryRaw<{ pinned: boolean, updatedAt: Date | null }[]>`
-    SELECT "pinned", "updatedAt"
-    FROM "Note"
-    WHERE "id" = ${noteId}
-    LIMIT 1
-  `;
-  const note = notes[0];
+  // 現在のピン状態と更新日時を取得（更新日時は変更したくないので保持する）
+  const note = await prisma.note.findUnique({
+    where: {id: noteId},
+    select: {pinned: true, updatedAt: true},
+  });
 
   if (!note) {
-    return NextResponse.json({ error: 'Note not found' }, { status: 404 });
+    return NextResponse.json({error: 'Note not found'}, {status: 404});
   }
 
-  const pinned = !note.pinned;
-  await prisma.$executeRaw`
-    UPDATE "Note"
-    SET "pinned" = ${pinned}, "updatedAt" = ${note.updatedAt}
-    WHERE "id" = ${noteId}
-  `;
+  const updated = await prisma.note.update({
+    where: {id: noteId},
+    data: {
+      pinned: !note.pinned,
+      updatedAt: note.updatedAt,
+    },
+  });
 
-  return NextResponse.json({ id: noteId, pinned });
+  return NextResponse.json(updated);
 }
