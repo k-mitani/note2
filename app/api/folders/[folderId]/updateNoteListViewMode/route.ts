@@ -1,6 +1,6 @@
 import {prisma} from '@/lib/prisma';
 import {NextRequest, NextResponse} from "next/server";
-import {$Enums} from "@prisma/client";
+import {$Enums} from "@/app/generated/prisma/client";
 
 export async function PUT(req: NextRequest, props: { params: Promise<{ folderId: string }> }) {
   const params = await props.params;

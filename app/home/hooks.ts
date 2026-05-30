@@ -1,5 +1,5 @@
 import useSWR, {mutate} from "swr";
-import {Folder, Note} from "@prisma/client";
+import type {Folder, Note} from "@/app/generated/prisma/browser";
 import {useNote} from "@/app/home/state";
 import * as utils from "@/app/utils";
 import {useCallback, useMemo} from "react";

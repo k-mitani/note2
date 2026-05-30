@@ -1,6 +1,5 @@
 import {create} from 'zustand';
-import {Note} from "@prisma/client";
-import {$Enums} from ".prisma/client";
+import type {Note} from "@/app/generated/prisma/browser";
 import {NoteOrderItem, orderItems} from "@/app/home/components/NoteList/NoteListOrder";
 import {NoteListViewModeItem, viewModeItems} from "@/app/home/components/NoteList/NoteListViewMode";
 

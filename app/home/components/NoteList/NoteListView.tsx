@@ -7,7 +7,7 @@ import {useListOrder, useKeyEventHandlers} from "@/app/home/components/NoteList/
 import {useFolderAndNotes} from "@/app/home/hooks";
 import NoteCard from "@/app/home/components/NoteList/NoteCard";
 import NoteListHeader from "@/app/home/components/NoteList/NoteListHeader";
-import {$Enums} from "@prisma/client";
+import {$Enums} from "@/app/generated/prisma/browser";
 import {orderItems} from "@/app/home/components/NoteList/NoteListOrder";
 import {NOTE_LIST_VIEW_MODE_SUMMARY, viewModeItems} from "@/app/home/components/NoteList/NoteListViewMode";
 

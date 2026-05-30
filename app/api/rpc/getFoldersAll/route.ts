@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import {prisma} from '@/lib/prisma';
 import {NextResponse} from "next/server";
-import {Folder} from "@prisma/client";
+import type {Folder} from "@/app/generated/prisma/client";
 import {isFolderLockUnlocked} from "@/lib/folderLock";
 import {TRASH_FOLDER_ID} from "@/app/home/constants";
 

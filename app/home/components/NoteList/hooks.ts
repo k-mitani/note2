@@ -1,5 +1,5 @@
 import React, {useEffect, useMemo, useRef} from "react";
-import {Note} from "@prisma/client";
+import type {Note} from "@/app/generated/prisma/browser";
 import {useNote} from "@/app/home/state";
 import {useNoteList} from "@/app/home/components/NoteList/state";
 

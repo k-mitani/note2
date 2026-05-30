@@ -1,5 +1,5 @@
 import {create} from 'zustand';
-import {Folder, Note} from '@prisma/client';
+import type {Folder, Note} from '@/app/generated/prisma/browser';
 
 export type ChangedNote = {
   id: number,

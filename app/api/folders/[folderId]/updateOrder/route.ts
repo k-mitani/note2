@@ -1,6 +1,6 @@
 import {prisma} from '@/lib/prisma';
 import {NextRequest, NextResponse} from "next/server";
-import {$Enums, Prisma} from ".prisma/client";
+import {$Enums, Prisma} from "@/app/generated/prisma/client";
 import NotesOrder = $Enums.NotesOrder;
 
 export async function PUT(req: NextRequest, props: { params: Promise<{ folderId: string }> }) {

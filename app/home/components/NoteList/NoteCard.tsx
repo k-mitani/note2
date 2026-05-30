@@ -4,7 +4,7 @@ import * as utils from "@/app/utils";
 import classNames from "classnames";
 import {NoteListStore} from "@/app/home/components/NoteList/state";
 import {mutate} from "swr";
-import {Note} from "@prisma/client";
+import type {Note} from "@/app/generated/prisma/browser";
 import {NOTE_LIST_VIEW_MODE_TITLE_ONLY} from "@/app/home/components/NoteList/NoteListViewMode";
 
 export default function NoteCard(

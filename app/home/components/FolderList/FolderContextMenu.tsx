@@ -1,6 +1,6 @@
 import {mutate} from "swr";
 import {createFolder} from "@/lib/folder";
-import {Folder} from "@prisma/client";
+import type {Folder} from "@/app/generated/prisma/browser";
 import * as utils from "@/app/utils";
 
 function MenuItem({name, onClick}: { name: string, onClick: () => void }) {

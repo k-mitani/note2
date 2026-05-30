@@ -1,4 +1,4 @@
-import type {Folder, Note} from "@prisma/client";
+import type {Folder, Note} from "@/app/generated/prisma/browser";
 import {useDrag, useDrop} from "react-dnd";
 import {useState} from "react";
 import classNames from "classnames";

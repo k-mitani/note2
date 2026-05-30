@@ -1,6 +1,6 @@
 import {prisma} from '@/lib/prisma';
 import {NextRequest, NextResponse} from "next/server";
-import {Prisma} from ".prisma/client";
+import {Prisma} from "@/app/generated/prisma/client";
 import JsonNull = Prisma.JsonNull;
 
 export async function POST(req: NextRequest, props: { params: Promise<{ folderId: string }> }) {

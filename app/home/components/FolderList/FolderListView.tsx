@@ -4,7 +4,7 @@ import classNames from "classnames";
 import {useFoldersAll, useOnDropToFolder} from "@/app/home/hooks";
 import {Folder, FolderCommonProps, FolderAndChild} from "@/app/home/components/FolderList/Folder";
 import useSWR from "swr";
-import {Note} from "@prisma/client";
+import type {Note} from "@/app/generated/prisma/browser";
 import {createFolder} from "@/lib/folder";
 import {findFolderById} from "@/lib/folderTree";
 import {SHORTCUTS_FOLDING_KEY} from "@/app/home/constants";

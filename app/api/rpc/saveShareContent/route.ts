@@ -1,7 +1,7 @@
 import {prisma} from '@/lib/prisma';
 import {NextRequest, NextResponse} from "next/server";
 import settings from "@/lib/settings";
-import {Prisma} from ".prisma/client";
+import {Prisma} from "@/app/generated/prisma/client";
 import {buildLinkPreviewCardHtml} from "@/lib/linkPreview";
 import {archiveUrl} from "@/lib/archive";
 import JsonNull = Prisma.JsonNull;

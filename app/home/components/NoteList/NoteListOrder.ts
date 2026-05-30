@@ -1,5 +1,5 @@
-import {$Enums} from ".prisma/client";
-import {Note} from "@prisma/client";
+import {$Enums} from "@/app/generated/prisma/browser";
+import type {Note} from "@/app/generated/prisma/browser";
 
 export type NoteOrderItem = {
   key: $Enums.NotesOrder;
