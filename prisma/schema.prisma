@@ -24,6 +24,8 @@ model Note {
 
   folder   Folder? @relation(fields: [folderId], references: [id])
   folderId Int?
+
+  @@index([folderId])
 }
 
 enum NotesOrder {
