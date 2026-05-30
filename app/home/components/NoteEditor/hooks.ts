@@ -116,6 +116,8 @@ export async function onPaste(ev: React.ClipboardEvent<HTMLDivElement>) {
   // 添付ファイルありの場合
   if (ev.clipboardData.files.length > 0) {
     ev.preventDefault();
+    // await後はev.currentTargetがnull化されるため、要素参照を先に取得しておく。
+    const editable = document.getElementById("NoteEditor-ContentEditable");
     for (let file of ev.clipboardData.files) {
       if (file.type.includes("image/")) {
         const data = await file.arrayBuffer();
@@ -137,6 +139,10 @@ export async function onPaste(ev: React.ClipboardEvent<HTMLDivElement>) {
         const url = await res.json();
         img.src = url;
         console.log("url2", url);
+        // img.srcのプログラム的な更新ではContentEditableのonChangeが発火せず、
+        // changedNotes/refHtmlにdata URLが残ってしまう。input イベントを発火させて
+        // S3 URL化済みのinnerHTMLを変更内容として確定させる。
+        editable?.dispatchEvent(new Event("input", {bubbles: true}));
       }
     }
     return;
