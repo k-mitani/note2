@@ -1,13 +1,17 @@
 import {useSetting} from "@/app/home/components/Setting/state";
-import {parseIni} from "@smithy/shared-ini-file-loader/dist-types/parseIni";
 import * as utils from "@/app/utils";
 import {mutate} from "swr";
 import {useLocalPrefs} from "@/app/home/useLocalPrefs";
+import {useState} from "react";
 
 export function SettingView() {
   const [autoSave, setAutoSave] = useLocalPrefs(state => [state.autoSave, state.setAutoSave]);
   const isOpen = useSetting(state => state.isOpen);
   const close = useSetting(state => state.close);
+
+  const [key, setKey] = useState("");
+  const [expiration, setExpiration] = useState(600);
+  const [message, setMessage] = useState("");
 
   if (!isOpen) return null;
   return (
@@ -20,36 +24,38 @@ export function SettingView() {
 
         {/* フォルダーロック */}
         <form className="mt-4" onSubmit={async (ev) => {
-          const $message = document.getElementById("setting-message")!;
-          $message.textContent = "sending...";
           ev.preventDefault();
-          const key = (document.getElementById("setting-key") as HTMLInputElement).value;
-          const expiration = parseInt((document.getElementById("setting-expiration") as HTMLInputElement).value);
+          setMessage("sending...");
           const res = await utils.putJson("/api/rpc/setFolderKey", {key, expiration});
-
-          $message.textContent = await res.text();
+          setMessage(await res.text());
           await mutate('/api/rpc/getFoldersAll');
         }}>
           <h2 className="text-lg pb-2">Folder Unlock</h2>
           <label className="flex items-center mb-2">
             <span className="w-20">Key</span>
-            <input id="setting-key" type="password" className="border border-gray-300 rounded-md ml-2 p-1 w-80"/>
+            <input type="password"
+                   className="border border-gray-300 rounded-md ml-2 p-1 w-80"
+                   value={key}
+                   onChange={ev => setKey(ev.target.value)}/>
           </label>
           <label className="flex items-center">
             <span className="w-20">Expiration</span>
-            <input id="setting-expiration" defaultValue={600} type="number" className="border border-gray-300 rounded-md ml-2 p-1 w-80"/>
+            <input type="number"
+                   className="border border-gray-300 rounded-md ml-2 p-1 w-80"
+                   value={expiration}
+                   onChange={ev => setExpiration(parseInt(ev.target.value) || 0)}/>
           </label>
           <button type="submit" className="mt-4 bg-blue-500 text-white rounded-md p-2 w-20 hover:bg-blue-400">
             Set
           </button>
-          <p id="setting-message" className="text-sm text-gray-500 mt-2"></p>
+          <p className="text-sm text-gray-500 mt-2">{message}</p>
         </form>
 
         {/* その他 */}
         <div className="mt-4">
           <h2 className="text-lg pb-2">Others</h2>
           <button className="ms-1 text-sm" onClick={() => setAutoSave(!autoSave)}>
-            <input className="align-middle" type="checkbox" checked={autoSave}/>
+            <input className="align-middle" type="checkbox" checked={autoSave} readOnly/>
             <span className="align-middle">自動保存</span>
           </button>
         </div>
