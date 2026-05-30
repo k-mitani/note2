@@ -1,11 +1,9 @@
-import {cookies} from "next/headers";
-
 export const dynamic = "force-dynamic";
 import {prisma} from '@/lib/prisma';
 import {NextResponse} from "next/server";
 import {Folder} from "@prisma/client";
-
-const FOLDER_LOCK_SECRET = process.env.FOLDER_LOCK_SECRET ?? null;
+import {isFolderLockUnlocked} from "@/lib/folderLock";
+import {TRASH_FOLDER_ID} from "@/app/home/constants";
 
 export async function GET() {
   // 全フォルダーを取得する。
@@ -18,16 +16,8 @@ export async function GET() {
       }
     }
   });
-  const viewModes = await prisma.$queryRaw<{ id: number, noteListViewMode: string }[]>`
-    SELECT "id", "noteListViewMode"
-    FROM "Folder"
-  `;
-  const viewModeById = new Map(viewModes.map(row => [row.id, row.noteListViewMode]));
-  foldersAll.forEach((folder: any) => {
-    folder.noteListViewMode = viewModeById.get(folder.id) ?? "SUMMARY";
-  });
   // ゴミ箱を取得する。
-  let trash = foldersAll.find(f => f.id === -1);
+  let trash = foldersAll.find(f => f.id === TRASH_FOLDER_ID);
 
   // 平坦な配列から木構造に直す。
   // まず辞書に直す。
@@ -53,13 +43,8 @@ export async function GET() {
   }
   sortChildren(roots);
 
-  const cookieStore = await cookies();
-  const folderKey = cookieStore.get("FOLDER_KEY")?.value;
-  const shouldLock =
-    FOLDER_LOCK_SECRET == null ||
-    FOLDER_LOCK_SECRET.length === 0 ||
-    folderKey !== FOLDER_LOCK_SECRET;
   // ロック状態ならlockedなフォルダーは除外する。
+  const shouldLock = !(await isFolderLockUnlocked());
   if (shouldLock) {
     function removeLockedFolder(folders: any[]) {
       return folders.filter((f: any) => {

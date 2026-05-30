@@ -1,8 +1,6 @@
 import {prisma} from '@/lib/prisma';
 import {NextRequest, NextResponse} from "next/server";
-import {cookies} from "next/headers";
-
-const FOLDER_LOCK_SECRET = process.env.FOLDER_LOCK_SECRET ?? null;
+import {isFolderLockUnlocked} from "@/lib/folderLock";
 
 export async function PUT(req: NextRequest, props: { params: Promise<{ folderId: string }> }) {
   const params = await props.params;
@@ -13,16 +11,8 @@ export async function PUT(req: NextRequest, props: { params: Promise<{ folderId:
   const {shouldLock} = await req.json();
 
   // ロック解除の場合はキーが必要
-  if (!shouldLock) {
-    const cookieStore = await cookies();
-    const folderKey = cookieStore.get("FOLDER_KEY")?.value;
-    const cannotLock =
-      FOLDER_LOCK_SECRET == null ||
-      FOLDER_LOCK_SECRET.length === 0 ||
-      folderKey !== FOLDER_LOCK_SECRET;
-    if (cannotLock) {
-      return NextResponse.error();
-    }
+  if (!shouldLock && !(await isFolderLockUnlocked())) {
+    return NextResponse.error();
   }
 
   const folder = await prisma.folder.update({
