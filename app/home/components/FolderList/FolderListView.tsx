@@ -45,7 +45,7 @@ export default function FolderListView({forceVisible = false}: {
 
   return (
     <div className={classNames(
-      'p-0.5 flex-1 flex flex-col h-0 basis-16 md:flex-none md:h-full w-48 md:w-72',
+      'p-0.5 flex-1 flex flex-col h-0 basis-16 md:flex-none md:h-full w-48 md:w-60',
       'bg-gray-700 text-white dark:bg-gray-950 dark:text-gray-300',
       {'hidden': !forceVisible && !showSideBar},
     )}>

@@ -61,7 +61,7 @@ export function Header() {
         <FaFolderClosed className="m-auto"/>
       </button>
 
-      <button className="ms-6 md:ms-16 rounded bg-gray-500 dark:bg-gray-700 p-2 w-20 md:w-24 hover:bg-gray-400"
+      <button className="ms-6 md:ms-[7.5rem] rounded bg-gray-500 dark:bg-gray-700 p-2 w-20 md:w-24 hover:bg-gray-400"
               onClick={onCreateNewNote}>
         <FaSquarePlus className="m-auto"/>
       </button>
