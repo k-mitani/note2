@@ -14,7 +14,9 @@ import {NOTE_LIST_VIEW_MODE_SUMMARY, viewModeItems} from "@/app/home/components/
 /**
  * ノート一覧
  */
-export default function NoteListView() {
+export default function NoteListView({forceVisible = false}: {
+  forceVisible?: boolean,
+}) {
   console.log("NoteListView prepare render");
   const selectedNote = useNote(state => state.selectedNote);
   const changedNotes = useNote(state => state.changedNotes);
@@ -22,7 +24,6 @@ export default function NoteListView() {
 
   const selectedFolder = useNote(state => state.selectedFolder);
   const {notes: notesRaw, isLoading} = useFolderAndNotes(selectedFolder?.id);
-  const noteCount = notesRaw.length;
 
   console.log("NoteListView prepare render for sort");
   const {notes: notesSorted, refSelectedNoteElement} = useListOrder(notesRaw);
@@ -64,10 +65,10 @@ export default function NoteListView() {
     <div className={classNames(
       'flex flex-1 flex-col h-0 basis-80 md:flex-none md:h-full w-48 md:w-72',
       'bg-gray-100 dark:bg-gray-900 dark:text-gray-400',
-      {'hidden': !showNoteListView},
+      {'hidden': !forceVisible && !showNoteListView},
     )}>
       {/*ヘッダー*/}
-      <NoteListHeader noteCount={noteCount} folderId={selectedFolder?.id ?? -1} />
+      <NoteListHeader folderId={selectedFolder?.id ?? -1} />
 
       {/* ロード中の場合 */}
       {isLoading && <div className="flex-grow p-2">loading...</div>}

@@ -13,7 +13,9 @@ import * as utils from "@/app/utils";
 /**
  * フォルダーやノートを表示する。
  */
-export default function FolderListView() {
+export default function FolderListView({forceVisible = false}: {
+  forceVisible?: boolean,
+}) {
   // フォルダーとゴミ箱
   const {folders = [], trash = null} = useFoldersAll().data ?? {};
   // ブックマーク一覧
@@ -43,9 +45,9 @@ export default function FolderListView() {
 
   return (
     <div className={classNames(
-      'p-0.5 flex-1 flex flex-col h-0 basis-0.5 md:flex-none md:h-full w-48 md:w-72',
+      'p-0.5 flex-1 flex flex-col h-0 basis-16 md:flex-none md:h-full w-48 md:w-72',
       'bg-gray-700 text-white dark:bg-gray-950 dark:text-gray-300',
-      {'hidden': !showSideBar}
+      {'hidden': !forceVisible && !showSideBar},
     )}>
       {/*固定ヘッダー*/}
       <div>
