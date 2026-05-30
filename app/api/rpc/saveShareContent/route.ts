@@ -4,6 +4,7 @@ import settings from "@/lib/settings";
 import {Prisma} from "@/app/generated/prisma/client";
 import {buildLinkPreviewCardHtml} from "@/lib/linkPreview";
 import {archiveUrl} from "@/lib/archive";
+import {normalizeNoteContent} from "@/lib/normalizeNoteContent";
 import JsonNull = Prisma.JsonNull;
 
 const LINK_PREVIEW_TIMEOUT_MS = 8000;
@@ -115,7 +116,7 @@ export async function GET(
   if (snippet == null) {
     snippet = buildSnippet(expanded);
   }
-  const newContent = "<br>" + snippet + "<br><br><br>" + inbox.content;
+  const newContent = await normalizeNoteContent("<br>" + snippet + "<br><br><br>" + inbox.content);
 
   await prisma.note.update({
     where: {id: inbox.id},
