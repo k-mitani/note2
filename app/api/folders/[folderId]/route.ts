@@ -38,5 +38,26 @@ export async function GET(_req: NextRequest, props: { params: Promise<{ folderId
     }
   }
 
+  if (folder != null) {
+    const [pinnedRows, viewModeRows] = await Promise.all([
+      prisma.$queryRaw<{ id: number, pinned: boolean }[]>`
+        SELECT "id", "pinned"
+        FROM "Note"
+        WHERE "folderId" = ${folderId}
+      `,
+      prisma.$queryRaw<{ noteListViewMode: string }[]>`
+        SELECT "noteListViewMode"
+        FROM "Folder"
+        WHERE "id" = ${folderId}
+      `,
+    ]);
+    const pinnedById = new Map(pinnedRows.map(row => [row.id, row.pinned]));
+    (folder.notes as any[]) = folder.notes.map(note => ({
+      ...note,
+      pinned: pinnedById.get(note.id) ?? false,
+    }));
+    (folder as any).noteListViewMode = viewModeRows[0]?.noteListViewMode ?? "SUMMARY";
+  }
+
   return NextResponse.json(folder);
 }

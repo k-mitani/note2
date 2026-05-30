@@ -2,8 +2,9 @@ import React, {useEffect, useMemo, useRef} from "react";
 import {Note} from "@prisma/client";
 import {useNote} from "@/app/home/state";
 import {useNoteList} from "@/app/home/components/NoteList/state";
+import {NoteWithPinned} from "@/app/home/types";
 
-export function useListOrder(notesRaw: Note[]) {
+export function useListOrder(notesRaw: NoteWithPinned[]) {
   const selectedOrder = useNoteList(state => state.selectedOrder);
   const shouldScroll = useNoteList(state => state.shouldScroll);
   const setShouldScroll = useNoteList(state => state.setShouldScroll);
@@ -12,7 +13,12 @@ export function useListOrder(notesRaw: Note[]) {
   const refSelectedNoteElement = useRef<Element>(null);
   const notes = useMemo(() => {
     console.log("sort notes");
-    return notesRaw.sort(orderFunc as any);
+    return [...notesRaw].sort((a, b) => {
+      if (a.pinned !== b.pinned) {
+        return a.pinned ? -1 : 1;
+      }
+      return orderFunc(a, b);
+    });
   }, [notesRaw, selectedOrder]);
   useEffect(() => {
     setShouldScroll(true);
@@ -39,7 +45,7 @@ export function useListOrder(notesRaw: Note[]) {
 }
 
 
-export function useKeyEventHandlers(notes: Note[]) {
+export function useKeyEventHandlers(notes: NoteWithPinned[]) {
   const selectedNote = useNote(state => state.selectedNote);
   const setSelectedNote = useNote(state => state.setSelectedNote);
   const multiSelectionMode = useNoteList(state => state.multiSelectionMode);
@@ -61,10 +67,10 @@ export function useKeyEventHandlers(notes: Note[]) {
     let index = -1;
     if (ev.key === "ArrowDown") {
       if (selectedNote == null) index = 0;
-      else index = Math.min(notes.indexOf(selectedNote) + 1, notes.length - 1);
+      else index = Math.min(notes.findIndex(n => n.id === selectedNote.id) + 1, notes.length - 1);
     } else if (ev.key === "ArrowUp") {
       if (selectedNote == null) index = 0;
-      else index = Math.max(notes.indexOf(selectedNote) - 1, 0);
+      else index = Math.max(notes.findIndex(n => n.id === selectedNote.id) - 1, 0);
     }
     if (index >= 0) {
       const nextNote = notes[index];
@@ -93,8 +99,9 @@ export function useKeyEventHandlers(notes: Note[]) {
   }
 
   function onShiftClick(note: Note) {
-    const start = notes!.indexOf(selectedNote as Note);
-    const end = notes!.indexOf(note);
+    const start = notes!.findIndex(n => n.id === selectedNote?.id);
+    const end = notes!.findIndex(n => n.id === note.id);
+    if (start < 0 || end < 0) return;
     const [a, b] = start < end ? [start, end] : [end, start];
     const newNotes = notes!.slice(a, b + 1);
     // すでに複数選択状態なら

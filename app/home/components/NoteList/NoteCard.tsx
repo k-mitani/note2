@@ -1,10 +1,11 @@
-import {Note} from "@prisma/client";
 import React from "react";
 import {useDrag} from "react-dnd";
 import * as utils from "@/app/utils";
 import classNames from "classnames";
 import {NoteListStore} from "@/app/home/components/NoteList/state";
 import {mutate} from "swr";
+import {NoteWithPinned} from "@/app/home/types";
+import {NOTE_LIST_VIEW_MODE_TITLE_ONLY} from "@/app/home/components/NoteList/NoteListViewMode";
 
 export default function NoteCard(
   {
@@ -18,17 +19,18 @@ export default function NoteCard(
     onCtrlClick,
     onShiftClick,
   }: {
-    note: Note,
+    note: NoteWithPinned,
     noteListState: NoteListStore,
-    setSelectedNote: (note: Note) => void,
+    setSelectedNote: (note: NoteWithPinned) => void,
     _ref: React.Ref<HTMLButtonElement>,
     changed: { title: string, content: string } | undefined,
     isSelected: boolean,
     onKeyDown: (e: React.KeyboardEvent<HTMLButtonElement>) => void,
-    onCtrlClick: (note: Note) => void,
-    onShiftClick: (note: Note) => void,
+    onCtrlClick: (note: NoteWithPinned) => void,
+    onShiftClick: (note: NoteWithPinned) => void,
   }) {
   const isMultiSelected = noteListState.isMultiSelected(note);
+  const isTitleOnly = noteListState.selectedViewMode.key === NOTE_LIST_VIEW_MODE_TITLE_ONLY;
 
   const [{}, refDrag] = useDrag(() => ({
     type: "note",
@@ -57,6 +59,13 @@ export default function NoteCard(
     await fetch(`/api/notes/${note.id}/toggleBookmark`, { method: 'POST' });
     mutate(`/api/folders/${note.folderId}`);
     mutate('/api/bookmarks');
+  };
+
+  const togglePin = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    await fetch(`/api/notes/${note.id}/togglePin`, { method: 'POST' });
+    mutate(`/api/folders/${note.folderId}`);
   };
 
   return (
@@ -98,25 +107,41 @@ export default function NoteCard(
 
       {/*本体*/}
       <div className={classNames(
-        "flex flex-col hover:bg-white dark:hover:bg-black hover:border-cyan-400 dark:hover:border-cyan-600 border-2 p-0.5 md:p-2",
+        "hover:bg-white dark:hover:bg-black hover:border-cyan-400 dark:hover:border-cyan-600 border-2 p-0.5 md:p-2",
+        isTitleOnly ? "flex items-center gap-2" : "flex flex-col",
         isSelected ? "border-blue-500 dark:border-blue-600 bg-white dark:bg-gray-900" : " border-gray-100 dark:border-gray-900",
       )}
            ref={refDrag as any}>
         {/*タイトル*/}
-        <strong className="text-xs md:text-base line-clamp-2">{(changed ?? note).title}</strong>
+        <strong className={classNames(
+          "text-xs md:text-base",
+          isTitleOnly ? "min-w-0 flex-grow truncate" : "line-clamp-2",
+        )}>{(changed ?? note).title}</strong>
 
         {/*サマリー*/}
-        <div className={"mt-2 h-16 line-clamp-3 text-gray-600 dark:text-gray-400 text-xs md:text-sm"}>{text}</div>
+        {!isTitleOnly && <div className={"mt-2 h-16 line-clamp-3 text-gray-600 dark:text-gray-400 text-xs md:text-sm"}>{text}</div>}
 
-        {/*日付とブックマーク*/}
-        <div className={"mt-2 flex items-center justify-between"}>
-          <div className={"text-[12px] text-gray-500"}>{dateText}</div>
-          <div
-            onMouseDown={toggleBookmark}
-            className="text-sm cursor-pointer"
-            title={note.bookmarked ? "ブックマークを解除" : "ブックマークに追加"}
-          >
-            {note.bookmarked ? '★' : '☆'}
+        {/*日付と操作*/}
+        <div className={classNames(
+          "flex items-center",
+          isTitleOnly ? "flex-none gap-2" : "mt-2 justify-between",
+        )}>
+          {!isTitleOnly && <div className={"text-[12px] text-gray-500"}>{dateText}</div>}
+          <div className="flex items-center gap-2">
+            <div
+              onMouseDown={togglePin}
+              className={classNames("text-sm cursor-pointer", note.pinned ? "text-cyan-600 dark:text-cyan-400" : "text-gray-400")}
+              title={note.pinned ? "ピン留めを解除" : "ピン留め"}
+            >
+              {note.pinned ? '📌' : '⌖'}
+            </div>
+            <div
+              onMouseDown={toggleBookmark}
+              className="text-sm cursor-pointer"
+              title={note.bookmarked ? "ブックマークを解除" : "ブックマークに追加"}
+            >
+              {note.bookmarked ? '★' : '☆'}
+            </div>
           </div>
         </div>
       </div>

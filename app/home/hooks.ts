@@ -3,6 +3,7 @@ import {Folder, Note} from "@prisma/client";
 import {useNote} from "@/app/home/state";
 import * as utils from "@/app/utils";
 import {useCallback} from "react";
+import {NoteWithPinned} from "@/app/home/types";
 
 type FolderAndChild = Folder & { childFolders: FolderAndChild[] };
 
@@ -21,11 +22,11 @@ function folderUrl(folderId: number | undefined) {
   return `/api/folders/${folderId}`;
 }
 
-const emptyNoteList: Note[] = [];
-export function useFolderAndNotes(folderId: number | undefined): {notes: Note[], isLoading: boolean} {
-  const {data, isLoading} = useSWR<Folder & { notes: Note[] }>(folderUrl(folderId), fetcher);
+const emptyNoteList: NoteWithPinned[] = [];
+export function useFolderAndNotes(folderId: number | undefined): {notes: NoteWithPinned[], isLoading: boolean} {
+  const {data, isLoading} = useSWR<Folder & { notes: NoteWithPinned[] }>(folderUrl(folderId), fetcher);
   if (data != null) {
-    data.notes.forEach((n: Note) => {
+    data.notes.forEach((n: NoteWithPinned) => {
       if (n != null && !(n.updatedAt instanceof Date)) n.updatedAt = new Date(n.updatedAt as any);
       if (!(n.createdAt instanceof Date)) n.createdAt = new Date(n.createdAt as any);
     });
