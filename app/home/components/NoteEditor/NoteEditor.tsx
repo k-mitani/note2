@@ -289,10 +289,13 @@ export default function NoteEditor() {
 
   // ノート選択中だがフル版（content）がまだ取得できていない間は、本文を編集させない。
   // 軽量版の空contentを編集・保存して本文を消してしまうのを防ぐため。
-  if (note != null && !isFullLoaded) {
-    return <div className="flex min-h-0 min-w-0 grow flex-col items-center justify-center bg-white dark:bg-black dark:text-gray-400">
-      loading...
-    </div>;
+  // ただし、別フォルダーをクリックしただけ（選択ノートは前フォルダーのままで本文は
+  // 取得済み）の場合は、新フォルダーの読み込み状態で誤ってローディング表示にして
+  // 画面が一瞬白くチラつくのを防ぐため、選択ノートが現在のフォルダーに属するときだけ
+  // ローディングを出す。
+  if (note != null && note.folderId === selectedFolder?.id && !isFullLoaded) {
+    // すぐ取得が終わるので「loading...」等のテキストは出さず、空のパネルにする。
+    return <div className="flex min-h-0 min-w-0 grow flex-col bg-white dark:bg-black" />;
   }
 
   return <div className="flex min-h-0 min-w-0 grow flex-col bg-white dark:bg-black">
