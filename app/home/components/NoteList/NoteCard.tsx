@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState} from "react";
 import {useDrag} from "react-dnd";
 import * as utils from "@/app/utils";
 import classNames from "classnames";
@@ -6,6 +6,7 @@ import {NoteListStore} from "@/app/home/components/NoteList/state";
 import {mutate} from "swr";
 import type {Note} from "@/app/generated/prisma/browser";
 import {NOTE_LIST_VIEW_MODE_TITLE_ONLY} from "@/app/home/components/NoteList/NoteListViewMode";
+import {NoteContextMenu} from "@/app/home/components/NoteList/NoteContextMenu";
 
 const UNTITLED_NOTE_TITLE = "無題のノート";
 const FALLBACK_TITLE_LENGTH = 32;
@@ -50,6 +51,7 @@ export default function NoteCard(
   }) {
   const isMultiSelected = noteListState.isMultiSelected(note);
   const isTitleOnly = noteListState.selectedViewMode.key === NOTE_LIST_VIEW_MODE_TITLE_ONLY;
+  const [menuPos, setMenuPos] = useState<{ x: number, y: number } | null>(null);
 
   const [{}, refDrag] = useDrag(() => ({
     type: "note",
@@ -87,9 +89,16 @@ export default function NoteCard(
   };
 
   return (
+    <>
     <button
       className="relative block w-full border-b-2 border-r border-gray-300 border-r-gray-200 text-start dark:border-gray-700 dark:border-r-gray-800"
+      onContextMenu={(ev) => {
+        ev.preventDefault();
+        setMenuPos({x: ev.clientX, y: ev.clientY});
+      }}
       onMouseDown={(ev) => {
+        // 右クリック（コンテキストメニュー）では選択を変更しない。
+        if (ev.button === 2) return;
         // Ctrl+クリックで通常選択モードなら、
         // 複数選択モードに入り現在のノートとクリックされたノートを選択状態にする。
         if (ev.ctrlKey) {
@@ -126,25 +135,23 @@ export default function NoteCard(
       {/*本体*/}
       <div className={classNames(
         "hover:bg-white dark:hover:bg-black hover:border-cyan-400 dark:hover:border-cyan-600 border-2 p-0.5 md:p-2",
-        isTitleOnly ? "flex h-12 items-center gap-2 md:h-16" : "flex flex-col",
+        "flex flex-col",
         isSelected ? "border-blue-500 dark:border-blue-600 bg-white dark:bg-gray-900" : " border-gray-100 dark:border-gray-900",
       )}
            ref={refDrag as any}>
         {/*タイトル*/}
         <strong className={classNames(
-          "text-xs md:text-base",
-          isTitleOnly ? "line-clamp-2 h-8 min-w-0 flex-grow leading-4 md:h-12 md:leading-6" : "line-clamp-2",
+          "line-clamp-2 text-xs md:text-base",
         )}>{displayTitle}</strong>
 
         {/*サマリー*/}
-        {!isTitleOnly && <div className={"mt-2 h-16 line-clamp-3 text-gray-600 dark:text-gray-400 text-xs md:text-sm"}>{text}</div>}
+        {!isTitleOnly && <div className={"mt-2 h-12 md:h-[3.75rem] line-clamp-3 text-gray-600 dark:text-gray-400 text-xs leading-4 md:text-sm md:leading-5"}>{text}</div>}
 
         {/*日付と操作*/}
         <div className={classNames(
-          "flex items-center",
-          isTitleOnly ? "flex-none gap-2" : "mt-2 justify-between",
+          "mt-2 flex items-center justify-between",
         )}>
-          {!isTitleOnly && <div className={"text-[12px] text-gray-500"}>{dateText}</div>}
+          <div className={"text-[12px] text-gray-500"}>{dateText}</div>
           <div className="flex items-center gap-2">
             <div
               onMouseDown={togglePin}
@@ -163,5 +170,9 @@ export default function NoteCard(
           </div>
         </div>
       </div>
-    </button>);
+    </button>
+
+    {/*コンテキストメニュー*/}
+    {menuPos && <NoteContextMenu note={note} x={menuPos.x} y={menuPos.y} onClose={() => setMenuPos(null)} />}
+    </>);
 }
