@@ -21,9 +21,15 @@ export function useShowingImePopup(): boolean {
   return isComposing;
 }
 
-export function useEnableImageResize() {
+export function useEnableImageResize(note: unknown) {
+  // note を依存に含めることで、ノート選択直後はまだ ContentEditable が
+  // マウントされていない（読み込み中のloading表示）場合でも、本文が
+  // 表示されたタイミングで再実行してリスナーを取り付け直す。
+  // パーマリンク復元時に editable が null で addEventListener が落ちるのを防ぐ。
   useEffect(() => {
     const editable = document.getElementById("NoteEditor-ContentEditable");
+    if (editable == null) return;
+
     let activeImage: HTMLImageElement | null = null;
     let isResizing = false;
     let currentX = 0;
@@ -31,7 +37,7 @@ export function useEnableImageResize() {
     let initialWidth = 0;
     let initialHeight = 0;
 
-    editable!.addEventListener('mousedown', ev => {
+    function onMouseDown(ev: MouseEvent) {
       if ((ev.target as HTMLElement)?.tagName !== 'IMG') return;
       // 画像の端（右下）付近でクリックされた場合のみリサイズを開始
       const img = ev.target as HTMLImageElement;
@@ -57,7 +63,7 @@ export function useEnableImageResize() {
         // デフォルトのドラッグ動作を防止
         ev.preventDefault();
       }
-    });
+    }
 
     function resize(ev: MouseEvent) {
       if (!isResizing) return;
@@ -84,7 +90,7 @@ export function useEnableImageResize() {
     }
 
     // ホバー時のカーソル表示
-    editable!.addEventListener('mousemove', ev => {
+    function onMouseMove(ev: MouseEvent) {
       if ((ev.target as HTMLElement)?.tagName === 'IMG') {
         const img = ev.target as HTMLImageElement;
         const rect = img.getBoundingClientRect();
@@ -97,9 +103,18 @@ export function useEnableImageResize() {
           img.style.cursor = 'default';
         }
       }
-    });
+    }
 
-  }, []);
+    editable.addEventListener('mousedown', onMouseDown);
+    editable.addEventListener('mousemove', onMouseMove);
+
+    return () => {
+      editable.removeEventListener('mousedown', onMouseDown);
+      editable.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mousemove', resize);
+      document.removeEventListener('mouseup', stopResize);
+    };
+  }, [note]);
 }
 
 export async function onPaste(ev: React.ClipboardEvent<HTMLDivElement>) {

@@ -285,7 +285,7 @@ export default function NoteEditor() {
   }, hotkeysOptions);
 
   // 画像のリサイズ
-  hooks.useEnableImageResize();
+  hooks.useEnableImageResize(note);
 
   // ノート選択中だがフル版（content）がまだ取得できていない間は、本文を編集させない。
   // 軽量版の空contentを編集・保存して本文を消してしまうのを防ぐため。

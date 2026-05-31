@@ -14,6 +14,7 @@ import {SettingView} from "@/app/home/components/Setting/SettingView";
 import {useLocalPrefs} from "@/app/home/useLocalPrefs";
 import classNames from "classnames";
 import {useIsMobile} from "@/app/home/useIsMobile";
+import {useNotePermalink} from "@/app/home/useNotePermalink";
 
 
 function HomeInternal() {
@@ -27,6 +28,9 @@ function HomeInternal() {
   const sidebarOpen = showSideBar || showNoteListView;
   const isMobile = useIsMobile();
   const touchStart = useRef<{ x: number, y: number } | null>(null);
+
+  // ノートのパーマリンク（?note=<id>）とブラウザの戻る/進む（History API）。
+  useNotePermalink();
 
   const openDrawer = useCallback(() => {
     setShowSideBar(true);

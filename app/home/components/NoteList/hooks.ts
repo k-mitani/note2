@@ -7,6 +7,7 @@ export function useListOrder(notesRaw: Note[]) {
   const selectedOrder = useNoteList(state => state.selectedOrder);
   const shouldScroll = useNoteList(state => state.shouldScroll);
   const setShouldScroll = useNoteList(state => state.setShouldScroll);
+  const selectedNote = useNote(state => state.selectedNote);
 
   const orderFunc = selectedOrder.comp;
   const refSelectedNoteElement = useRef<HTMLButtonElement>(null);
@@ -38,7 +39,10 @@ export function useListOrder(notesRaw: Note[]) {
       refSelectedNoteElement.current.scrollIntoView({block: "center"});
       setShouldScroll(false);
     }
-  }, [notes, shouldScroll, setShouldScroll]);
+    // selectedNote も依存に含める。パーマリンク復元や戻る/進む（popstate）では、
+    // フォルダーのフル版読み込み後に選択ノートが一覧内の同一オブジェクトへ差し替わる。
+    // そのタイミングで選択カードのスクロール位置を合わせるため。
+  }, [notes, shouldScroll, setShouldScroll, selectedNote]);
 
   return {notes, refSelectedNoteElement};
 }
