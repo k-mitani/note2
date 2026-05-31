@@ -70,8 +70,7 @@ export default function NoteListView({forceVisible = false}: {
       {/*ヘッダー*/}
       <NoteListHeader folderId={selectedFolder?.id ?? -1} />
 
-      {/* ロード中の場合 */}
-      {isLoading && <div className="flex-grow p-2">loading...</div>}
+      {/* ロード中はすぐ終わるので何も表示しない（loading... は出さない）。 */}
       {!isLoading && notes.length === 0 && <div className="flex-grow p-2">no notes</div>}
       {!isLoading && notes.length > 0 && <ul id="note-list" className="flex-grow overflow-y-scroll">
         {notes.map((note, i) => {
