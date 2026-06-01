@@ -21,6 +21,11 @@ export async function runBackup() {
 }
 
 export function start() {
+  if (process.env.DISABLE_BACKUP_TASK === "true") {
+    console.log('バックアップタスクは無効化されています。');
+    return;
+  }
+
   schedule.scheduleJob('0 3 * * *', () => {
     runBackup();
   });

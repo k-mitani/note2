@@ -42,5 +42,10 @@ public/workbox-*
 public/objects/
 backup.custom
 
+# Windows local launcher build output
+/windows-local/Launcher/.vs/
+/windows-local/Launcher/bin/
+/windows-local/Launcher/obj/
+
 # AI agents
 .antigravitycli/

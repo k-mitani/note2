@@ -1,47 +1,48 @@
-import {
-  S3Client,
-  ListBucketsCommand,
-  ListObjectsV2Command,
-  GetObjectCommand,
-  PutObjectCommand
-} from "@aws-sdk/client-s3";
-import {StreamingBlobPayloadInputTypes} from "@smithy/types";
+import {S3Client, PutObjectCommand} from "@aws-sdk/client-s3";
+import fs from "fs";
+import path from "path";
 
 const LOCAL_IMAGE_SAVE = process.env.LOCAL_IMAGE_SAVE === "true";
 const LOCAL_IMAGE_PREFIX = process.env.LOCAL_IMAGE_PREFIX || "objects/";
 
-const ACCESS_KEY_ID = process.env.S3_ACCESS_KEY_ID;
-const SECRET_ACCESS_KEY = process.env.S3_SECRET_ACCESS_KEY;
-if (!ACCESS_KEY_ID || !SECRET_ACCESS_KEY) {
-  throw new Error("Missing credentials");
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing ${name}`);
+  }
+  return value;
 }
 
-const REGION = process.env.S3_REGION;
-const ENDPOINT = process.env.S3_ENDPOINT;
-const BUCKET_NAME = process.env.S3_BUCKET_NAME;
-const PREFIX = process.env.S3_PREFIX || "";
-const PUBLIC_URL = process.env.S3_PUBLIC_URL;
-if (!BUCKET_NAME) {
-  throw new Error("Missing bucket name");
+function createS3Client(): S3Client {
+  return new S3Client({
+    region: process.env.S3_REGION,
+    endpoint: process.env.S3_ENDPOINT,
+    credentials: {
+      accessKeyId: requireEnv("S3_ACCESS_KEY_ID"),
+      secretAccessKey: requireEnv("S3_SECRET_ACCESS_KEY"),
+    },
+  });
 }
 
-const S3 = new S3Client({
-  region: REGION,
-  endpoint: ENDPOINT,
-  credentials: {
-    accessKeyId: ACCESS_KEY_ID,
-    secretAccessKey: SECRET_ACCESS_KEY,
-  },
-});
+function objectUrl(...parts: string[]): string {
+  const segments = parts
+    .join("/")
+    .split("/")
+    .filter(Boolean)
+    .map(encodeURIComponent);
+  return `/${segments.join("/")}`;
+}
 
 function saveObjectLocal(key: string, blob: ArrayBuffer): string {
-  const fs = require("fs");
-  const path = require("path");
-  const cwd = process.cwd();
-  const filePath = path.join(cwd, "public", LOCAL_IMAGE_PREFIX, key);
+  const publicDir = path.resolve(process.cwd(), "public");
+  const filePath = path.resolve(publicDir, LOCAL_IMAGE_PREFIX, key);
+  if (!filePath.startsWith(publicDir + path.sep)) {
+    throw new Error("Invalid local object key");
+  }
+
   fs.mkdirSync(path.dirname(filePath), {recursive: true});
-  fs.writeFileSync(filePath, Buffer.from(blob));
-  return `/${LOCAL_IMAGE_PREFIX}${key}`;
+  fs.writeFileSync(filePath, new Uint8Array(blob));
+  return objectUrl(LOCAL_IMAGE_PREFIX, key);
 }
 
 export async function saveObject(
@@ -53,13 +54,17 @@ export async function saveObject(
     return saveObjectLocal(key, blob);
   }
 
-  await S3.send(
+  const bucketName = requireEnv("S3_BUCKET_NAME");
+  const prefix = process.env.S3_PREFIX || "";
+  const publicUrl = requireEnv("S3_PUBLIC_URL");
+
+  await createS3Client().send(
     new PutObjectCommand({
-      Bucket: BUCKET_NAME,
-      Key: PREFIX + key,
+      Bucket: bucketName,
+      Key: prefix + key,
       Body: blob as any,
       ContentType: contentType ?? "application/octet-stream",
     })
   );
-  return PUBLIC_URL + PREFIX + key;
+  return publicUrl + prefix + key;
 }
