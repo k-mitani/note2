@@ -218,7 +218,7 @@ export type NoteGroupByOutputType = {
   title: string
   content: string
   summary: string
-  tags: string[]
+  tags: runtime.JsonValue
   resource: runtime.JsonValue | null
   attributes: runtime.JsonValue | null
   bookmarked: boolean
@@ -256,7 +256,7 @@ export type NoteWhereInput = {
   title?: Prisma.StringFilter<"Note"> | string
   content?: Prisma.StringFilter<"Note"> | string
   summary?: Prisma.StringFilter<"Note"> | string
-  tags?: Prisma.StringNullableListFilter<"Note">
+  tags?: Prisma.JsonFilter<"Note">
   resource?: Prisma.JsonNullableFilter<"Note">
   attributes?: Prisma.JsonNullableFilter<"Note">
   bookmarked?: Prisma.BoolFilter<"Note"> | boolean
@@ -291,7 +291,7 @@ export type NoteWhereUniqueInput = Prisma.AtLeast<{
   title?: Prisma.StringFilter<"Note"> | string
   content?: Prisma.StringFilter<"Note"> | string
   summary?: Prisma.StringFilter<"Note"> | string
-  tags?: Prisma.StringNullableListFilter<"Note">
+  tags?: Prisma.JsonFilter<"Note">
   resource?: Prisma.JsonNullableFilter<"Note">
   attributes?: Prisma.JsonNullableFilter<"Note">
   bookmarked?: Prisma.BoolFilter<"Note"> | boolean
@@ -330,7 +330,7 @@ export type NoteScalarWhereWithAggregatesInput = {
   title?: Prisma.StringWithAggregatesFilter<"Note"> | string
   content?: Prisma.StringWithAggregatesFilter<"Note"> | string
   summary?: Prisma.StringWithAggregatesFilter<"Note"> | string
-  tags?: Prisma.StringNullableListFilter<"Note">
+  tags?: Prisma.JsonWithAggregatesFilter<"Note">
   resource?: Prisma.JsonNullableWithAggregatesFilter<"Note">
   attributes?: Prisma.JsonNullableWithAggregatesFilter<"Note">
   bookmarked?: Prisma.BoolWithAggregatesFilter<"Note"> | boolean
@@ -344,7 +344,7 @@ export type NoteCreateInput = {
   title: string
   content: string
   summary?: string
-  tags?: Prisma.NoteCreatetagsInput | string[]
+  tags?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   resource?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   attributes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   bookmarked?: boolean
@@ -359,7 +359,7 @@ export type NoteUncheckedCreateInput = {
   title: string
   content: string
   summary?: string
-  tags?: Prisma.NoteCreatetagsInput | string[]
+  tags?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   resource?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   attributes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   bookmarked?: boolean
@@ -373,7 +373,7 @@ export type NoteUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
-  tags?: Prisma.NoteUpdatetagsInput | string[]
+  tags?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   resource?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   attributes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   bookmarked?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -388,7 +388,7 @@ export type NoteUncheckedUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
-  tags?: Prisma.NoteUpdatetagsInput | string[]
+  tags?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   resource?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   attributes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   bookmarked?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -403,7 +403,7 @@ export type NoteCreateManyInput = {
   title: string
   content: string
   summary?: string
-  tags?: Prisma.NoteCreatetagsInput | string[]
+  tags?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   resource?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   attributes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   bookmarked?: boolean
@@ -417,7 +417,7 @@ export type NoteUpdateManyMutationInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
-  tags?: Prisma.NoteUpdatetagsInput | string[]
+  tags?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   resource?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   attributes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   bookmarked?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -431,7 +431,7 @@ export type NoteUncheckedUpdateManyInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
-  tags?: Prisma.NoteUpdatetagsInput | string[]
+  tags?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   resource?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   attributes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   bookmarked?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -439,14 +439,6 @@ export type NoteUncheckedUpdateManyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   folderId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-}
-
-export type StringNullableListFilter<$PrismaModel = never> = {
-  equals?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel> | null
-  has?: string | Prisma.StringFieldRefInput<$PrismaModel> | null
-  hasEvery?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
-  hasSome?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
-  isEmpty?: boolean
 }
 
 export type NoteCountOrderByAggregateInput = {
@@ -508,17 +500,8 @@ export type NoteOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type NoteCreatetagsInput = {
-  set: string[]
-}
-
 export type StringFieldUpdateOperationsInput = {
   set?: string
-}
-
-export type NoteUpdatetagsInput = {
-  set?: string[]
-  push?: string | string[]
 }
 
 export type BoolFieldUpdateOperationsInput = {
@@ -595,7 +578,7 @@ export type NoteCreateWithoutFolderInput = {
   title: string
   content: string
   summary?: string
-  tags?: Prisma.NoteCreatetagsInput | string[]
+  tags?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   resource?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   attributes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   bookmarked?: boolean
@@ -609,7 +592,7 @@ export type NoteUncheckedCreateWithoutFolderInput = {
   title: string
   content: string
   summary?: string
-  tags?: Prisma.NoteCreatetagsInput | string[]
+  tags?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   resource?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   attributes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   bookmarked?: boolean
@@ -625,7 +608,6 @@ export type NoteCreateOrConnectWithoutFolderInput = {
 
 export type NoteCreateManyFolderInputEnvelope = {
   data: Prisma.NoteCreateManyFolderInput | Prisma.NoteCreateManyFolderInput[]
-  skipDuplicates?: boolean
 }
 
 export type NoteUpsertWithWhereUniqueWithoutFolderInput = {
@@ -652,7 +634,7 @@ export type NoteScalarWhereInput = {
   title?: Prisma.StringFilter<"Note"> | string
   content?: Prisma.StringFilter<"Note"> | string
   summary?: Prisma.StringFilter<"Note"> | string
-  tags?: Prisma.StringNullableListFilter<"Note">
+  tags?: Prisma.JsonFilter<"Note">
   resource?: Prisma.JsonNullableFilter<"Note">
   attributes?: Prisma.JsonNullableFilter<"Note">
   bookmarked?: Prisma.BoolFilter<"Note"> | boolean
@@ -667,7 +649,7 @@ export type NoteCreateManyFolderInput = {
   title: string
   content: string
   summary?: string
-  tags?: Prisma.NoteCreatetagsInput | string[]
+  tags?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   resource?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   attributes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   bookmarked?: boolean
@@ -680,7 +662,7 @@ export type NoteUpdateWithoutFolderInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
-  tags?: Prisma.NoteUpdatetagsInput | string[]
+  tags?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   resource?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   attributes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   bookmarked?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -694,7 +676,7 @@ export type NoteUncheckedUpdateWithoutFolderInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
-  tags?: Prisma.NoteUpdatetagsInput | string[]
+  tags?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   resource?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   attributes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   bookmarked?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -708,7 +690,7 @@ export type NoteUncheckedUpdateManyWithoutFolderInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
-  tags?: Prisma.NoteUpdatetagsInput | string[]
+  tags?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   resource?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   attributes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   bookmarked?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -803,7 +785,7 @@ export type $NotePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     title: string
     content: string
     summary: string
-    tags: string[]
+    tags: runtime.JsonValue
     resource: runtime.JsonValue | null
     attributes: runtime.JsonValue | null
     bookmarked: boolean
@@ -1239,7 +1221,7 @@ export interface NoteFieldRefs {
   readonly title: Prisma.FieldRef<"Note", 'String'>
   readonly content: Prisma.FieldRef<"Note", 'String'>
   readonly summary: Prisma.FieldRef<"Note", 'String'>
-  readonly tags: Prisma.FieldRef<"Note", 'String[]'>
+  readonly tags: Prisma.FieldRef<"Note", 'Json'>
   readonly resource: Prisma.FieldRef<"Note", 'Json'>
   readonly attributes: Prisma.FieldRef<"Note", 'Json'>
   readonly bookmarked: Prisma.FieldRef<"Note", 'Boolean'>
@@ -1481,7 +1463,6 @@ export type NoteCreateManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * The data used to create many Notes.
    */
   data: Prisma.NoteCreateManyInput | Prisma.NoteCreateManyInput[]
-  skipDuplicates?: boolean
 }
 
 /**
@@ -1500,7 +1481,6 @@ export type NoteCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions
    * The data used to create many Notes.
    */
   data: Prisma.NoteCreateManyInput | Prisma.NoteCreateManyInput[]
-  skipDuplicates?: boolean
   /**
    * Choose, which related nodes to fetch as well
    */

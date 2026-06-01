@@ -7,7 +7,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "__DATABASE_PROVIDER__"
 }
 
 model Note {

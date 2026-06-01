@@ -567,7 +567,6 @@ export type FolderCreateOrConnectWithoutParentFolderInput = {
 
 export type FolderCreateManyParentFolderInputEnvelope = {
   data: Prisma.FolderCreateManyParentFolderInput | Prisma.FolderCreateManyParentFolderInput[]
-  skipDuplicates?: boolean
 }
 
 export type FolderCreateWithoutChildFoldersInput = {
@@ -1463,7 +1462,6 @@ export type FolderCreateManyArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * The data used to create many Folders.
    */
   data: Prisma.FolderCreateManyInput | Prisma.FolderCreateManyInput[]
-  skipDuplicates?: boolean
 }
 
 /**
@@ -1482,7 +1480,6 @@ export type FolderCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensio
    * The data used to create many Folders.
    */
   data: Prisma.FolderCreateManyInput | Prisma.FolderCreateManyInput[]
-  skipDuplicates?: boolean
   /**
    * Choose, which related nodes to fetch as well
    */

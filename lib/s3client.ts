@@ -34,9 +34,9 @@ function objectUrl(...parts: string[]): string {
 }
 
 function saveObjectLocal(key: string, blob: ArrayBuffer): string {
-  const publicDir = path.resolve(process.cwd(), "public");
-  const filePath = path.resolve(publicDir, LOCAL_IMAGE_PREFIX, key);
-  if (!filePath.startsWith(publicDir + path.sep)) {
+  const localRoot = path.resolve(process.cwd(), "data-local", "objects");
+  const filePath = path.resolve(localRoot, key);
+  if (!filePath.startsWith(localRoot + path.sep)) {
     throw new Error("Invalid local object key");
   }
 

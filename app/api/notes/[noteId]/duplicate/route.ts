@@ -28,7 +28,7 @@ export async function POST(
       title: `${source.title} のコピー`,
       content: source.content,
       summary: source.summary,
-      tags: source.tags,
+      tags: Array.isArray(source.tags) ? source.tags : [],
       resource: source.resource ?? undefined,
       attributes: source.attributes ?? undefined,
       bookmarked: source.bookmarked,

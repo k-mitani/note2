@@ -62,7 +62,11 @@ async function saveObject(key, blob, contentType) {
   if (LOCAL_IMAGE_SAVE) {
     const fs = await import("node:fs");
     const path = await import("node:path");
-    const filePath = path.join(process.cwd(), "public", LOCAL_IMAGE_PREFIX, key);
+    const localRoot = path.resolve(process.cwd(), "data-local", "objects");
+    const filePath = path.resolve(localRoot, key);
+    if (!filePath.startsWith(localRoot + path.sep)) {
+      throw new Error("Invalid local object key");
+    }
     fs.mkdirSync(path.dirname(filePath), {recursive: true});
     fs.writeFileSync(filePath, blob);
     return `/${LOCAL_IMAGE_PREFIX}${key}`;
