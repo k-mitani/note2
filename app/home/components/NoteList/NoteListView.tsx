@@ -21,7 +21,6 @@ export default function NoteListView({forceVisible = false}: {
   const selectedNote = useNote(state => state.selectedNote);
   const changedNotes = useNote(state => state.changedNotes);
   const showNoteListView = useLocalPrefs(state => state.showNoteListView);
-  const selectedOrderKey = useNoteList(state => state.selectedOrder.key);
 
   const selectedFolder = useNote(state => state.selectedFolder);
   const {notes: notesRaw, isLoading} = useFolderAndNotes(selectedFolder?.id);
@@ -59,25 +58,6 @@ export default function NoteListView({forceVisible = false}: {
   const setSelectedNote = useNote(state => state.setSelectedNote);
   const noteListState = useNoteList();
   const {onKeyDown, onCtrlClick, onShiftClick} = useKeyEventHandlers(notes);
-
-  useEffect(() => {
-    if (selectedFolder == null || isLoading) return;
-    const folderOrderKey = selectedFolder.order ?? $Enums.NotesOrder.UPDATED_AT_DESC;
-    if (selectedOrderKey !== folderOrderKey) return;
-
-    if (notes.length === 0) {
-      if (selectedNote?.folderId === selectedFolder.id) {
-        setSelectedNote(null);
-      }
-      return;
-    }
-
-    const selectedNoteInList = selectedNote != null && notes.some(n => n.id === selectedNote.id);
-    if (!selectedNoteInList) {
-      useNoteList.getState().setShouldScroll(true);
-      setSelectedNote(notes[0]);
-    }
-  }, [isLoading, notes, selectedFolder, selectedNote, selectedOrderKey, setSelectedNote]);
 
   console.log("NoteListView render");
 

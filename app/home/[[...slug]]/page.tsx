@@ -81,11 +81,18 @@ function HomeInternal() {
   }, []);
 
   // 初回のみ、最初のフォルダを選択する。
+  // パーマリンク復元時はノート取得がフォルダーツリー取得より先に完了することがある。
+  // その場合は useNotePermalink 側の保留フォルダー解決に任せ、先頭フォルダーで上書きしない。
   useEffect(() => {
-    if (selectedFolder == null && folders != null && folders.folders.length > 0) {
+    if (
+      selectedFolder == null &&
+      selectedNote?.folderId == null &&
+      folders != null &&
+      folders.folders.length > 0
+    ) {
       setSelectedFolder(folders.folders[0] as any);
     }
-  }, [folders, selectedFolder, setSelectedFolder]);
+  }, [folders, selectedFolder, selectedNote, setSelectedFolder]);
 
   // ロック解除時間が過ぎて、現在のフォルダー/ノートが見えるツリーから消えたら
   // 見える範囲の先頭フォルダーへ移動する。先頭ノートの選択は NoteListView 側で行う。
