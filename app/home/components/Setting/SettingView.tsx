@@ -29,6 +29,7 @@ export function SettingView() {
           setMessage("sending...");
           const res = await utils.putJson("/api/rpc/setFolderKey", {key, expiration});
           setMessage(await res.text());
+          setKey("");
           await mutate('/api/rpc/getFoldersAll');
         }}>
           <h2 className="text-lg pb-2">Folder Unlock</h2>
