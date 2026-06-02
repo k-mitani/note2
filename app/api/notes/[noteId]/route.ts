@@ -1,6 +1,6 @@
 import {prisma} from '@/lib/prisma';
 import {NextRequest, NextResponse} from "next/server";
-import {isFolderLockUnlocked} from "@/lib/folderLock";
+import {isFolderRestrictedByLock} from "@/lib/folderLock";
 
 // パーマリンク（?note=<id>）からの復元用に、単一ノートを取得する。
 // 所属フォルダーを知るために folderId を含むノート全体を返す。
@@ -13,18 +13,15 @@ export async function GET(req: NextRequest, props: { params: Promise<{ noteId: s
 
   const note = await prisma.note.findUnique({
     where: {id: noteId},
-    include: {folder: true},
   });
   if (note == null) {
     return NextResponse.json(null);
   }
 
   // ロックフォルダーのノートは、解錠済みでなければ公開しない。
-  if (note.folder?.isLocked && !(await isFolderLockUnlocked())) {
+  if (await isFolderRestrictedByLock(note.folderId)) {
     return NextResponse.json(null);
   }
 
-  // folder は判定用に取得しただけなので落とし、Note と同じ形で返す。
-  const {folder, ...rest} = note;
-  return NextResponse.json(rest);
+  return NextResponse.json(note);
 }

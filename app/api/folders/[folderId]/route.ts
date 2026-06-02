@@ -1,6 +1,6 @@
 import {prisma} from '@/lib/prisma';
 import {NextRequest, NextResponse} from "next/server";
-import {isFolderLockUnlocked} from "@/lib/folderLock";
+import {isFolderRestrictedByLock} from "@/lib/folderLock";
 import {TRASH_FOLDER_ID} from "@/app/home/constants";
 
 export async function DELETE(req: NextRequest, props: { params: Promise<{ folderId: string }> }) {
@@ -40,7 +40,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ folderId:
     }
   }
 
-  if (folder?.isLocked && !(await isFolderLockUnlocked())) {
+  if (folder != null && await isFolderRestrictedByLock(folder.id)) {
     console.log("Folder is locked " + folderId + " " + folder.name);
     return NextResponse.json(null);
   }

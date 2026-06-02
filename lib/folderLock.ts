@@ -1,4 +1,5 @@
 import {cookies} from "next/headers";
+import {prisma} from "@/lib/prisma";
 
 const FOLDER_LOCK_SECRET = process.env.FOLDER_LOCK_SECRET ?? null;
 
@@ -8,4 +9,31 @@ export async function isFolderLockUnlocked(): Promise<boolean> {
   const cookieStore = await cookies();
   const folderKey = cookieStore.get("FOLDER_KEY")?.value;
   return folderKey === FOLDER_LOCK_SECRET;
+}
+
+/** 指定フォルダーまたは祖先フォルダーがロック対象で、現在未解除ならtrue。 */
+export async function isFolderRestrictedByLock(folderId: number | null | undefined): Promise<boolean> {
+  if (folderId == null) return false;
+  if (await isFolderLockUnlocked()) return false;
+
+  const folders = await prisma.folder.findMany({
+    select: {
+      id: true,
+      parentFolderId: true,
+      isLocked: true,
+    },
+  });
+  const folderById = new Map(folders.map(folder => [folder.id, folder]));
+  const visited = new Set<number>();
+
+  let currentId: number | null | undefined = folderId;
+  while (currentId != null && !visited.has(currentId)) {
+    visited.add(currentId);
+    const folder = folderById.get(currentId);
+    if (folder == null) return false;
+    if (folder.isLocked) return true;
+    currentId = folder.parentFolderId;
+  }
+
+  return false;
 }
