@@ -608,6 +608,7 @@ export type NoteCreateOrConnectWithoutFolderInput = {
 
 export type NoteCreateManyFolderInputEnvelope = {
   data: Prisma.NoteCreateManyFolderInput | Prisma.NoteCreateManyFolderInput[]
+  skipDuplicates?: boolean
 }
 
 export type NoteUpsertWithWhereUniqueWithoutFolderInput = {
@@ -1463,6 +1464,7 @@ export type NoteCreateManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * The data used to create many Notes.
    */
   data: Prisma.NoteCreateManyInput | Prisma.NoteCreateManyInput[]
+  skipDuplicates?: boolean
 }
 
 /**
@@ -1481,6 +1483,7 @@ export type NoteCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions
    * The data used to create many Notes.
    */
   data: Prisma.NoteCreateManyInput | Prisma.NoteCreateManyInput[]
+  skipDuplicates?: boolean
   /**
    * Choose, which related nodes to fetch as well
    */

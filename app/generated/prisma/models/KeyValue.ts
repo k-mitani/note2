@@ -954,6 +954,7 @@ export type KeyValueCreateManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * The data used to create many KeyValues.
    */
   data: Prisma.KeyValueCreateManyInput | Prisma.KeyValueCreateManyInput[]
+  skipDuplicates?: boolean
 }
 
 /**
@@ -972,6 +973,7 @@ export type KeyValueCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extens
    * The data used to create many KeyValues.
    */
   data: Prisma.KeyValueCreateManyInput | Prisma.KeyValueCreateManyInput[]
+  skipDuplicates?: boolean
 }
 
 /**
