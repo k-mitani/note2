@@ -7,23 +7,17 @@ import {mutate} from "swr";
 import type {Note} from "@/app/generated/prisma/browser";
 import {NOTE_LIST_VIEW_MODE_TITLE_ONLY} from "@/app/home/components/NoteList/NoteListViewMode";
 import {NoteContextMenu} from "@/app/home/components/NoteList/NoteContextMenu";
+import {htmlToPlainText} from "@/lib/noteSummary";
 
 const UNTITLED_NOTE_TITLE = "無題のノート";
 const FALLBACK_TITLE_LENGTH = 32;
-
-function noteContentToPlainText(content: string): string {
-  return content
-    .replace(/<("[^"]*"|'[^']*'|[^'">])*>/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
 
 function getDisplayTitle(note: { title: string, content: string }): string {
   if (note.title !== UNTITLED_NOTE_TITLE) {
     return note.title;
   }
 
-  const fallback = noteContentToPlainText(note.content).substring(0, FALLBACK_TITLE_LENGTH);
+  const fallback = htmlToPlainText(note.content).substring(0, FALLBACK_TITLE_LENGTH);
   return fallback || UNTITLED_NOTE_TITLE;
 }
 
@@ -71,7 +65,7 @@ export default function NoteCard(
   const dateText = utils.dateToText(note.updatedAt ?? note.createdAt);
   const displayNote = changed ?? note;
   const displayTitle = getDisplayTitle(displayNote);
-  const text = noteContentToPlainText(displayNote.content).substring(0, 100);
+  const text = htmlToPlainText(displayNote.content).substring(0, 100);
 
   const toggleBookmark = async (e: React.MouseEvent) => {
     e.stopPropagation();
