@@ -79,7 +79,7 @@ export function renderLinkPreviewCardHtml(og: Og, imageUrls: string[]): string {
   const imagesHtml = imageUrls
     .map(
       (u) =>
-        `<div><img src="${escapeHtml(u)}" alt="" style="margin-left:0.3em;max-height:5em;max-width:5em"/></div>`
+        `<div style="width:80px;height:80px;margin-left:0.3em;display:flex;align-items:center;justify-content:flex-end;flex:0 0 80px"><img src="${escapeHtml(u)}" alt="" style="max-width:80px;max-height:80px;width:auto;height:auto;object-fit:contain"/></div>`
     )
     .join("");
   return (
@@ -88,7 +88,7 @@ export function renderLinkPreviewCardHtml(og: Og, imageUrls: string[]): string {
     `<div><a href="${href}">${title}</a></div>` +
     `<div style="border-bottom:1px solid #ccc;margin:0.5em -0.3em"></div>` +
     `<div style="display:flex;align-items:center">` +
-    `<div>${description}</div>` +
+    `<div style="flex:1;min-width:0">${description}</div>` +
     imagesHtml +
     `</div>` +
     `</section>`
