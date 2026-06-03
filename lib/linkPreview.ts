@@ -10,6 +10,19 @@ type Og = {
   images?: { url: string }[];
 };
 
+type XOEmbed = {
+  url: string;
+  author_name?: string;
+  author_url?: string;
+  html?: string;
+  provider_name?: string;
+};
+
+type XStatusRef = {
+  id: string;
+  url: string;
+};
+
 function pathNameToContentType(pathName: string): string {
   if (pathName.endsWith(".png")) return "image/png";
   if (pathName.endsWith(".jpg")) return "image/jpeg";
@@ -28,6 +41,155 @@ function escapeHtml(s: string): string {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function decodeHtml(s: string): string {
+  return s
+    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCodePoint(parseInt(code, 16)))
+    .replaceAll("&quot;", '"')
+    .replaceAll("&#39;", "'")
+    .replaceAll("&apos;", "'")
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&amp;", "&");
+}
+
+function stripHtml(html: string): string {
+  return decodeHtml(
+    html
+      .replace(/<script\b[\s\S]*?<\/script>/gi, "")
+      .replace(/<style\b[\s\S]*?<\/style>/gi, "")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/p>/gi, "\n")
+      .replace(/<[^>]+>/g, "")
+  )
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function getXStatusRef(url: string): XStatusRef | null {
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(decodeHtml(url));
+  } catch {
+    return null;
+  }
+  const hostname = parsedUrl.hostname.toLowerCase().replace(/^www\./, "").replace(/^mobile\./, "");
+  if (hostname !== "x.com" && hostname !== "twitter.com") return null;
+  const match = parsedUrl.pathname.match(/^\/([^/]+)\/status(?:es)?\/(\d+)/);
+  if (match == null) return null;
+  return {
+    id: match[2],
+    url: `https://x.com/${match[1]}/status/${match[2]}`,
+  };
+}
+
+function extractTweetText(html: string | undefined): string {
+  if (html == null) return "";
+  const paragraphMatch = html.match(/<p\b[^>]*>([\s\S]*?)<\/p>/i);
+  return stripHtml(paragraphMatch?.[1] ?? html);
+}
+
+function xOEmbedToOg(embed: XOEmbed, fallbackUrl: string): Og {
+  const authorUrl = embed.author_url != null ? getXStatusRef(embed.author_url)?.url ?? embed.author_url : undefined;
+  const handle = authorUrl != null ? new URL(authorUrl).pathname.split("/").filter(Boolean)[0] : undefined;
+  const author = embed.author_name ?? handle ?? "X";
+  const title = handle != null ? `${author} (@${handle})` : author;
+  return {
+    url: getXStatusRef(embed.url)?.url ?? getXStatusRef(fallbackUrl)?.url ?? fallbackUrl,
+    site_name: embed.provider_name ?? "X",
+    title,
+    description: extractTweetText(embed.html) || "（データなし）",
+    images: [],
+  };
+}
+
+function extractDirectQuotedXStatusUrls(html: string | undefined, sourceUrl: string): string[] {
+  if (html == null) return [];
+  const sourceRef = getXStatusRef(sourceUrl);
+  const candidates = [
+    ...html.matchAll(/href=["']([^"']+)["']/gi),
+    ...html.matchAll(/https?:\/\/(?:www\.|mobile\.)?(?:x\.com|twitter\.com)\/[^"'\s<>]+/gi),
+  ];
+  const seen = new Set<string>();
+  const urls: string[] = [];
+  for (const match of candidates) {
+    const ref = getXStatusRef(match[1] ?? match[0]);
+    if (ref == null || ref.id === sourceRef?.id || seen.has(ref.id)) continue;
+    seen.add(ref.id);
+    urls.push(ref.url);
+  }
+  return urls;
+}
+
+function extractTcoUrls(html: string | undefined): string[] {
+  if (html == null) return [];
+  const seen = new Set<string>();
+  const urls: string[] = [];
+  for (const match of html.matchAll(/https?:\/\/t\.co\/[a-z0-9]+/gi)) {
+    const url = match[0];
+    if (seen.has(url)) continue;
+    seen.add(url);
+    urls.push(url);
+  }
+  return urls;
+}
+
+async function resolveRedirectUrl(url: string): Promise<string | null> {
+  for (const method of ["HEAD", "GET"] as const) {
+    try {
+      const res = await fetch(url, {
+        method,
+        redirect: "follow",
+        headers: {
+          "user-agent": "note2-link-preview/1.0",
+        },
+      });
+      return res.url;
+    } catch (e) {
+      console.error("redirect resolve error", e);
+    }
+  }
+  return null;
+}
+
+async function findQuotedXStatusUrls(html: string | undefined, sourceUrl: string): Promise<string[]> {
+  const urls = extractDirectQuotedXStatusUrls(html, sourceUrl);
+  const sourceRef = getXStatusRef(sourceUrl);
+  const seen = new Set(urls.map((url) => getXStatusRef(url)?.id).filter((id): id is string => id != null));
+  for (const finalUrl of await Promise.all(extractTcoUrls(html).slice(0, 3).map(resolveRedirectUrl))) {
+    if (finalUrl == null) continue;
+    const ref = getXStatusRef(finalUrl);
+    if (ref == null || ref.id === sourceRef?.id || seen.has(ref.id)) continue;
+    seen.add(ref.id);
+    urls.push(ref.url);
+  }
+  return urls;
+}
+
+async function fetchXOEmbed(url: string): Promise<XOEmbed> {
+  const ref = getXStatusRef(url);
+  if (ref == null) throw new Error("not an X status URL");
+  let lastError: unknown = null;
+  for (const origin of ["https://publish.x.com/oembed", "https://publish.twitter.com/oembed"]) {
+    try {
+      const endpoint = new URL(origin);
+      endpoint.searchParams.set("url", ref.url);
+      endpoint.searchParams.set("omit_script", "1");
+      endpoint.searchParams.set("dnt", "1");
+      const res = await fetch(endpoint, {
+        headers: {
+          "user-agent": "note2-link-preview/1.0",
+        },
+      });
+      if (!res.ok) throw new Error(`X oEmbed failed: ${res.status} ${res.statusText}`);
+      return (await res.json()) as XOEmbed;
+    } catch (e) {
+      lastError = e;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("X oEmbed failed");
 }
 
 async function fetchOg(url: string): Promise<Og> {
@@ -71,7 +233,21 @@ async function saveOgImages(og: Og): Promise<string[]> {
   return imageUrls;
 }
 
-export function renderLinkPreviewCardHtml(og: Og, imageUrls: string[]): string {
+function renderQuotedXPostHtml(og: Og): string {
+  const siteName = escapeHtml(og.site_name ?? "X");
+  const title = escapeHtml(og.title ?? og.url);
+  const description = escapeHtml(og.description ?? "");
+  const href = escapeHtml(og.url);
+  return (
+    `<div style="margin-top:0.6em;padding:0.45em;border:1px solid #bbb;background:#fafafa">` +
+    `<div style="font-size:0.85em;color:#777">引用 / ${siteName}</div>` +
+    `<div><a href="${href}">${title}</a></div>` +
+    `<div style="margin-top:0.35em;white-space:pre-wrap">${description}</div>` +
+    `</div>`
+  );
+}
+
+export function renderLinkPreviewCardHtml(og: Og, imageUrls: string[], extraHtml = ""): string {
   const siteName = escapeHtml(og.site_name ?? "(no site name)");
   const title = escapeHtml(og.title ?? og.url);
   const description = escapeHtml(og.description ?? "");
@@ -88,9 +264,10 @@ export function renderLinkPreviewCardHtml(og: Og, imageUrls: string[]): string {
     `<div><a href="${href}">${title}</a></div>` +
     `<div style="border-bottom:1px solid #ccc;margin:0.5em -0.3em"></div>` +
     `<div style="display:flex;align-items:center">` +
-    `<div style="flex:1;min-width:0">${description}</div>` +
+    `<div style="flex:1;min-width:0;white-space:pre-wrap">${description}</div>` +
     imagesHtml +
     `</div>` +
+    extraHtml +
     `</section>`
   );
 }
@@ -101,6 +278,27 @@ export async function buildLinkPreviewCardHtml(
 ): Promise<string> {
   const timeoutMs = options?.timeoutMs;
   const run = async () => {
+    if (getXStatusRef(url) != null) {
+      try {
+        const embed = await fetchXOEmbed(url);
+        const og = xOEmbedToOg(embed, url);
+        const fallbackOg = await fetchOg(url);
+        og.images = fallbackOg.images ?? [];
+        const imageUrls = await saveOgImages(og);
+        const quotedUrls = await findQuotedXStatusUrls(embed.html, og.url);
+        const quotedHtml = (
+          await Promise.all(
+            quotedUrls.slice(0, 1).map(async (quotedUrl) => {
+              const quotedEmbed = await fetchXOEmbed(quotedUrl);
+              return renderQuotedXPostHtml(xOEmbedToOg(quotedEmbed, quotedUrl));
+            })
+          )
+        ).join("");
+        return renderLinkPreviewCardHtml(og, imageUrls, quotedHtml);
+      } catch (e) {
+        console.error("X oEmbed error", e);
+      }
+    }
     const og = await fetchOg(url);
     const imageUrls = await saveOgImages(og);
     return renderLinkPreviewCardHtml(og, imageUrls);
