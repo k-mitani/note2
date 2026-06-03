@@ -32,13 +32,19 @@ export function FolderContextMenu({folder}: { folder: Folder }) {
         const yes = confirm("ロックを解除します。よろしいですか？");
         if (!yes) return;
         await utils.putJson(`/api/folders/${folder.id}/setLock`, {shouldLock: false});
-        await mutate('/api/rpc/getFoldersAll');
+        await Promise.all([
+          mutate('/api/rpc/getFoldersAll'),
+          mutate('/api/bookmarks'),
+        ]);
       }} />}
       {!folder.isLocked && <MenuItem name="ロック" onClick={async () => {
         const yes = confirm("フォルダーをロックしますか？");
         if (!yes) return;
         await utils.putJson(`/api/folders/${folder.id}/setLock`, {shouldLock: true});
-        await mutate('/api/rpc/getFoldersAll');
+        await Promise.all([
+          mutate('/api/rpc/getFoldersAll'),
+          mutate('/api/bookmarks'),
+        ]);
       }} />}
 
       <MenuItem name="フォルダー作成" onClick={() => {

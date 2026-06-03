@@ -30,7 +30,10 @@ export function SettingView() {
           const res = await utils.putJson("/api/rpc/setFolderKey", {key, expiration});
           setMessage(await res.text());
           setKey("");
-          await mutate('/api/rpc/getFoldersAll');
+          await Promise.all([
+            mutate('/api/rpc/getFoldersAll'),
+            mutate('/api/bookmarks'),
+          ]);
         }}>
           <h2 className="text-lg pb-2">Folder Unlock</h2>
           <label className="flex items-center mb-2">

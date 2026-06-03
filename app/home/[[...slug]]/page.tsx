@@ -76,6 +76,7 @@ function HomeInternal() {
   useEffect(() => {
     const id = window.setInterval(() => {
       mutate('/api/rpc/getFoldersAll');
+      mutate('/api/bookmarks');
     }, FOLDER_LOCK_REVALIDATE_INTERVAL_MS);
     return () => window.clearInterval(id);
   }, []);
