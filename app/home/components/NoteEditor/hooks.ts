@@ -117,6 +117,21 @@ export function useEnableImageResize(note: unknown) {
   }, [note]);
 }
 
+/**
+ * contenteditable内ではアンカーをクリックしてもデフォルトでは遷移しないため、
+ * リンク部分のクリックを検知して別タブで開く。
+ * リファラーは付けない（rel=noreferrer 相当）。
+ */
+export function onClickContent(ev: React.MouseEvent<HTMLDivElement>) {
+  const target = ev.target as HTMLElement;
+  const anchor = target.closest("a");
+  if (anchor == null) return;
+  const href = anchor.getAttribute("href");
+  if (!href) return;
+  ev.preventDefault();
+  window.open(href, "_blank", "noopener,noreferrer");
+}
+
 export async function onPaste(ev: React.ClipboardEvent<HTMLDivElement>) {
   function arrayBufferToBase64(buffer: ArrayBuffer): string {
     let binary = '';

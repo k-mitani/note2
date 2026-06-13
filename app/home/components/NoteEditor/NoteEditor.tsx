@@ -311,7 +311,8 @@ export default function NoteEditor() {
     />
 
     {/*本文*/}
-    <div className="min-h-0 min-w-0 grow overflow-y-scroll break-all p-2 dark:text-gray-300">
+    <div className="min-h-0 min-w-0 grow overflow-y-scroll break-all p-2 dark:text-gray-300"
+         onClick={hooks.onClickContent}>
       <ContentEditable html={refHtml.current}
                        id="NoteEditor-ContentEditable"
                        className="h-full w-full min-w-0"
