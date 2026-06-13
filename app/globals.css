@@ -25,6 +25,7 @@ html {
 #NoteEditor-ContentEditable a {
   color: revert;
   text-decoration: revert;
+  cursor: pointer;
 }
 
 .ncf-20260403 {
