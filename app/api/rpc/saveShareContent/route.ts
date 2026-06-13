@@ -74,7 +74,7 @@ function buildSnippet(params: Params): string {
   const parts: string[] = [];
   if (params.title?.trim()) parts.push(params.title);
   if (params.text?.trim()) parts.push(params.text);
-  if (params.url) parts.push(`<a href="${params.url}">${params.url}</a>`);
+  if (params.url) parts.push(`<a href="${params.url}" rel="noreferrer">${params.url}</a>`);
   return parts.join("<br>");
 }
 

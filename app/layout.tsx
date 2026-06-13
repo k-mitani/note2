@@ -8,6 +8,7 @@ export default function RootLayout({
   return (
     <html className="dark h-full">
       <head>
+        <meta name="referrer" content="no-referrer" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icon.png"></link>
         <link rel="icon" href="/icon.png" />

@@ -108,7 +108,7 @@ export function NoteHeader({
       </label>
       {link && (
         <span className="min-w-0 text-xs text-blue-700 dark:text-blue-400">
-          <Link href={link}>{linkText}</Link>
+          <Link href={link} rel="noreferrer">{linkText}</Link>
         </span>
       )}
     </div>

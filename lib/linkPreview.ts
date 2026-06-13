@@ -241,7 +241,7 @@ function renderQuotedXPostHtml(og: Og): string {
   return (
     `<div style="margin-top:0.6em;padding:0.45em;border:1px solid #bbb;background:#fafafa">` +
     `<div style="font-size:0.85em;color:#777">引用 / ${siteName}</div>` +
-    `<div><a href="${href}">${title}</a></div>` +
+    `<div><a href="${href}" rel="noreferrer">${title}</a></div>` +
     `<div style="margin-top:0.35em;white-space:pre-wrap">${description}</div>` +
     `</div>`
   );
@@ -255,13 +255,13 @@ export function renderLinkPreviewCardHtml(og: Og, imageUrls: string[], extraHtml
   const imagesHtml = imageUrls
     .map(
       (u) =>
-        `<div style="width:80px;height:80px;margin-left:0.3em;display:flex;align-items:center;justify-content:flex-end;flex:0 0 80px"><img src="${escapeHtml(u)}" alt="" style="max-width:80px;max-height:80px;width:auto;height:auto;object-fit:contain"/></div>`
+        `<div style="width:80px;height:80px;margin-left:0.3em;display:flex;align-items:center;justify-content:flex-end;flex:0 0 80px"><img src="${escapeHtml(u)}" alt="" referrerpolicy="no-referrer" style="max-width:80px;max-height:80px;width:auto;height:auto;object-fit:contain"/></div>`
     )
     .join("");
   return (
     `<section class="link-preview" style="max-width:50em;margin:0.1em;padding:0.3em;border:1px solid #777">` +
     `<div style="font-size:0.9em;color:#777">${siteName}</div>` +
-    `<div><a href="${href}">${title}</a></div>` +
+    `<div><a href="${href}" rel="noreferrer">${title}</a></div>` +
     `<div style="border-bottom:1px solid #ccc;margin:0.5em -0.3em"></div>` +
     `<div style="display:flex;align-items:center">` +
     `<div style="flex:1;min-width:0;white-space:pre-wrap">${description}</div>` +
