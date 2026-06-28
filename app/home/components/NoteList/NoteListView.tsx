@@ -5,6 +5,7 @@ import {useLocalPrefs} from "@/app/home/useLocalPrefs";
 import {useNoteList} from "@/app/home/components/NoteList/state";
 import {useListOrder, useKeyEventHandlers} from "@/app/home/components/NoteList/hooks";
 import {useFolderAndNotes} from "@/app/home/hooks";
+import {useSearch, useSearchStore} from "@/app/home/search";
 import NoteCard from "@/app/home/components/NoteList/NoteCard";
 import NoteListHeader from "@/app/home/components/NoteList/NoteListHeader";
 import {$Enums} from "@/app/generated/prisma/browser";
@@ -23,24 +24,39 @@ export default function NoteListView({forceVisible = false}: {
   const showNoteListView = useLocalPrefs(state => state.showNoteListView);
 
   const selectedFolder = useNote(state => state.selectedFolder);
-  const {notes: notesRaw, isLoading} = useFolderAndNotes(selectedFolder?.id);
+  const {notes: folderNotes, isLoading: folderLoading} = useFolderAndNotes(selectedFolder?.id);
+
+  // 「検索結果」仮想フォルダーを表示中は、選択フォルダーではなく全フォルダー横断のヒットを一覧する。
+  const localQuery = useNoteList(state => state.searchQuery);
+  const {active: searchActive, notes: searchNotes, noteIds} = useSearch();
+  const viewingResults = useSearchStore(state => state.viewingResults);
+  const inResultsView = viewingResults && searchActive;
+
+  const notesRaw = inResultsView ? searchNotes : folderNotes;
+  const isLoading = inResultsView ? false : folderLoading;
 
   console.log("NoteListView prepare render for sort");
   const {notes: notesSorted, refSelectedNoteElement} = useListOrder(notesRaw);
 
-  // 検索クエリでフィルタリング
-  const searchQuery = useNoteList(state => state.searchQuery);
+  // 一覧の絞り込み。
+  // - 検索結果ビュー: ヒット一覧そのものなのでグローバル絞り込みは不要。ローカル検索だけ適用。
+  // - 通常のフォルダービュー: グローバル検索のヒットID（DBで本文全体を判定済み）とローカル検索のAND。
   const notes = React.useMemo(() => {
-    if (!searchQuery.trim()) {
-      return notesSorted;
+    let result = notesSorted;
+    if (!inResultsView && searchActive) {
+      const ids = new Set(noteIds);
+      result = result.filter(note => ids.has(note.id));
     }
-    const query = searchQuery.toLowerCase();
-    return notesSorted.filter(note => {
-      const title = (changedNotes.get(note.id)?.title ?? note.title).toLowerCase();
-      const content = (changedNotes.get(note.id)?.content ?? note.content).toLowerCase();
-      return title.includes(query) || content.includes(query);
-    });
-  }, [notesSorted, searchQuery, changedNotes]);
+    if (localQuery.trim()) {
+      const query = localQuery.toLowerCase();
+      result = result.filter(note => {
+        const title = (changedNotes.get(note.id)?.title ?? note.title).toLowerCase();
+        const content = (changedNotes.get(note.id)?.content ?? note.content).toLowerCase();
+        return title.includes(query) || content.includes(query);
+      });
+    }
+    return result;
+  }, [notesSorted, inResultsView, searchActive, noteIds, localQuery, changedNotes]);
 
   console.log("NoteListView prepare render for notes");
   useEffect(() => {
@@ -68,7 +84,7 @@ export default function NoteListView({forceVisible = false}: {
       {'hidden': !forceVisible && !showNoteListView},
     )}>
       {/*ヘッダー*/}
-      <NoteListHeader folderId={selectedFolder?.id ?? -1} />
+      <NoteListHeader folderId={inResultsView ? null : (selectedFolder?.id ?? null)} />
 
       {/* ロード中はすぐ終わるので何も表示しない（loading... は出さない）。 */}
       {!isLoading && notes.length === 0 && <div className="flex-grow p-2">no notes</div>}

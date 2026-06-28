@@ -1,3 +1,4 @@
+import {useEffect} from "react";
 import {useNote} from "@/app/home/state";
 import {useLocalPrefs} from "@/app/home/useLocalPrefs";
 import classNames from "classnames";
@@ -9,6 +10,7 @@ import {createFolder} from "@/lib/folder";
 import {findFolderById} from "@/lib/folderTree";
 import {SHORTCUTS_FOLDING_KEY} from "@/app/home/constants";
 import * as utils from "@/app/utils";
+import {useSearch, useSearchStore} from "@/app/home/search";
 
 /**
  * フォルダーやノートを表示する。
@@ -33,14 +35,31 @@ export default function FolderListView({forceVisible = false}: {
   const isBookmarksFolded = foldingDict[SHORTCUTS_FOLDING_KEY] ?? false;
   // フォルダーにドロップされたときの処理
   const onDropToFolder = useOnDropToFolder(selectedFolder?.id);
+  // 全フォルダー横断検索の結果（フォルダー別ヒット件数・総ヒット数）
+  const {active: searchActive, folderCounts, noteIds} = useSearch();
+  // 「検索結果」仮想フォルダーの表示状態
+  const viewingResults = useSearchStore(state => state.viewingResults);
+  const setViewingResults = useSearchStore(state => state.setViewingResults);
+  // 検索が終了したら検索結果ビューも解除する。
+  useEffect(() => {
+    if (!searchActive && viewingResults) setViewingResults(false);
+  }, [searchActive, viewingResults, setViewingResults]);
+
+  // フォルダーを選択したら検索結果ビューを抜けて通常のフォルダー表示に戻す。
+  const selectFolder = (folder: FolderAndChild) => {
+    setViewingResults(false);
+    setSelectedFolder(folder as any);
+  };
 
   const common: FolderCommonProps = {
     onDrop: onDropToFolder,
     allFolders: folders,
-    selectedFolder: selectedFolder as any,
-    setSelectedFolder: setSelectedFolder as any,
+    selectedFolder: viewingResults ? undefined : (selectedFolder as any),
+    setSelectedFolder: selectFolder,
     isFolding: (id: number) => foldingDict[id] ?? true,
     setFolding: setFolding,
+    searchActive,
+    searchCounts: folderCounts,
   };
 
   return (
@@ -72,6 +91,7 @@ export default function FolderListView({forceVisible = false}: {
                 <button
                   className="hover:bg-gray-600 w-full text-start text-xs md:text-sm px-2 py-1 truncate"
                   onClick={() => {
+                    setViewingResults(false);
                     setSelectedNote(note);
                     if (note.folderId) {
                       const folder = findFolderById(note.folderId, folders);
@@ -98,6 +118,19 @@ export default function FolderListView({forceVisible = false}: {
             </li>
           })}
         </ul>
+        {/*検索結果（仮想フォルダー）: 検索中のみ表示し、クリックで全フォルダー横断のヒット一覧を表示する。*/}
+        {searchActive && (
+          <button
+            className={classNames(
+              "mt-2 w-full text-start text-sm md:text-base h-7 flex items-center px-1 rounded",
+              viewingResults ? "bg-gray-500 dark:bg-gray-700" : "hover:bg-gray-600",
+            )}
+            onClick={() => setViewingResults(true)}
+          >
+            🔍検索結果
+            <span className="text-gray-400">&nbsp;({noteIds.length})</span>
+          </button>
+        )}
         {/*新規フォルダー作成ボタン*/}
         <div className="mt-2">
           <button className="pt-2 pb-2 rounded hover:bg-gray-600 w-full text-start text-sm md:text-base"

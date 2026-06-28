@@ -11,7 +11,7 @@ import {mutate} from "swr";
 import {FaBars, FaListUl, FaRectangleList} from "react-icons/fa6";
 
 
-export default function NoteListHeader({folderId}: { folderId: number }) {
+export default function NoteListHeader({folderId}: { folderId: number | null }) {
   const showOrderItems = useNoteList(state => state.showOrderItems);
   const toggleShowOrderItems = useNoteList(state => state.toggleShowOrderItems);
   const orderName = useNoteList(state => state.selectedOrder).label;
@@ -28,10 +28,13 @@ export default function NoteListHeader({folderId}: { folderId: number }) {
   const toggleViewMode = async () => {
     const nextViewMode = getNextViewMode(selectedViewMode);
     setSelectedViewMode(nextViewMode);
-    await utils.putJson(`/api/folders/${folderId}/updateNoteListViewMode`, {
-      noteListViewMode: nextViewMode.key,
-    });
-    mutate("/api/rpc/getFoldersAll");
+    // 検索結果ビュー（folderId == null）では特定フォルダーに紐づかないので永続化しない。
+    if (folderId != null) {
+      await utils.putJson(`/api/folders/${folderId}/updateNoteListViewMode`, {
+        noteListViewMode: nextViewMode.key,
+      });
+      mutate("/api/rpc/getFoldersAll");
+    }
   };
 
   return (
@@ -82,7 +85,10 @@ export default function NoteListHeader({folderId}: { folderId: number }) {
                 )}
                 onClick={async () => {
                   setSelectedOrder(order);
-                  await utils.putJson(`/api/folders/${folderId}/updateOrder`, {order: order.key});
+                  // 検索結果ビュー（folderId == null）では永続化せずクライアント側の並び替えのみ行う。
+                  if (folderId != null) {
+                    await utils.putJson(`/api/folders/${folderId}/updateOrder`, {order: order.key});
+                  }
                   toggleShowOrderItems();
                 }}
               >

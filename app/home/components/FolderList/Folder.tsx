@@ -16,6 +16,9 @@ export type FolderCommonProps = {
   setSelectedFolder: (folder: FolderAndChild) => void,
   isFolding: (id: number) => boolean,
   setFolding: (id: number, expand: boolean) => void,
+  // 全フォルダー横断検索が有効なときは、フォルダーごとの件数を検索ヒット数に置き換える。
+  searchActive: boolean,
+  searchCounts: Record<string, number> | undefined,
 };
 
 /** id付きフォルダー要素にフォーカスする。 */
@@ -48,7 +51,10 @@ export function Folder({folder, indent, common}: {
   }));
   const [menuPos, setMenuPos] = useState<{ x: number, y: number } | null>(null);
   const hasChildren = (folder.childFolders?.length ?? 0) > 0;
-  const noteCount = folder._count?.notes ?? 0;
+  // 検索中はそのフォルダー直下のヒット数を、通常時は全ノート数を表示する。
+  const noteCount = common.searchActive
+    ? (common.searchCounts?.[String(folder.id)] ?? 0)
+    : (folder._count?.notes ?? 0);
   const indentClass = FOLDER_INDENT_CLASSES[Math.min(indent, FOLDER_INDENT_CLASSES.length - 1)];
 
   const openMenuFromTwoFingerTap = (ev: React.TouchEvent<HTMLButtonElement>) => {

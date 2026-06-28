@@ -5,10 +5,26 @@ import classNames from "classnames";
 import {useCallback, useEffect} from "react";
 import {useOnCreateNewNote, useSaveChanges} from "@/app/home/hooks";
 import {useSetting} from "@/app/home/components/Setting/state";
+import {SEARCH_MIN_LENGTH, useSearchStore} from "@/app/home/search";
 
 export function Header() {
   const openSetting = useSetting(state => state.open);
   const changedNotes = useNote(state => state.changedNotes);
+
+  const searchInput = useSearchStore(state => state.input);
+  const setSearchInput = useSearchStore(state => state.setInput);
+  const setSearchQuery = useSearchStore(state => state.setQuery);
+  const setViewingResults = useSearchStore(state => state.setViewingResults);
+
+  // 3文字以上で自動的に検索を確定する（trigram検索のため）。3文字未満では自動検索しない。
+  // 入力のたびに検索しないよう250msのデバウンスをかける。Enterでは文字数に関わらず即座に確定する（下のonKeyDown）。
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      const trimmed = searchInput.trim();
+      setSearchQuery(trimmed.length >= SEARCH_MIN_LENGTH ? trimmed : "");
+    }, 250);
+    return () => clearTimeout(handle);
+  }, [searchInput, setSearchQuery]);
 
   const theme = useLocalPrefs(state => state.theme);
   const setTheme = useLocalPrefs(state => state.setTheme);
@@ -76,7 +92,23 @@ export function Header() {
         </div>
       </button>
 
-      <div className="ml-auto">
+      {/*全フォルダー横断検索*/}
+      <input
+        className="min-w-0 flex-1 mx-2 rounded border border-gray-600 bg-gray-700 px-2 py-1 text-sm text-white placeholder-gray-400 dark:bg-neutral-800 dark:border-neutral-700"
+        type="search"
+        placeholder="全ノートを検索"
+        value={searchInput}
+        onChange={(e) => setSearchInput(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            const trimmed = searchInput.trim();
+            setSearchQuery(trimmed);
+            if (trimmed === "") setViewingResults(false);
+          }
+        }}
+      />
+
+      <div className="ml-auto flex">
         <button className="rounded bg-gray-500 dark:bg-gray-700 p-2 w-14 hover:bg-gray-400 mr-1"
                 onClick={openSetting}>
           <FaGear className="m-auto"/>
