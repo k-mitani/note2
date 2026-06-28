@@ -70,11 +70,25 @@ async function expandParams(params: Params): Promise<Params> {
   };
 }
 
+// ノート本文はinnerHTMLとして描画されるため、共有元から渡される値（title/text/url）は
+// 必ずHTMLエスケープしてからHTMLに埋め込む（ストアドXSS対策）。
+function escapeHtml(s: string): string {
+  return s
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 function buildSnippet(params: Params): string {
   const parts: string[] = [];
-  if (params.title?.trim()) parts.push(params.title);
-  if (params.text?.trim()) parts.push(params.text);
-  if (params.url) parts.push(`<a href="${params.url}" rel="noreferrer">${params.url}</a>`);
+  if (params.title?.trim()) parts.push(escapeHtml(params.title));
+  if (params.text?.trim()) parts.push(escapeHtml(params.text));
+  if (params.url) {
+    const escapedUrl = escapeHtml(params.url);
+    parts.push(`<a href="${escapedUrl}" rel="noreferrer">${escapedUrl}</a>`);
+  }
   return parts.join("<br>");
 }
 
@@ -107,8 +121,8 @@ export async function GET(
     try {
       const card = await buildLinkPreviewCardHtml(url, {timeoutMs: LINK_PREVIEW_TIMEOUT_MS});
       const extras: string[] = [];
-      if (expanded.title?.trim()) extras.push(expanded.title);
-      if (expanded.text?.trim() && expanded.text.trim() !== url) extras.push(expanded.text);
+      if (expanded.title?.trim()) extras.push(escapeHtml(expanded.title));
+      if (expanded.text?.trim() && expanded.text.trim() !== url) extras.push(escapeHtml(expanded.text));
       snippet = [...extras, card].join("<br>");
     } catch (e) {
       console.error("link preview error, falling back", e);
