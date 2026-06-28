@@ -2,33 +2,34 @@ import {mutate} from "swr";
 import {createFolder} from "@/lib/folder";
 import type {Folder} from "@/app/generated/prisma/browser";
 import * as utils from "@/app/utils";
+import {PopupMenu, PopupMenuItem} from "@/app/home/components/PopupMenu";
 
-function MenuItem({name, onClick}: { name: string, onClick: () => void }) {
-  return (
-    <li
-      className="hover:bg-gray-200 dark:hover:bg-gray-500 w-full cursor-pointer"
-      onClick={onClick}>
-      {name}
-    </li>
-  );
-}
+export function FolderContextMenu(
+  {folder, x, y, onClose}: {
+    folder: Folder,
+    x: number,
+    y: number,
+    onClose: () => void,
+  }) {
+  const run = (action: () => Promise<void> | void) => async () => {
+    onClose();
+    await action();
+  };
 
-export function FolderContextMenu({folder}: { folder: Folder }) {
-  return <div className="bg-white text-black dark:bg-gray-700 dark:text-gray-200">
-    <ul className="flex-col p-0.5">
-      <MenuItem name="共有先に設定" onClick={async () => {
+  return <PopupMenu x={x} y={y} onClose={onClose}>
+      <PopupMenuItem label="共有先に設定" onClick={run(async () => {
         await utils.putJson(`/api/settings/ShareTargetFolder`, {folderId: folder.id});
         alert(`「${folder.name}」を共有先に設定しました。`);
-      }} />
+      })} />
 
-      <MenuItem name="名前変更" onClick={async () => {
+      <PopupMenuItem label="名前変更" onClick={run(async () => {
         const newName = prompt("名前を入力してください", folder.name);
         if (newName == null) return;
         await utils.putJson(`/api/folders/${folder.id}/changeName`, {name: newName});
         await mutate('/api/rpc/getFoldersAll');
-      }} />
+      })} />
 
-      {folder.isLocked && <MenuItem name="ロック解除" onClick={async () => {
+      {folder.isLocked && <PopupMenuItem label="ロック解除" onClick={run(async () => {
         const yes = confirm("ロックを解除します。よろしいですか？");
         if (!yes) return;
         await utils.putJson(`/api/folders/${folder.id}/setLock`, {shouldLock: false});
@@ -36,8 +37,8 @@ export function FolderContextMenu({folder}: { folder: Folder }) {
           mutate('/api/rpc/getFoldersAll'),
           mutate('/api/bookmarks'),
         ]);
-      }} />}
-      {!folder.isLocked && <MenuItem name="ロック" onClick={async () => {
+      })} />}
+      {!folder.isLocked && <PopupMenuItem label="ロック" onClick={run(async () => {
         const yes = confirm("フォルダーをロックしますか？");
         if (!yes) return;
         await utils.putJson(`/api/folders/${folder.id}/setLock`, {shouldLock: true});
@@ -45,18 +46,17 @@ export function FolderContextMenu({folder}: { folder: Folder }) {
           mutate('/api/rpc/getFoldersAll'),
           mutate('/api/bookmarks'),
         ]);
-      }} />}
+      })} />}
 
-      <MenuItem name="フォルダー作成" onClick={() => {
+      <PopupMenuItem label="フォルダー作成" onClick={run(() => {
         createFolder(folder.id);
-      }} />
+      })} />
 
-      <MenuItem name="削除" onClick={async () => {
+      <PopupMenuItem label="削除" danger onClick={run(async () => {
         const yes = confirm("本当に削除しますか？");
         if (!yes) return;
         await utils.deleteJson(`/api/folders/${folder.id}`);
         await mutate('/api/rpc/getFoldersAll');
-      }} />
-    </ul>
-  </div>
+      })} />
+  </PopupMenu>
 }

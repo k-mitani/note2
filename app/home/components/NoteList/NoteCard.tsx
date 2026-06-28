@@ -67,6 +67,18 @@ export default function NoteCard(
   const displayTitle = getDisplayTitle(displayNote);
   const text = htmlToPlainText(displayNote.content).substring(0, 100);
 
+  const openMenuFromTwoFingerTap = (ev: React.TouchEvent<HTMLButtonElement>) => {
+    if (ev.touches.length !== 2) return;
+
+    const [first, second] = [ev.touches[0], ev.touches[1]];
+    ev.preventDefault();
+    ev.stopPropagation();
+    setMenuPos({
+      x: (first.clientX + second.clientX) / 2,
+      y: (first.clientY + second.clientY) / 2,
+    });
+  };
+
   const toggleBookmark = async (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
@@ -90,6 +102,7 @@ export default function NoteCard(
         ev.preventDefault();
         setMenuPos({x: ev.clientX, y: ev.clientY});
       }}
+      onTouchStart={openMenuFromTwoFingerTap}
       onMouseDown={(ev) => {
         // 右クリック（コンテキストメニュー）では選択を変更しない。
         if (ev.button === 2) return;

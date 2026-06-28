@@ -46,13 +46,25 @@ export function Folder({folder, indent, common}: {
       isDragging: monitor.isDragging()
     }),
   }));
-  const [showMenu, setShowMenu] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ x: number, y: number } | null>(null);
   const hasChildren = (folder.childFolders?.length ?? 0) > 0;
   const noteCount = folder._count?.notes ?? 0;
   const indentClass = FOLDER_INDENT_CLASSES[Math.min(indent, FOLDER_INDENT_CLASSES.length - 1)];
 
+  const openMenuFromTwoFingerTap = (ev: React.TouchEvent<HTMLButtonElement>) => {
+    if (ev.touches.length !== 2) return;
+
+    const [first, second] = [ev.touches[0], ev.touches[1]];
+    ev.preventDefault();
+    ev.stopPropagation();
+    setMenuPos({
+      x: (first.clientX + second.clientX) / 2,
+      y: (first.clientY + second.clientY) / 2,
+    });
+  };
+
   return (
-    <div onMouseLeave={() => setShowMenu(false)}>
+    <div>
       {/*フォルダー項目*/}
       <button
         ref={refDrop as any}
@@ -124,9 +136,10 @@ export function Folder({folder, indent, common}: {
           }
         }}
         onContextMenu={(ev) => {
-          setShowMenu(!showMenu);
           ev.preventDefault();
+          setMenuPos({x: ev.clientX, y: ev.clientY});
         }}
+        onTouchStart={openMenuFromTwoFingerTap}
       >
         {/*フォルダー名*/}
         <div className="text-sm md:text-base line-clamp-1"
@@ -149,7 +162,14 @@ export function Folder({folder, indent, common}: {
       </button>
 
       {/*コンテキストメニュー*/}
-      {showMenu && <FolderContextMenu folder={folder} />}
+      {menuPos && (
+        <FolderContextMenu
+          folder={folder}
+          x={menuPos.x}
+          y={menuPos.y}
+          onClose={() => setMenuPos(null)}
+        />
+      )}
 
       {/*サブフォルダー*/}
       {folder.childFolders && <ul className={classNames({hidden: isFolding(folder.id)})}>
