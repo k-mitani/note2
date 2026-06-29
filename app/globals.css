@@ -28,6 +28,15 @@ html {
   cursor: pointer;
 }
 
+#NoteEditor-ContentEditable a.note-ref {
+  border-bottom: 1px dotted currentColor;
+  border-radius: 3px;
+  background: rgb(37 99 235 / 0.08);
+  color: #1d4ed8;
+  padding: 0 0.15em;
+  text-decoration: none;
+}
+
 .ncf-20260403 {
   border: 1px solid #aaa;
   border-radius: 4px;
@@ -92,8 +101,17 @@ html {
   color: #08c;
 }
 
+.dark #NoteEditor-ContentEditable a.note-ref {
+  background: rgb(14 165 233 / 0.14);
+  color: #38bdf8;
+}
+
 .dark #NoteEditor-ContentEditable a:visited {
   color: #94a;
+}
+
+.dark #NoteEditor-ContentEditable a.note-ref:visited {
+  color: #38bdf8;
 }
 
 #note-list {
