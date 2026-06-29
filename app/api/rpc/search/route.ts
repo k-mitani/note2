@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import {prisma} from '@/lib/prisma';
 import {NextRequest, NextResponse} from "next/server";
-import {isFolderLockUnlocked} from "@/lib/folderLock";
+import {filterVisibleByFolderLock} from "@/lib/folderLock";
 
 // 全フォルダー横断で title / content を部分一致検索し、ヒットしたノートを軽量版で返す。
 // 重い content / resource は読まず、保存済みの summary を content として渡す（一覧表示用）。
@@ -31,30 +31,7 @@ export async function GET(req: NextRequest) {
     delete note.summary;
   }
 
-  // ロック中は、ロックされたフォルダー配下のノートを除外する。
-  let visible = notes;
-  if (!(await isFolderLockUnlocked())) {
-    const folders = await prisma.folder.findMany({
-      select: {id: true, isLocked: true, parentFolderId: true},
-    });
-    const byId = new Map(folders.map(f => [f.id, f]));
-
-    // 指定フォルダーまたは祖先がロックされていればtrue（循環があっても無限ループしない）。
-    const isRestricted = (folderId: number | null): boolean => {
-      const visited = new Set<number>();
-      let currentId: number | null | undefined = folderId;
-      while (currentId != null && !visited.has(currentId)) {
-        visited.add(currentId);
-        const folder = byId.get(currentId);
-        if (folder == null) return false;
-        if (folder.isLocked) return true;
-        currentId = folder.parentFolderId;
-      }
-      return false;
-    };
-
-    visible = notes.filter((n: any) => !isRestricted(n.folderId ?? null));
-  }
+  const visible = await filterVisibleByFolderLock(notes);
 
   return NextResponse.json({notes: visible});
 }
