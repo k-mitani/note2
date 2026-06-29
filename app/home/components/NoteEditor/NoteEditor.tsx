@@ -3,14 +3,20 @@ import {useNote} from "@/app/home/state";
 import ContentEditable from 'react-contenteditable'
 import {useHotkeys} from 'react-hotkeys-hook'
 import {useFolderAndNotes, useSaveChanges} from "@/app/home/hooks";
-import * as hooks from "@/app/home/components/NoteEditor/hooks";
 import {NoteHeader} from "@/app/home/components/NoteEditor/NoteHeader";
+import {onClickContent} from "@/app/home/components/NoteEditor/linkHandlers";
+import {getNoteRefTokenRange, insertNoteRefAnchor} from "@/app/home/components/NoteEditor/noteRef/dom";
+import {NoteRefCompletionPopup} from "@/app/home/components/NoteEditor/noteRef/NoteRefCompletionPopup";
+import {NoteRefTooltipPopup} from "@/app/home/components/NoteEditor/noteRef/NoteRefTooltipPopup";
+import {useNoteRefCompletion} from "@/app/home/components/NoteEditor/noteRef/useNoteRefCompletion";
+import {useNoteRefTooltip} from "@/app/home/components/NoteEditor/noteRef/useNoteRefTooltip";
+import {onPaste} from "@/app/home/components/NoteEditor/pasteHandlers";
+import {useEnableImageResize} from "@/app/home/components/NoteEditor/useEnableImageResize";
+import {useShowingImePopup} from "@/app/home/components/NoteEditor/useShowingImePopup";
 import {useLocalPrefs} from "@/app/home/useLocalPrefs";
 import {FOLDABLE_CLASS} from "@/app/home/constants";
 
 const AUTO_SAVE_DELAY_MS = 10_000;
-const NOTE_REF_COMPLETION_LIMIT = 20;
-const UNTITLED_NOTE_TITLE = "無題のノート";
 
 const hotkeysOptions = {
   enableOnFormTags: true,
@@ -21,124 +27,12 @@ const hotkeysOptionsPreventDefault = {
   ...hotkeysOptions,
 };
 
-type NoteRefToken = {
-  noteId: number,
-  range: Range,
-};
-
-type NoteRefCompletionTrigger = {
-  range: Range,
-  prefix: string,
-};
-
-type NoteRefCandidate = {
-  id: number,
-  title: string,
-  summary: string,
-  label: string,
-};
-
-type NoteRefCompletion = {
-  range: Range,
-  prefix: string,
-  x: number,
-  y: number,
-  loading: boolean,
-  candidates: NoteRefCandidate[],
-  selectedIndex: number,
-};
-
 /** Ctrl系のフォーマット系コマンドをexecCommandで実行するためのフック。 */
 function useExecCommandHotkey(key: string, args: [string, boolean?, string?]) {
   useHotkeys(key, () => {
     // @ts-ignore
     document.execCommand(...args);
   }, hotkeysOptionsPreventDefault);
-}
-
-function getTextNodeBeforeCaret(range: Range): { node: Text, offset: number } | null {
-  if (range.startContainer.nodeType === Node.TEXT_NODE) {
-    return {node: range.startContainer as Text, offset: range.startOffset};
-  }
-  if (range.startContainer.nodeType !== Node.ELEMENT_NODE || range.startOffset === 0) {
-    return null;
-  }
-
-  const prev = range.startContainer.childNodes[range.startOffset - 1];
-  if (prev?.nodeType !== Node.TEXT_NODE) return null;
-  return {node: prev as Text, offset: prev.textContent?.length ?? 0};
-}
-
-function getNoteRefTokenRange(range: Range): NoteRefToken | null {
-  const textNode = getTextNodeBeforeCaret(range);
-  if (textNode == null) return null;
-
-  const text = textNode.node.textContent ?? "";
-  const beforeCaret = text.slice(0, textNode.offset);
-  const match = beforeCaret.match(/@(\d+)$/);
-  if (match == null) return null;
-
-  const tokenStart = textNode.offset - match[0].length;
-  const noteId = Number(match[1]);
-  if (!Number.isSafeInteger(noteId) || noteId <= 0) return null;
-
-  const tokenRange = document.createRange();
-  tokenRange.setStart(textNode.node, tokenStart);
-  tokenRange.setEnd(textNode.node, textNode.offset);
-  return {noteId, range: tokenRange};
-}
-
-function getNoteRefCompletionTrigger(range: Range): NoteRefCompletionTrigger | null {
-  const textNode = getTextNodeBeforeCaret(range);
-  if (textNode == null) return null;
-
-  const text = textNode.node.textContent ?? "";
-  const beforeCaret = text.slice(0, textNode.offset);
-  const match = beforeCaret.match(/@(\d*)$/);
-  if (match == null) return null;
-
-  const tokenStart = textNode.offset - match[0].length;
-  const tokenRange = document.createRange();
-  tokenRange.setStart(textNode.node, tokenStart);
-  tokenRange.setEnd(textNode.node, textNode.offset);
-  return {range: tokenRange, prefix: match[1]};
-}
-
-function getRangePopupPosition(range: Range): { x: number, y: number } {
-  const rect = range.getBoundingClientRect();
-  const editable = document.getElementById("NoteEditor-ContentEditable");
-  const fallbackRect = editable?.getBoundingClientRect();
-  const margin = 8;
-  const width = 360;
-  const xBase = rect.left || fallbackRect?.left || margin;
-  const yBase = rect.bottom || fallbackRect?.top || margin;
-  return {
-    x: Math.max(margin, Math.min(xBase, window.innerWidth - width - margin)),
-    y: Math.max(margin, Math.min(yBase + 6, window.innerHeight - 260)),
-  };
-}
-
-function insertNoteRefAnchor(range: Range, noteId: number) {
-  const anchor = document.createElement("a");
-  anchor.href = `/home/${noteId}`;
-  anchor.dataset.noteId = String(noteId);
-  anchor.className = "note-ref";
-  anchor.textContent = `@${noteId}`;
-
-  range.deleteContents();
-  range.insertNode(anchor);
-
-  const newRange = document.createRange();
-  newRange.setStartAfter(anchor);
-  newRange.collapse(true);
-  const selection = document.getSelection();
-  selection?.removeAllRanges();
-  selection?.addRange(newRange);
-}
-
-function getCandidateTitle(candidate: NoteRefCandidate): string {
-  const title = candidate.title.trim();
-  return title === "" ? UNTITLED_NOTE_TITLE : title;
 }
 
 export default function NoteEditor() {
@@ -151,7 +45,6 @@ export default function NoteEditor() {
 
   const prevNote = useRef(note);
   const refHtml = useRef(note?.content ?? "");
-  const completionListRef = useRef<HTMLDivElement | null>(null);
   const [title, setTitle] = useState(note?.title ?? "");
   const [updatedAt, setUpdatedAt] = useState(note?.updatedAt ?? note?.createdAt);
   const [createdAt, setCreatedAt] = useState(note?.createdAt);
@@ -159,9 +52,8 @@ export default function NoteEditor() {
   const changedNotes = useNote(state => state.changedNotes);
   const addChangedNote = useNote(state => state.addChangedNote);
   // 変換候補選択中ならtrue
-  const showingImePopup = hooks.useShowingImePopup();
-  const noteRefTooltip = hooks.useNoteRefTooltip(note);
-  const [noteRefCompletion, setNoteRefCompletion] = useState<NoteRefCompletion | null>(null);
+  const showingImePopup = useShowingImePopup();
+  const noteRefTooltip = useNoteRefTooltip(note);
 
   // 未保存の変更がある場合、最後の変更から AUTO_SAVE_DELAY_MS 経過したら自動保存する。
   useEffect(() => {
@@ -214,124 +106,10 @@ export default function NoteEditor() {
     refHtml.current = editable.innerHTML;
   }, [addChangedNote, note, title]);
 
-  const applyNoteRefCompletion = useCallback((candidate: NoteRefCandidate) => {
-    const editable = document.getElementById("NoteEditor-ContentEditable");
-    if (editable == null || noteRefCompletion == null) return;
-
-    insertNoteRefAnchor(noteRefCompletion.range, candidate.id);
-    updateCurrentNoteContent(editable);
-    setNoteRefCompletion(null);
-  }, [noteRefCompletion, updateCurrentNoteContent]);
-
-  async function openNoteRefCompletion() {
-    const editable = document.getElementById("NoteEditor-ContentEditable");
-    const selectionObj = document.getSelection();
-    if (selectionObj == null || selectionObj.rangeCount === 0) return;
-    const range = selectionObj.getRangeAt(0);
-    const selection = range.startContainer;
-    if (selection == null || editable == null || !editable.contains(selection) || !range.collapsed) return;
-
-    const trigger = getNoteRefCompletionTrigger(range);
-    if (trigger == null) {
-      setNoteRefCompletion(null);
-      return;
-    }
-
-    const pos = getRangePopupPosition(trigger.range);
-    setNoteRefCompletion({
-      range: trigger.range,
-      prefix: trigger.prefix,
-      x: pos.x,
-      y: pos.y,
-      loading: true,
-      candidates: [],
-      selectedIndex: 0,
-    });
-
-    const params = new URLSearchParams({limit: String(NOTE_REF_COMPLETION_LIMIT)});
-    if (note?.id != null) params.set("excludeId", String(note.id));
-
-    try {
-      const res = await fetch(`/api/rpc/noteRefCandidates?${params.toString()}`);
-      if (!res.ok) throw new Error(`noteRefCandidates failed: ${res.status}`);
-      const data = await res.json();
-      const rawCandidates: unknown[] = Array.isArray(data.notes) ? data.notes : [];
-      const candidates = rawCandidates
-        .filter((candidate): candidate is NoteRefCandidate => {
-          if (typeof candidate !== "object" || candidate == null) return false;
-          const c = candidate as Partial<NoteRefCandidate>;
-          return Number.isSafeInteger(c.id)
-            && typeof c.label === "string"
-            && typeof c.summary === "string"
-            && typeof c.title === "string";
-        })
-        .filter((candidate: NoteRefCandidate) => (
-          trigger.prefix === "" || String(candidate.id).startsWith(trigger.prefix)
-        ));
-
-      setNoteRefCompletion(prev => prev?.range === trigger.range
-        ? {...prev, loading: false, candidates, selectedIndex: 0}
-        : prev
-      );
-    } catch {
-      setNoteRefCompletion(prev => prev?.range === trigger.range
-        ? {...prev, loading: false, candidates: [], selectedIndex: 0}
-        : prev
-      );
-    }
-  }
-
-  useEffect(() => {
-    setNoteRefCompletion(null);
-  }, [note?.id]);
-
-  useEffect(() => {
-    if (noteRefCompletion == null) return;
-    const completion: NoteRefCompletion = noteRefCompletion;
-
-    function onKeyDown(ev: KeyboardEvent) {
-      if (ev.key === "Escape") {
-        ev.preventDefault();
-        ev.stopPropagation();
-        setNoteRefCompletion(null);
-        return;
-      }
-
-      if (ev.key === "ArrowDown" || ev.key === "ArrowUp") {
-        ev.preventDefault();
-        ev.stopPropagation();
-        setNoteRefCompletion(prev => {
-          if (prev == null || prev.candidates.length === 0) return prev;
-          const direction = ev.key === "ArrowDown" ? 1 : -1;
-          return {
-            ...prev,
-            selectedIndex: (prev.selectedIndex + direction + prev.candidates.length) % prev.candidates.length,
-          };
-        });
-        return;
-      }
-
-      if (ev.key === "Enter" || ev.key === "Tab") {
-        if (completion.candidates.length === 0) return;
-        const candidate = completion.candidates[completion.selectedIndex];
-        if (candidate == null) return;
-        ev.preventDefault();
-        ev.stopPropagation();
-        applyNoteRefCompletion(candidate);
-      }
-    }
-
-    document.addEventListener("keydown", onKeyDown, true);
-    return () => document.removeEventListener("keydown", onKeyDown, true);
-  }, [applyNoteRefCompletion, noteRefCompletion]);
-
-  useEffect(() => {
-    if (noteRefCompletion == null) return;
-    const selected = completionListRef.current?.querySelector<HTMLElement>(
-      `[data-note-ref-candidate-index="${noteRefCompletion.selectedIndex}"]`
-    );
-    selected?.scrollIntoView({block: "nearest"});
-  }, [noteRefCompletion?.selectedIndex, noteRefCompletion]);
+  const noteRefCompletion = useNoteRefCompletion({
+    noteId: note?.id,
+    onContentChanged: updateCurrentNoteContent,
+  });
 
   // フォーマット系のショートカット
   useExecCommandHotkey("ctrl+b", ["bold"]);
@@ -358,7 +136,7 @@ export default function NoteEditor() {
 
   useHotkeys("ctrl+space", (ev: KeyboardEvent) => {
     ev.preventDefault();
-    openNoteRefCompletion();
+    noteRefCompletion.open();
   }, hotkeysOptionsPreventDefault);
 
   // tabキーでインデントする。
@@ -548,7 +326,7 @@ export default function NoteEditor() {
   }, hotkeysOptions);
 
   // 画像のリサイズ
-  hooks.useEnableImageResize(note);
+  useEnableImageResize(note);
 
   // ノート選択中だがフル版（content）がまだ取得できていない間は、本文を編集させない。
   // 軽量版の空contentを編集・保存して本文を消してしまうのを防ぐため。
@@ -575,7 +353,7 @@ export default function NoteEditor() {
 
     {/*本文*/}
     <div className="min-h-0 min-w-0 grow overflow-y-scroll break-all p-2 dark:text-gray-300"
-         onClick={hooks.onClickContent}>
+         onClick={onClickContent}>
       <ContentEditable html={refHtml.current}
                        id="NoteEditor-ContentEditable"
                        className="h-full w-full min-w-0"
@@ -584,10 +362,10 @@ export default function NoteEditor() {
                          whiteSpace: "pre-wrap",
                          tabSize: 8,
                        }}
-                       onPaste={hooks.onPaste}
+                       onPaste={onPaste}
                        onChange={ev => {
                          refHtml.current = ev.target.value
-                         setNoteRefCompletion(null);
+                         noteRefCompletion.close();
                          if (note != null) {
                            const title = changedNotes.get(note.id)?.title ?? note.title;
                            addToChangedNotes(note.id, title, ev.target.value);
@@ -595,63 +373,16 @@ export default function NoteEditor() {
                        }}
       />
     </div>
-    {noteRefCompletion != null && (
-      <div
-        className="fixed z-50 w-80 max-w-[calc(100vw-1rem)] overflow-hidden rounded border border-gray-300 bg-white text-xs text-gray-700 shadow-lg dark:border-gray-700 dark:bg-neutral-900 dark:text-gray-200"
-        style={{left: noteRefCompletion.x, top: noteRefCompletion.y}}
-      >
-        {noteRefCompletion.loading && (
-          <div className="px-3 py-2 text-gray-500 dark:text-gray-400">loading...</div>
-        )}
-        {!noteRefCompletion.loading && noteRefCompletion.candidates.length === 0 && (
-          <div className="px-3 py-2 text-gray-500 dark:text-gray-400">候補なし</div>
-        )}
-        {!noteRefCompletion.loading && noteRefCompletion.candidates.length > 0 && (
-          <div className="max-h-72 overflow-y-auto py-1" ref={completionListRef}>
-            {noteRefCompletion.candidates.map((candidate, index) => {
-              const candidateTitle = getCandidateTitle(candidate);
-              return (
-                <button
-                  key={candidate.id}
-                  data-note-ref-candidate-index={index}
-                  className={`flex w-full items-start gap-2 px-3 py-2 text-left ${index === noteRefCompletion.selectedIndex ? "bg-blue-50 dark:bg-sky-950" : "hover:bg-gray-100 dark:hover:bg-neutral-800"}`}
-                  onMouseEnter={() => setNoteRefCompletion(prev => prev == null ? null : {...prev, selectedIndex: index})}
-                  onMouseDown={ev => {
-                    ev.preventDefault();
-                    applyNoteRefCompletion(candidate);
-                  }}
-                >
-                  <span className="shrink-0 font-mono text-[11px] leading-5 text-blue-600 dark:text-sky-400">@{candidate.id}</span>
-                  <span className="min-w-0 flex-1">
-                    <span className="line-clamp-1 font-medium leading-5 text-gray-900 dark:text-gray-100">
-                      {candidateTitle}
-                    </span>
-                    {candidate.summary !== "" && (
-                      <span className="mt-0.5 line-clamp-3 whitespace-normal leading-4 text-gray-500 dark:text-gray-400">
-                        {candidate.summary}
-                      </span>
-                    )}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
+    {noteRefCompletion.completion != null && (
+      <NoteRefCompletionPopup
+        completion={noteRefCompletion.completion}
+        listRef={noteRefCompletion.listRef}
+        onSelectIndex={noteRefCompletion.setSelectedIndex}
+        onApply={noteRefCompletion.apply}
+      />
     )}
     {noteRefTooltip != null && (
-      <div
-        className="pointer-events-none fixed z-50 max-w-xs rounded border border-gray-300 bg-white px-3 py-2 text-xs text-gray-700 shadow-lg dark:border-gray-700 dark:bg-neutral-900 dark:text-gray-200"
-        style={{left: noteRefTooltip.x, top: noteRefTooltip.y}}
-      >
-        <div className="font-semibold text-gray-900 dark:text-gray-100">{noteRefTooltip.title}</div>
-        {noteRefTooltip.loading && <div className="mt-1 text-gray-500 dark:text-gray-400">loading...</div>}
-        {!noteRefTooltip.loading && noteRefTooltip.summary !== "" && (
-          <div className="mt-1 line-clamp-4 whitespace-normal text-gray-600 dark:text-gray-400">
-            {noteRefTooltip.summary}
-          </div>
-        )}
-      </div>
+      <NoteRefTooltipPopup tooltip={noteRefTooltip} />
     )}
   </div>
 }
