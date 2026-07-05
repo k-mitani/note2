@@ -24,7 +24,11 @@ export default function NoteListView({forceVisible = false}: {
   const showNoteListView = useLocalPrefs(state => state.showNoteListView);
 
   const selectedFolder = useNote(state => state.selectedFolder);
-  const {notes: folderNotes, isLoading: folderLoading} = useFolderAndNotes(selectedFolder?.id);
+  const {
+    notes: folderNotes,
+    isLoading: folderLoading,
+    isFullLoaded: folderFullLoaded,
+  } = useFolderAndNotes(selectedFolder?.id);
 
   // 「検索結果」仮想フォルダーを表示中は、選択フォルダーではなく全フォルダー横断のヒットを一覧する。
   const localQuery = useNoteList(state => state.searchQuery);
@@ -34,6 +38,7 @@ export default function NoteListView({forceVisible = false}: {
 
   const notesRaw = inResultsView ? searchNotes : folderNotes;
   const isLoading = inResultsView ? false : folderLoading;
+  const needsLoadFullContent = inResultsView || !folderFullLoaded;
 
   console.log("NoteListView prepare render for sort");
   const {notes: notesSorted, refSelectedNoteElement} = useListOrder(notesRaw);
@@ -97,6 +102,7 @@ export default function NoteListView({forceVisible = false}: {
                         setSelectedNote={setSelectedNote}
                         _ref={selectedNote === note ? refSelectedNoteElement : null}
                         changed={changedNotes.get(note.id)}
+                        needsLoadFullContent={needsLoadFullContent}
                         isSelected={selectedNote === note}
                         onKeyDown={onKeyDown}
                         onCtrlClick={onCtrlClick}

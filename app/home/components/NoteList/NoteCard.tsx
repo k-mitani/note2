@@ -28,6 +28,7 @@ export default function NoteCard(
     setSelectedNote,
     _ref,
     changed,
+    needsLoadFullContent,
     isSelected,
     onKeyDown,
     onCtrlClick,
@@ -38,6 +39,7 @@ export default function NoteCard(
     setSelectedNote: (note: Note) => void,
     _ref: React.Ref<HTMLButtonElement>,
     changed: { title: string, content: string } | undefined,
+    needsLoadFullContent: boolean,
     isSelected: boolean,
     onKeyDown: (e: React.KeyboardEvent<HTMLButtonElement>) => void,
     onCtrlClick: (note: Note) => void,
@@ -180,6 +182,13 @@ export default function NoteCard(
     </button>
 
     {/*コンテキストメニュー*/}
-    {menuPos && <NoteContextMenu note={note} x={menuPos.x} y={menuPos.y} onClose={() => setMenuPos(null)} />}
+    {menuPos && <NoteContextMenu
+      note={note}
+      changedContent={changed?.content}
+      needsLoadFullContent={needsLoadFullContent}
+      x={menuPos.x}
+      y={menuPos.y}
+      onClose={() => setMenuPos(null)}
+    />}
     </>);
 }
