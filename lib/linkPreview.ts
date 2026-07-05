@@ -1,6 +1,9 @@
 import {unfurl} from "unfurl.js";
 import {v4 as uuidv4} from "uuid";
 import * as s3 from "@/lib/s3client";
+import dns from "node:dns/promises";
+import net from "node:net";
+
 /** http/https のURLのみ許可してパースする。それ以外(javascript:, file: 等)はnull。 */
 export function parseHttpUrl(url: string | undefined | null): URL | null {
   if (url == null) return null;
@@ -18,6 +21,49 @@ export function parseHttpUrl(url: string | undefined | null): URL | null {
 function toSafeHref(url: string | undefined | null): string {
   const parsed = parseHttpUrl(url);
   return parsed != null ? escapeHtml(parsed.href) : "#";
+}
+
+function isPrivateAddress(address: string): boolean {
+  // IPv4射影IPv6 (::ffff:10.0.0.1) はIPv4部分で判定する
+  const v4Mapped = address.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/i);
+  if (v4Mapped != null) address = v4Mapped[1];
+  if (net.isIPv4(address)) {
+    const [a, b] = address.split(".").map(Number);
+    return (
+      a === 0 || a === 10 || a === 127 ||
+      (a === 100 && b >= 64 && b <= 127) ||
+      (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 192 && b === 168)
+    );
+  }
+  const lower = address.toLowerCase();
+  return (
+    lower === "::" || lower === "::1" ||
+    lower.startsWith("fc") || lower.startsWith("fd") || // fc00::/7
+    lower.startsWith("fe8") || lower.startsWith("fe9") ||
+    lower.startsWith("fea") || lower.startsWith("feb") // fe80::/10
+  );
+}
+
+/**
+ * SSRF対策: http/httpsであり、かつホスト名がプライベート/ループバック等の
+ * アドレスに解決されないことを確認する。安全ならパース済みURLを返す。
+ */
+export async function assertPublicHttpUrl(url: string): Promise<URL | null> {
+  const parsed = parseHttpUrl(url);
+  if (parsed == null) return null;
+  const hostname = parsed.hostname.replace(/^\[|\]$/g, "");
+  try {
+    const addresses = net.isIP(hostname)
+      ? [{address: hostname}]
+      : await dns.lookup(hostname, {all: true});
+    if (addresses.length === 0) return null;
+    if (addresses.some((a) => isPrivateAddress(a.address))) return null;
+  } catch {
+    return null;
+  }
+  return parsed;
 }
 
 type Og = {
@@ -237,6 +283,7 @@ async function saveOgImages(og: Og): Promise<string[]> {
   const imageUrls: string[] = [];
   try {
     for (const image of og.images ?? []) {
+      if ((await assertPublicHttpUrl(image.url)) == null) continue;
       const res = await fetch(image.url);
       const buff = await res.arrayBuffer();
       const DIRECTORY = "files-og/v1/";
@@ -295,6 +342,11 @@ export async function buildLinkPreviewCardHtml(
   options?: { timeoutMs?: number }
 ): Promise<string> {
   const timeoutMs = options?.timeoutMs;
+  if ((await assertPublicHttpUrl(url)) == null) {
+    return `<section class="link-preview" style="max-width:50em;margin:0.1em;padding:0.3em;border:1px solid #777">` +
+      `<div style="color:#777">プレビューできないURLです: ${escapeHtml(url)}</div>` +
+      `</section>`;
+  }
   const run = async () => {
     if (getXStatusRef(url) != null) {
       try {
