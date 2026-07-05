@@ -1,6 +1,24 @@
 import {unfurl} from "unfurl.js";
 import {v4 as uuidv4} from "uuid";
 import * as s3 from "@/lib/s3client";
+/** http/https のURLのみ許可してパースする。それ以外(javascript:, file: 等)はnull。 */
+export function parseHttpUrl(url: string | undefined | null): URL | null {
+  if (url == null) return null;
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+  return parsed;
+}
+
+/** href属性に埋め込んでよいURLならエスケープ済みで返す。不正なら "#"。 */
+function toSafeHref(url: string | undefined | null): string {
+  const parsed = parseHttpUrl(url);
+  return parsed != null ? escapeHtml(parsed.href) : "#";
+}
 
 type Og = {
   url: string;
@@ -237,7 +255,7 @@ function renderQuotedXPostHtml(og: Og): string {
   const siteName = escapeHtml(og.site_name ?? "X");
   const title = escapeHtml(og.title ?? og.url);
   const description = escapeHtml(og.description ?? "");
-  const href = escapeHtml(og.url);
+  const href = toSafeHref(og.url);
   return (
     `<div style="margin-top:0.6em;padding:0.45em;border:1px solid #bbb;background:#fafafa">` +
     `<div style="font-size:0.85em;color:#777">引用 / ${siteName}</div>` +
@@ -251,7 +269,7 @@ export function renderLinkPreviewCardHtml(og: Og, imageUrls: string[], extraHtml
   const siteName = escapeHtml(og.site_name ?? "(no site name)");
   const title = escapeHtml(og.title ?? og.url);
   const description = escapeHtml(og.description ?? "");
-  const href = escapeHtml(og.url);
+  const href = toSafeHref(og.url);
   const imagesHtml = imageUrls
     .map(
       (u) =>
