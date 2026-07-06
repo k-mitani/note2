@@ -20,10 +20,10 @@ export async function GET(
   props: {params: Promise<{filepath: string[]}>},
 ) {
   const {filepath} = await props.params;
-  const publicDir = path.resolve(process.cwd(), "public");
-  const filePath = path.resolve(publicDir, ...filepath);
+  const dataRoot = path.resolve(process.cwd(), "data-local");
+  const filePath = path.resolve(dataRoot, ...filepath);
 
-  if (!filePath.startsWith(publicDir + path.sep)) {
+  if (!filePath.startsWith(dataRoot + path.sep)) {
     return new NextResponse(null, {status: 403});
   }
 
