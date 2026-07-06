@@ -6,6 +6,7 @@ import {useNoteList} from "@/app/home/components/NoteList/state";
 import {useFoldersAll} from "@/app/home/hooks";
 import {findFolderById} from "@/lib/folderTree";
 import type {Note} from "@/app/generated/prisma/browser";
+import {useRemoteStore} from "@/app/home/remote";
 
 /**
  * ノートのパーマリンク（`/home/<id>`）と、ブラウザの戻る/進む（History API）を実装するフック。
@@ -122,6 +123,8 @@ export function useNotePermalink() {
   // 戻る/進む（popstate）への対応。
   useEffect(() => {
     const onPopState = () => {
+      // リモート表示中はURLのノートID（ローカルのID）を復元しない。
+      if (useRemoteStore.getState().activeServer != null) return;
       selectNoteById(getUrlNoteId());
     };
     window.addEventListener("popstate", onPopState);
@@ -140,8 +143,10 @@ export function useNotePermalink() {
   }, [foldersAll]);
 
   // 選択中ノートが変わったら URL を同期する。
+  // リモートサーバー表示中はノートIDがローカルと衝突するため、URL同期を行わない。
+  const activeServer = useRemoteStore(state => state.activeServer);
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || activeServer != null) return;
     const id = selectedNote?.id ?? null;
     const urlId = getUrlNoteId();
     // すでに URL が一致している場合は push しない（popstate / 初回復元の二重 push を防ぐ）。
@@ -150,5 +155,5 @@ export function useNotePermalink() {
     const url = new URL(window.location.href);
     url.pathname = id == null ? BASE_PATH : `${BASE_PATH}/${id}`;
     window.history.pushState(null, "", url);
-  }, [selectedNote, ready]);
+  }, [selectedNote, ready, activeServer]);
 }

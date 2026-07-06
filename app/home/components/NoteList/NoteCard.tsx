@@ -8,6 +8,7 @@ import type {Note} from "@/app/generated/prisma/browser";
 import {NOTE_LIST_VIEW_MODE_TITLE_ONLY} from "@/app/home/components/NoteList/NoteListViewMode";
 import {NoteContextMenu} from "@/app/home/components/NoteList/NoteContextMenu";
 import {htmlToPlainText} from "@/lib/noteSummary";
+import {api} from "@/app/home/remote";
 
 const UNTITLED_NOTE_TITLE = "無題のノート";
 const FALLBACK_TITLE_LENGTH = 32;
@@ -84,16 +85,16 @@ export default function NoteCard(
   const toggleBookmark = async (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    await fetch(`/api/notes/${note.id}/toggleBookmark`, { method: 'POST' });
-    mutate(`/api/folders/${note.folderId}`);
-    mutate('/api/bookmarks');
+    await utils.apiFetch(api(`/api/notes/${note.id}/toggleBookmark`), { method: 'POST' });
+    mutate(api(`/api/folders/${note.folderId}`));
+    mutate(api('/api/bookmarks'));
   };
 
   const togglePin = async (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    await fetch(`/api/notes/${note.id}/togglePin`, { method: 'POST' });
-    mutate(`/api/folders/${note.folderId}`);
+    await utils.apiFetch(api(`/api/notes/${note.id}/togglePin`), { method: 'POST' });
+    mutate(api(`/api/folders/${note.folderId}`));
   };
 
   return (

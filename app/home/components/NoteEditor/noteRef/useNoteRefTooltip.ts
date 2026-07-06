@@ -1,3 +1,5 @@
+import {api} from "@/app/home/remote";
+import * as utils from "@/app/utils";
 import {useEffect, useState} from "react";
 import {getNoteRefAnchor, getNoteRefIdFromAnchor} from "@/app/home/components/NoteEditor/noteRef/dom";
 import {buildNoteRefPreview} from "@/app/home/components/NoteEditor/noteRef/preview";
@@ -44,7 +46,7 @@ export function useNoteRefTooltip(note: unknown): NoteRefTooltip | null {
       const seq = ++requestSeq;
       setTooltip({noteId, title: `@${noteId}`, summary: "", ...pos, loading: true});
       try {
-        const res = await fetch(`/api/notes/${noteId}`);
+        const res = await utils.apiFetch(api(`/api/notes/${noteId}`));
         if (!res.ok) {
           if (currentAnchor === anchor && requestSeq === seq) setTooltip(null);
           return;

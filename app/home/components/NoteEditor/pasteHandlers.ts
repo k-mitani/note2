@@ -1,3 +1,5 @@
+import {api} from "@/app/home/remote";
+import * as utils from "@/app/utils";
 import React from "react";
 
 export async function onPaste(ev: React.ClipboardEvent<HTMLDivElement>) {
@@ -30,7 +32,7 @@ export async function onPaste(ev: React.ClipboardEvent<HTMLDivElement>) {
 
         const formData = new FormData();
         formData.append("file", file);
-        const res = await fetch("/api/rpc/uploadFile", {
+        const res = await utils.apiFetch(api("/api/rpc/uploadFile"), {
           method: "POST",
           body: formData,
         });

@@ -4,6 +4,7 @@ import * as utils from "@/app/utils";
 import {PopupMenu, PopupMenuItem, PopupMenuSeparator} from "@/app/home/components/PopupMenu";
 import {TRASH_FOLDER_ID} from "@/app/home/constants";
 import {useNote} from "@/app/home/state";
+import {api} from "@/app/home/remote";
 import {
   getNoteContentCopyText,
   noteContentToFormattedHtml,
@@ -32,7 +33,7 @@ export function NoteContextMenu(
     if (changedContent != null) return changedContent;
     if (!needsLoadFullContent) return note.content;
 
-    const res = await fetch(`/api/notes/${note.id}`);
+    const res = await utils.apiFetch(api(`/api/notes/${note.id}`));
     if (!res.ok) return note.content;
 
     const fullNote = await res.json() as Note | null;
@@ -53,7 +54,7 @@ export function NoteContextMenu(
   });
 
   const moveToTrash = run(async () => {
-    await utils.postJson("/api/rpc/moveNotes/", {
+    await utils.postJson(api("/api/rpc/moveNotes/"), {
       folderId: TRASH_FOLDER_ID,
       noteIds: [note.id],
     });
@@ -62,13 +63,13 @@ export function NoteContextMenu(
     }
 
     const mutations: Promise<unknown>[] = [
-      mutate("/api/rpc/getFoldersAll"),
-      mutate("/api/bookmarks"),
-      mutate(`/api/folders/${TRASH_FOLDER_ID}`),
-      mutate(key => typeof key === "string" && key.startsWith("/api/rpc/search")),
+      mutate(api("/api/rpc/getFoldersAll")),
+      mutate(api("/api/bookmarks")),
+      mutate(api(`/api/folders/${TRASH_FOLDER_ID}`)),
+      mutate(key => typeof key === "string" && key.startsWith(api("/api/rpc/search"))),
     ];
     if (note.folderId != null) {
-      mutations.push(mutate(`/api/folders/${note.folderId}`));
+      mutations.push(mutate(api(`/api/folders/${note.folderId}`)));
     }
     await Promise.all(mutations);
   });
@@ -76,8 +77,8 @@ export function NoteContextMenu(
   return (
     <PopupMenu x={x} y={y} onClose={onClose}>
       <PopupMenuItem label="複製" onClick={run(async () => {
-        await utils.postJson(`/api/notes/${note.id}/duplicate`);
-        await mutate(`/api/folders/${note.folderId}`);
+        await utils.postJson(api(`/api/notes/${note.id}/duplicate`));
+        await mutate(api(`/api/folders/${note.folderId}`));
       })} />
       <PopupMenuSeparator />
       <PopupMenuItem label="本文コピー(txt)" onClick={copyContent("txt")} />

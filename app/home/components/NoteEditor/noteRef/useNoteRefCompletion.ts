@@ -1,3 +1,5 @@
+import {api} from "@/app/home/remote";
+import * as utils from "@/app/utils";
 import {useCallback, useEffect, useRef, useState, type RefObject} from "react";
 import {
   getNoteRefCompletionTrigger,
@@ -84,7 +86,7 @@ export function useNoteRefCompletion({
     if (noteId != null) params.set("excludeId", String(noteId));
 
     try {
-      const res = await fetch(`/api/rpc/noteRefCandidates?${params.toString()}`);
+      const res = await utils.apiFetch(api(`/api/rpc/noteRefCandidates?${params.toString()}`));
       if (!res.ok) throw new Error(`noteRefCandidates failed: ${res.status}`);
       const data = await res.json();
       const rawCandidates: unknown[] = Array.isArray(data.notes) ? data.notes : [];

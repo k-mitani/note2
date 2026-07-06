@@ -11,6 +11,7 @@ import {findFolderById} from "@/lib/folderTree";
 import {SHORTCUTS_FOLDING_KEY} from "@/app/home/constants";
 import * as utils from "@/app/utils";
 import {useSearch, useSearchStore} from "@/app/home/search";
+import {useApi} from "@/app/home/remote";
 
 /**
  * フォルダーやノートを表示する。
@@ -21,7 +22,8 @@ export default function FolderListView({forceVisible = false}: {
   // フォルダーとゴミ箱
   const {folders = [], trash = null} = useFoldersAll().data ?? {};
   // ブックマーク一覧
-  const {data: bookmarks = []} = useSWR<Note[]>('/api/bookmarks', utils.jsonFetcher);
+  const apiPath = useApi();
+  const {data: bookmarks = []} = useSWR<Note[]>(apiPath('/api/bookmarks'), utils.jsonFetcher);
   // 選択中のフォルダー
   const selectedFolder = useNote(state => state.selectedFolder);
   const setSelectedFolder = useNote(state => state.setSelectedFolder);

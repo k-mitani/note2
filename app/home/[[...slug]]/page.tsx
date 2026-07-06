@@ -17,6 +17,7 @@ import {useIsMobile} from "@/app/home/useIsMobile";
 import {useNotePermalink} from "@/app/home/useNotePermalink";
 import {findFolderById} from "@/lib/folderTree";
 import {mutate} from "swr";
+import {api} from "@/app/home/remote";
 
 const FOLDER_LOCK_REVALIDATE_INTERVAL_MS = 15_000;
 
@@ -75,8 +76,8 @@ function HomeInternal() {
   // 一定間隔でサーバー判定済みの見えるフォルダー一覧を再取得する。
   useEffect(() => {
     const id = window.setInterval(() => {
-      mutate('/api/rpc/getFoldersAll');
-      mutate('/api/bookmarks');
+      mutate(api('/api/rpc/getFoldersAll'));
+      mutate(api('/api/bookmarks'));
     }, FOLDER_LOCK_REVALIDATE_INTERVAL_MS);
     return () => window.clearInterval(id);
   }, []);

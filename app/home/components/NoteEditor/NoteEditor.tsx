@@ -1,3 +1,5 @@
+import {api} from "@/app/home/remote";
+import * as utils from "@/app/utils";
 import React, {useCallback, useEffect, useRef, useState} from "react";
 import {useNote} from "@/app/home/state";
 import ContentEditable from 'react-contenteditable'
@@ -279,7 +281,7 @@ export default function NoteEditor() {
     const noteRef = getNoteRefTokenRange(range);
     if (noteRef != null) {
       setTimeout(async () => {
-        const res = await fetch(`/api/notes/${noteRef.noteId}`);
+        const res = await utils.apiFetch(api(`/api/notes/${noteRef.noteId}`));
         if (!res.ok) return;
         const rawNote = await res.json();
         if (rawNote == null) return;

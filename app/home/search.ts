@@ -3,6 +3,7 @@ import {useMemo} from 'react';
 import useSWR from 'swr';
 import * as utils from '@/app/utils';
 import type {Note} from '@/app/generated/prisma/browser';
+import {useApi} from '@/app/home/remote';
 
 /** trigram検索のため、入力中に自動で検索を確定する最小文字数。Enterならこれ未満でも検索する。 */
 export const SEARCH_MIN_LENGTH = 3;
@@ -71,8 +72,9 @@ export function useSearch(): {
 } {
   const query = useSearchStore(s => s.query).trim();
   const active = query.length >= 1;
+  const apiPath = useApi();
   const {data} = useSWR<{notes: any[]}>(
-    active ? `/api/rpc/search?q=${encodeURIComponent(query)}` : null,
+    active ? apiPath(`/api/rpc/search?q=${encodeURIComponent(query)}`) : null,
     utils.jsonFetcher,
   );
 

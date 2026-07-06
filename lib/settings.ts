@@ -2,7 +2,14 @@ import {prisma} from "@/lib/prisma";
 
 enum Key {
   shareTargetFolderId,
+  remoteServers,
 }
+
+export type RemoteServer = {
+  id: string,
+  name: string,
+  url: string,
+};
 
 async function getValue<T>(key: Key): Promise<T | null> {
   const kv = await prisma.keyValue.findFirst({
@@ -32,6 +39,12 @@ class SettingsManager {
   }
   async setShareTargetFolderId(value: number): Promise<void> {
     await setValue(Key.shareTargetFolderId, value);
+  }
+  async getRemoteServers(): Promise<RemoteServer[]> {
+    return await getValue<RemoteServer[]>(Key.remoteServers) ?? [];
+  }
+  async setRemoteServers(value: RemoteServer[]): Promise<void> {
+    await setValue(Key.remoteServers, value);
   }
 }
 

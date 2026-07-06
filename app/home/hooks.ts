@@ -3,18 +3,20 @@ import type {Folder, Note} from "@/app/generated/prisma/browser";
 import {useNote} from "@/app/home/state";
 import * as utils from "@/app/utils";
 import {useCallback, useMemo} from "react";
+import {api, useApi} from "@/app/home/remote";
 
 type FolderAndChild = Folder & { childFolders: FolderAndChild[] };
 
 export function useFoldersAll() {
+  const apiPath = useApi();
   return useSWR<{
     folders: FolderAndChild[],
     trash: FolderAndChild
-  }>('/api/rpc/getFoldersAll', utils.jsonFetcher);
+  }>(apiPath('/api/rpc/getFoldersAll'), utils.jsonFetcher);
 }
 
 function folderUrl(folderId: number | undefined) {
-  return `/api/folders/${folderId}`;
+  return api(`/api/folders/${folderId}`);
 }
 
 /** SWRから取得したnoteは日付が文字列なので、Dateに正規化する。 */
@@ -60,8 +62,9 @@ function getNormalizedNotes(data: (Folder & { notes: Note[] }) | undefined): Not
 export function useFolderAndNotes(folderId: number | undefined): {
   notes: Note[], isLoading: boolean, isFullLoaded: boolean,
 } {
-  const lightKey = folderId != null ? `${folderUrl(folderId)}?light=1` : null;
-  const fullKey = folderId != null ? folderUrl(folderId) : null;
+  const apiPath = useApi();
+  const lightKey = folderId != null ? apiPath(`/api/folders/${folderId}?light=1`) : null;
+  const fullKey = folderId != null ? apiPath(`/api/folders/${folderId}`) : null;
 
   const {data: lightData} = useSWR<Folder & { notes: Note[] }>(lightKey, utils.jsonFetcher);
   const {data: fullData} = useSWR<Folder & { notes: Note[] }>(fullKey, utils.jsonFetcher);
@@ -84,7 +87,7 @@ export function useSaveChanges(currentFolderId: number | undefined) {
     const saved = Array.from(changedNotes.values());
     if (saved.length === 0) return;
     console.log("saveChanges", changedNotes);
-    const res = await utils.postJson("/api/rpc/saveChanges", {notes: saved});
+    const res = await utils.postJson(api("/api/rpc/saveChanges"), {notes: saved});
     // 保存に失敗した場合は変更を保持し、再取得もしない（次回保存で再送する）。
     if (!res.ok) {
       console.error("saveChanges failed", res.status);
@@ -94,7 +97,7 @@ export function useSaveChanges(currentFolderId: number | undefined) {
     removeSavedNotes(saved);
     await Promise.all([
       mutate(folderUrl(currentFolderId)),
-      mutate("/api/rpc/getFoldersAll"),
+      mutate(api("/api/rpc/getFoldersAll")),
     ]);
   }, [currentFolderId, changedNotes, removeSavedNotes]);
 }
@@ -106,13 +109,13 @@ export function useOnCreateNewNote(currentFolderId: number | undefined) {
   return useCallback(async function onCreateNewNote() {
     if (selectedFolder == null) return;
     const res = await utils.postJson(
-      `/api/folders/${selectedFolder.id}/createNote`
+      api(`/api/folders/${selectedFolder.id}/createNote`)
     );
     const newNote = normalizeNoteDates(await res.json());
     console.log(newNote);
     await Promise.all([
       mutate(folderUrl(currentFolderId)),
-      mutate("/api/rpc/getFoldersAll"),
+      mutate(api("/api/rpc/getFoldersAll")),
     ]);
     setSelectedNote(newNote);
   }, [currentFolderId, selectedFolder, setSelectedNote]);
@@ -124,21 +127,21 @@ export function useOnDropToFolder(currentFolderId: number | undefined) {
   ) {
     // ノートがドロップされた場合
     if (ev.notes != null) {
-      await utils.postJson("/api/rpc/moveNotes/", {
+      await utils.postJson(api("/api/rpc/moveNotes/"), {
         folderId: ev.target.id,
         noteIds: ev.notes.map(n => n.id),
       });
       mutate(folderUrl(currentFolderId));
-      mutate("/api/rpc/getFoldersAll");
+      mutate(api("/api/rpc/getFoldersAll"));
     }
     // フォルダーがドロップされた場合
     if (ev.folders != null) {
-      await utils.postJson("/api/rpc/moveFolders/", {
+      await utils.postJson(api("/api/rpc/moveFolders/"), {
           parentFolderId: ev.target.id,
           folderIds: ev.folders.map(n => n.id).filter(id => id !== ev.target.id),
       });
       mutate(folderUrl(currentFolderId));
-      mutate("/api/rpc/getFoldersAll");
+      mutate(api("/api/rpc/getFoldersAll"));
     }
   }, [currentFolderId]);
 }

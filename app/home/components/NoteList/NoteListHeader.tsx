@@ -9,6 +9,7 @@ import {
 } from "@/app/home/components/NoteList/NoteListViewMode";
 import {mutate} from "swr";
 import {FaBars, FaListUl, FaRectangleList} from "react-icons/fa6";
+import {api} from "@/app/home/remote";
 
 
 export default function NoteListHeader({folderId}: { folderId: number | null }) {
@@ -30,10 +31,10 @@ export default function NoteListHeader({folderId}: { folderId: number | null }) 
     setSelectedViewMode(nextViewMode);
     // 検索結果ビュー（folderId == null）では特定フォルダーに紐づかないので永続化しない。
     if (folderId != null) {
-      await utils.putJson(`/api/folders/${folderId}/updateNoteListViewMode`, {
+      await utils.putJson(api(`/api/folders/${folderId}/updateNoteListViewMode`), {
         noteListViewMode: nextViewMode.key,
       });
-      mutate("/api/rpc/getFoldersAll");
+      mutate(api("/api/rpc/getFoldersAll"));
     }
   };
 
@@ -87,7 +88,7 @@ export default function NoteListHeader({folderId}: { folderId: number | null }) 
                   setSelectedOrder(order);
                   // 検索結果ビュー（folderId == null）では永続化せずクライアント側の並び替えのみ行う。
                   if (folderId != null) {
-                    await utils.putJson(`/api/folders/${folderId}/updateOrder`, {order: order.key});
+                    await utils.putJson(api(`/api/folders/${folderId}/updateOrder`), {order: order.key});
                   }
                   toggleShowOrderItems();
                 }}

@@ -3,6 +3,8 @@ import React from "react";
 import {format} from "date-fns";
 import {useNote} from "@/app/home/state";
 import {mutate} from "swr";
+import {api} from "@/app/home/remote";
+import * as utils from "@/app/utils";
 
 export function NoteHeader({
   title,
@@ -27,10 +29,10 @@ export function NoteHeader({
 
   const toggleBookmark = async () => {
     if (!note) return;
-    await fetch(`/api/notes/${note.id}/toggleBookmark`, { method: 'POST' });
+    await utils.apiFetch(api(`/api/notes/${note.id}/toggleBookmark`), { method: 'POST' });
     // フォルダーとブックマーク一覧を再取得
-    mutate(`/api/folders/${note.folderId}`);
-    mutate('/api/bookmarks');
+    mutate(api(`/api/folders/${note.folderId}`));
+    mutate(api('/api/bookmarks'));
   };
 
   let link = null;
