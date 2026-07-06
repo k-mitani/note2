@@ -51,7 +51,7 @@ export function SettingView() {
           </h2>
           <label className="flex items-center mb-2">
             <span className="w-20">Key</span>
-            <input type="password"
+            <input type="password" name="password" autoComplete="current-password"
                    className="border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-200 rounded-md ml-2 p-1 w-80"
                    value={key}
                    onChange={ev => setKey(ev.target.value)}/>

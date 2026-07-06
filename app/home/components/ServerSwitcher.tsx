@@ -81,8 +81,7 @@ export function ServerSwitcher() {
   return (
     <div className="relative">
       <button
-        className={classNames("ms-1 rounded p-2 w-14 hover:bg-gray-400",
-          activeServer == null ? "bg-gray-500 dark:bg-gray-700" : "bg-orange-600 dark:bg-orange-800")}
+        className="ms-1 rounded p-2 w-14 hover:bg-gray-400 bg-gray-500 dark:bg-gray-700"
         title={activeServer == null ? "サーバー切替（ローカル）" : `サーバー切替（${activeServer.name}）`}
         onClick={() => isOpen ? closePopup() : setIsOpen(true)}>
         <FaServer className="m-auto"/>
@@ -103,7 +102,6 @@ export function ServerSwitcher() {
                       activeServer?.id === server.id && "bg-gray-800 dark:bg-neutral-900")}
                     onClick={() => trySelect(server)}>
               {server.name}
-              <span className="block text-xs text-gray-400 truncate">{server.url}</span>
             </button>
           ))}
           {servers.length === 0 &&
@@ -113,10 +111,12 @@ export function ServerSwitcher() {
             <form className="border-t border-gray-600 mt-1 pt-1 px-2 pb-1" onSubmit={submitAuth}>
               <div className="text-sm mb-1">{authTarget.name} のBASIC認証</div>
               <input className="w-full mb-1 rounded border border-gray-600 bg-gray-800 px-2 py-1 text-sm"
+                     name="username" autoComplete="username"
                      placeholder="ユーザー名" value={authUser} autoFocus
                      onChange={ev => setAuthUser(ev.target.value)}/>
               <input className="w-full mb-1 rounded border border-gray-600 bg-gray-800 px-2 py-1 text-sm"
-                     type="password" placeholder="パスワード" value={authPassword}
+                     type="password" name="password" autoComplete="current-password"
+                     placeholder="パスワード" value={authPassword}
                      onChange={ev => setAuthPassword(ev.target.value)}/>
               <button type="submit"
                       className="rounded bg-blue-600 hover:bg-blue-500 px-2 py-1 text-sm">
