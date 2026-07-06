@@ -30,6 +30,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# prisma generated client (regenerated via `npm run prisma:generate`)
+/app/generated/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
