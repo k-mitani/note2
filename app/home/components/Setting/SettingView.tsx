@@ -12,12 +12,21 @@ export function SettingView() {
   const close = useSetting(state => state.close);
   const activeServer = useRemoteStore(state => state.activeServer);
   const {data: remoteServers, mutate: mutateRemoteServers} = useRemoteServers();
+  const localSectionExpanded = useLocalPrefs(state => state.localSectionExpanded);
+  const remoteExpandedDict = useLocalPrefs(state => state.remoteExpandedDict);
 
   // ロック解除の対象サーバー（""ならローカル）。
   const [unlockTarget, setUnlockTarget] = useState<string>("");
-  // ダイアログを開いた時点で表示中のサーバーを対象の初期値にする。
+  // ダイアログを開いた時点で、サイドバーで展開中の一番上のセクションを対象の初期値にする
+  // （ローカルセクションが展開中ならローカル、そうでなければ最初の展開中リモートサーバー）。
   useEffect(() => {
-    if (isOpen) setUnlockTarget(activeServer?.id ?? "");
+    if (!isOpen) return;
+    const servers = remoteServers?.servers ?? [];
+    let target = "";
+    if (servers.length > 0 && !localSectionExpanded) {
+      target = servers.find(s => remoteExpandedDict[s.id])?.id ?? activeServer?.id ?? "";
+    }
+    setUnlockTarget(target);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
   const [key, setKey] = useState("");

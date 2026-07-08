@@ -14,6 +14,9 @@ interface LocalPreferencesStore {
   folderFoldingStateDict: { [key: number]: boolean };
   setFolderFoldingState: (id: number, fold: boolean) => void;
 
+  // ローカルセクションの展開状態（リモートサーバー登録時のみセクション表示になる）
+  localSectionExpanded: boolean;
+  setLocalSectionExpanded: (expanded: boolean) => void;
   // リモートサーバーセクションの展開状態（リロード時に自動再接続する）
   remoteExpandedDict: { [serverId: string]: boolean };
   setRemoteExpanded: (serverId: string, expanded: boolean) => void;
@@ -47,6 +50,10 @@ export const useLocalPrefs = create<LocalPreferencesStore>()(
         const val = get().folderFoldingStateDict;
         set({folderFoldingStateDict: {...val, [id]: fold}});
       },
+
+      // ローカルセクションの展開状態
+      localSectionExpanded: true,
+      setLocalSectionExpanded: (expanded: boolean) => set({localSectionExpanded: expanded}),
 
       // リモートサーバーセクションの展開状態
       remoteExpandedDict: {},

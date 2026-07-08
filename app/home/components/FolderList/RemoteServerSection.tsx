@@ -1,7 +1,11 @@
 import {useCallback, useEffect, useRef, useState} from "react";
 import classNames from "classnames";
+import useSWR from "swr";
 import {FaServer} from "react-icons/fa6";
-import {RemoteServer, getRemoteAuth, setRemoteAuth, useRemoteStore} from "@/app/home/remote";
+import type {Note} from "@/app/generated/prisma/browser";
+import {findFolderById} from "@/lib/folderTree";
+import {apiFor, RemoteServer, getRemoteAuth, setRemoteAuth, useRemoteStore} from "@/app/home/remote";
+import {SectionBookmarks} from "@/app/home/components/FolderList/SectionBookmarks";
 import {useNote} from "@/app/home/state";
 import {useSearch, useSearchStore} from "@/app/home/search";
 import {useFoldersAllFor, useOnDropToFolder} from "@/app/home/hooks";
@@ -31,10 +35,12 @@ export function RemoteServerSection({server}: { server: RemoteServer }) {
   const [authPassword, setAuthPassword] = useState("");
   const [message, setMessage] = useState("");
 
-  // 接続済みの間だけフォルダーツリーを取得する。
+  // 接続済みの間だけフォルダーツリーとブックマークを取得する。
   const {data} = useFoldersAllFor(server.id, connected);
   const folders = data?.folders ?? [];
   const trash = data?.trash ?? null;
+  const {data: bookmarks = []} = useSWR<Note[]>(
+    connected ? apiFor(server.id, '/api/bookmarks') : null, utils.jsonFetcher);
 
   const selectedFolder = useNote(state => state.selectedFolder);
   const setSelectedFolder = useNote(state => state.setSelectedFolder);
@@ -99,25 +105,43 @@ export function RemoteServerSection({server}: { server: RemoteServer }) {
     await connect();
   }, [server.id, authUser, authPassword, connect]);
 
-  // このサーバーのフォルダーを選択する。表示対象サーバーが違えば切り替える。
+  // 表示対象サーバーが違えばこのサーバーに切り替える。キャンセルしたらfalseを返す。
+  const switchToThisServer = (): boolean => {
+    if (isActive) return true;
+    const {changedNotes, clearChangedNotes, setSelectedNote} = useNote.getState();
+    if (changedNotes.size > 0 &&
+      !window.confirm("未保存の変更があります。破棄してサーバーを切り替えますか?")) {
+      return false;
+    }
+    clearChangedNotes();
+    setSelectedNote(null);
+    const search = useSearchStore.getState();
+    search.setInput("");
+    search.setQuery("");
+    search.setViewingResults(false);
+    setActiveServer(server);
+    return true;
+  };
+
+  // このサーバーのフォルダーを選択する。
   // 切替をキャンセルした場合はfalseを返す（コンテキストメニューの誤爆防止）。
   const selectFolder = (folder: FolderAndChild): boolean | void => {
-    if (!isActive) {
-      const {changedNotes, clearChangedNotes, setSelectedNote} = useNote.getState();
-      if (changedNotes.size > 0 &&
-        !window.confirm("未保存の変更があります。破棄してサーバーを切り替えますか?")) {
-        return false;
-      }
-      clearChangedNotes();
-      setSelectedNote(null);
-      const search = useSearchStore.getState();
-      search.setInput("");
-      search.setQuery("");
-      search.setViewingResults(false);
-      setActiveServer(server);
-    }
+    if (!switchToThisServer()) return false;
     setViewingResults(false);
     setSelectedFolder(folder as any);
+  };
+
+  const selectBookmark = (note: Note) => {
+    if (!switchToThisServer()) return;
+    setViewingResults(false);
+    const {setSelectedNote} = useNote.getState();
+    setSelectedNote(note);
+    if (note.folderId) {
+      const folder = findFolderById(note.folderId, folders);
+      if (folder) {
+        setSelectedFolder(folder as any);
+      }
+    }
   };
 
   const common: FolderCommonProps = {
@@ -175,6 +199,13 @@ export function RemoteServerSection({server}: { server: RemoteServer }) {
       {/*フォルダーツリー*/}
       {expanded && connected && (
         <>
+          {/*ショートカット（このサーバーのブックマーク）*/}
+          <SectionBookmarks
+            bookmarks={bookmarks}
+            folded={remoteFoldingDict[`${server.id}:bookmarks`] ?? false}
+            setFolded={(folded) => setRemoteFolding(`${server.id}:bookmarks`, folded)}
+            onSelect={selectBookmark}
+          />
           <ul>
             {folders.map(folder => (
               <li key={folder.id}>
