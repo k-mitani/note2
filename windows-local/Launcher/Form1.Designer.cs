@@ -33,6 +33,7 @@
             notifyIcon1 = new NotifyIcon(components);
             contextMenuStrip1 = new ContextMenuStrip(components);
             updateToolStripMenuItem = new ToolStripMenuItem();
+            rebuildToolStripMenuItem = new ToolStripMenuItem();
             restartToolStripMenuItem = new ToolStripMenuItem();
             closeToolStripMenuItem = new ToolStripMenuItem();
             textBox1 = new TextBox();
@@ -49,17 +50,24 @@
             // 
             // contextMenuStrip1
             // 
-            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { updateToolStripMenuItem, restartToolStripMenuItem, closeToolStripMenuItem });
+            contextMenuStrip1.Items.AddRange(new ToolStripItem[] { updateToolStripMenuItem, rebuildToolStripMenuItem, restartToolStripMenuItem, closeToolStripMenuItem });
             contextMenuStrip1.Name = "contextMenuStrip1";
-            contextMenuStrip1.Size = new Size(113, 70);
-            // 
+            contextMenuStrip1.Size = new Size(113, 92);
+            //
             // updateToolStripMenuItem
-            // 
+            //
             updateToolStripMenuItem.Name = "updateToolStripMenuItem";
             updateToolStripMenuItem.Size = new Size(112, 22);
             updateToolStripMenuItem.Text = "Update";
             updateToolStripMenuItem.Click += updateToolStripMenuItem_Click;
-            // 
+            //
+            // rebuildToolStripMenuItem
+            //
+            rebuildToolStripMenuItem.Name = "rebuildToolStripMenuItem";
+            rebuildToolStripMenuItem.Size = new Size(112, 22);
+            rebuildToolStripMenuItem.Text = "Rebuild";
+            rebuildToolStripMenuItem.Click += rebuildToolStripMenuItem_Click;
+            //
             // restartToolStripMenuItem
             // 
             restartToolStripMenuItem.Name = "restartToolStripMenuItem";
@@ -109,6 +117,7 @@
         private NotifyIcon notifyIcon1;
         private ContextMenuStrip contextMenuStrip1;
         private ToolStripMenuItem updateToolStripMenuItem;
+        private ToolStripMenuItem rebuildToolStripMenuItem;
         private ToolStripMenuItem restartToolStripMenuItem;
         private ToolStripMenuItem closeToolStripMenuItem;
         private TextBox textBox1;

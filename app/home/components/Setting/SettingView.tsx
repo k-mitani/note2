@@ -1,37 +1,15 @@
 import {useSetting} from "@/app/home/components/Setting/state";
 import * as utils from "@/app/utils";
-import {mutate} from "swr";
 import {useLocalPrefs} from "@/app/home/useLocalPrefs";
-import {useEffect, useState} from "react";
-import {apiFor, useRemoteStore, useRemoteServers} from "@/app/home/remote";
+import {useState} from "react";
+import {useRemoteServers} from "@/app/home/remote";
 
 export function SettingView() {
   const autoSave = useLocalPrefs(state => state.autoSave);
   const setAutoSave = useLocalPrefs(state => state.setAutoSave);
   const isOpen = useSetting(state => state.isOpen);
   const close = useSetting(state => state.close);
-  const activeServer = useRemoteStore(state => state.activeServer);
   const {data: remoteServers, mutate: mutateRemoteServers} = useRemoteServers();
-  const localSectionExpanded = useLocalPrefs(state => state.localSectionExpanded);
-  const remoteExpandedDict = useLocalPrefs(state => state.remoteExpandedDict);
-
-  // ロック解除の対象サーバー（""ならローカル）。
-  const [unlockTarget, setUnlockTarget] = useState<string>("");
-  // ダイアログを開いた時点で、サイドバーで展開中の一番上のセクションを対象の初期値にする
-  // （ローカルセクションが展開中ならローカル、そうでなければ最初の展開中リモートサーバー）。
-  useEffect(() => {
-    if (!isOpen) return;
-    const servers = remoteServers?.servers ?? [];
-    let target = "";
-    if (servers.length > 0 && !localSectionExpanded) {
-      target = servers.find(s => remoteExpandedDict[s.id])?.id ?? activeServer?.id ?? "";
-    }
-    setUnlockTarget(target);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
-  const [key, setKey] = useState("");
-  const [expiration, setExpiration] = useState(600);
-  const [message, setMessage] = useState("");
 
   const [newServerName, setNewServerName] = useState("");
   const [newServerUrl, setNewServerUrl] = useState("");
@@ -45,53 +23,6 @@ export function SettingView() {
          }}>
       <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-200 rounded-lg p-6 pt-3 w-11/12 max-w-2xl max-h-[90vh] overflow-y-auto">
         <h1 className="text-2xl">Settings</h1>
-
-        {/* フォルダーロック（対象サーバーを選んで解除できる） */}
-        <form className="mt-4" onSubmit={async (ev) => {
-          ev.preventDefault();
-          setMessage("sending...");
-          const targetId = unlockTarget === "" ? null : unlockTarget;
-          const res = await utils.putJson(apiFor(targetId, "/api/rpc/setFolderKey"), {key, expiration});
-          setMessage(await res.text());
-          setKey("");
-          await Promise.all([
-            mutate(apiFor(targetId, '/api/rpc/getFoldersAll')),
-            mutate(apiFor(targetId, '/api/bookmarks')),
-            mutateRemoteServers(),
-          ]);
-        }}>
-          <h2 className="text-lg pb-2">Folder Unlock</h2>
-          <label className="flex items-center mb-2">
-            <span className="w-20">Server</span>
-            <select
-              className="border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-200 rounded-md ml-2 p-1 w-80"
-              value={unlockTarget}
-              onChange={ev => setUnlockTarget(ev.target.value)}>
-              <option value="">ローカル</option>
-              {(remoteServers?.servers ?? []).map(server => (
-                <option key={server.id} value={server.id}>{server.name}</option>
-              ))}
-            </select>
-          </label>
-          <label className="flex items-center mb-2">
-            <span className="w-20">Key</span>
-            <input type="password" name="password" autoComplete="current-password"
-                   className="border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-200 rounded-md ml-2 p-1 w-80"
-                   value={key}
-                   onChange={ev => setKey(ev.target.value)}/>
-          </label>
-          <label className="flex items-center">
-            <span className="w-20">Expiration</span>
-            <input type="number"
-                   className="border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-200 rounded-md ml-2 p-1 w-80"
-                   value={expiration}
-                   onChange={ev => setExpiration(parseInt(ev.target.value) || 0)}/>
-          </label>
-          <button type="submit" className="mt-4 bg-blue-500 text-white rounded-md p-2 w-20 hover:bg-blue-400">
-            Set
-          </button>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{message}</p>
-        </form>
 
         {/* リモートサーバー登録（ローカルのロック解除状態でのみ表示） */}
         {remoteServers?.unlocked === true && <div className="mt-4">

@@ -1,10 +1,11 @@
-import {useEffect} from "react";
+import {useEffect, useState} from "react";
 import {useNote} from "@/app/home/state";
 import {useLocalPrefs} from "@/app/home/useLocalPrefs";
 import classNames from "classnames";
 import {useFoldersAllFor, useOnDropToFolder} from "@/app/home/hooks";
 import {RemoteServerSection} from "@/app/home/components/FolderList/RemoteServerSection";
 import {SectionBookmarks} from "@/app/home/components/FolderList/SectionBookmarks";
+import {SectionContextMenu} from "@/app/home/components/FolderList/SectionContextMenu";
 import {Folder, FolderCommonProps, FolderAndChild} from "@/app/home/components/FolderList/Folder";
 import useSWR from "swr";
 import type {Note} from "@/app/generated/prisma/browser";
@@ -45,8 +46,9 @@ export default function FolderListView({forceVisible = false}: {
   // ローカルセクションの展開状態（リモートサーバー登録時のみセクションヘッダーを表示する）
   const localExpanded = useLocalPrefs(state => state.localSectionExpanded);
   const setLocalExpanded = useLocalPrefs(state => state.setLocalSectionExpanded);
-  const hasServers = servers.length > 0;
-  const showLocalContent = !hasServers || localExpanded;
+  const showLocalContent = localExpanded;
+  // Homeヘッダーの右クリックメニュー位置（nullなら非表示）。
+  const [menuPos, setMenuPos] = useState<{ x: number, y: number } | null>(null);
   // フォルダーにドロップされたときの処理
   const onDropToFolder = useOnDropToFolder(selectedFolder?.id);
   // 全フォルダー横断検索の結果（フォルダー別ヒット件数・総ヒット数）
@@ -115,21 +117,32 @@ export default function FolderListView({forceVisible = false}: {
       {'hidden': !forceVisible && !showSideBar},
     )}>
       <div id="folder-list" className='pt-0.5 flex-col overflow-y-auto'>
-        {/*ローカルセクションヘッダー（リモートサーバーが登録されているときのみ表示）*/}
-        {hasServers && (
-          <button
-            className={classNames(
-              "w-full text-start text-sm md:text-base h-7 flex items-center px-1 rounded select-none hover:bg-gray-600",
-              activeServer == null && "font-bold",
-            )}
-            onDoubleClick={() => setLocalExpanded(!localExpanded)}
-          >
-            <FaHouse className="inline mr-1 text-gray-400"/>
-            <span className="line-clamp-1">Home</span>
-            <span className="text-gray-500 ml-1">
-              {localExpanded ? "▼" : "▶"}
-            </span>
-          </button>
+        {/*ローカルセクションヘッダー（常時表示。右クリックでアンロック等）*/}
+        <button
+          className={classNames(
+            "w-full text-start text-sm md:text-base h-7 flex items-center px-1 rounded select-none hover:bg-gray-600",
+            activeServer == null && "font-bold",
+          )}
+          onDoubleClick={() => setLocalExpanded(!localExpanded)}
+          onContextMenu={(ev) => {
+            ev.preventDefault();
+            setMenuPos({x: ev.clientX, y: ev.clientY});
+          }}
+        >
+          <FaHouse className="inline mr-1 text-gray-400"/>
+          <span className="line-clamp-1">Home</span>
+          <span className="text-gray-500 ml-1">
+            {localExpanded ? "▼" : "▶"}
+          </span>
+        </button>
+        {menuPos && (
+          <SectionContextMenu
+            serverId={null}
+            serverName="Home"
+            x={menuPos.x}
+            y={menuPos.y}
+            onClose={() => setMenuPos(null)}
+          />
         )}
 
         {showLocalContent && <>

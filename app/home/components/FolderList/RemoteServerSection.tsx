@@ -11,6 +11,7 @@ import {useSearch, useSearchStore} from "@/app/home/search";
 import {useFoldersAllFor, useOnDropToFolder} from "@/app/home/hooks";
 import {useLocalPrefs} from "@/app/home/useLocalPrefs";
 import {Folder, FolderAndChild, FolderCommonProps} from "@/app/home/components/FolderList/Folder";
+import {SectionContextMenu} from "@/app/home/components/FolderList/SectionContextMenu";
 import * as utils from "@/app/utils";
 
 /**
@@ -34,6 +35,8 @@ export function RemoteServerSection({server}: { server: RemoteServer }) {
   const [authUser, setAuthUser] = useState("");
   const [authPassword, setAuthPassword] = useState("");
   const [message, setMessage] = useState("");
+  // セクションヘッダーの右クリックメニュー位置（nullなら非表示）。
+  const [menuPos, setMenuPos] = useState<{ x: number, y: number } | null>(null);
 
   // 接続済みの間だけフォルダーツリーとブックマークを取得する。
   const {data} = useFoldersAllFor(server.id, connected);
@@ -167,6 +170,10 @@ export function RemoteServerSection({server}: { server: RemoteServer }) {
           isActive && "font-bold",
         )}
         onDoubleClick={onHeaderDoubleClick}
+        onContextMenu={(ev) => {
+          ev.preventDefault();
+          setMenuPos({x: ev.clientX, y: ev.clientY});
+        }}
       >
         <FaServer className="inline mr-1 text-gray-400"/>
         <span className="line-clamp-1">{server.name}</span>
@@ -174,6 +181,15 @@ export function RemoteServerSection({server}: { server: RemoteServer }) {
           {expanded ? "▼" : "▶"}
         </span>
       </button>
+      {menuPos && (
+        <SectionContextMenu
+          serverId={server.id}
+          serverName={server.name}
+          x={menuPos.x}
+          y={menuPos.y}
+          onClose={() => setMenuPos(null)}
+        />
+      )}
 
       {/*BASIC認証フォーム*/}
       {authOpen && (

@@ -9,12 +9,16 @@ namespace Note2Launcher
     public partial class Form1 : Form
     {
         private const int ServerPort = 3000;
+        // 制御チャンネル。リポジトリ直下のこのファイルに書かれたコマンドを実行する（ローカルからのみ）。
+        private const string ControlFileName = ".note2-control";
         private static readonly Regex AnsiEscapePattern = new(@"\x1B\[[0-?]*[ -/]*[@-~]", RegexOptions.Compiled);
 
         private readonly string _repoRoot;
         private Process? _serverProcess;
         private Process? _commandProcess;
         private bool _shouldExit;
+        private FileSystemWatcher? _controlWatcher;
+        private int _controlBusy;
 
         public Form1()
         {
@@ -27,6 +31,7 @@ namespace Note2Launcher
             Opacity = 0;
             AppendLog($"Repository: {_repoRoot}");
             StartNoteServerProcess();
+            StartControlWatcher();
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -55,6 +60,7 @@ namespace Note2Launcher
 
         private void Application_ApplicationExit(object? sender, EventArgs e)
         {
+            try { if (_controlWatcher != null) _controlWatcher.EnableRaisingEvents = false; _controlWatcher?.Dispose(); } catch { }
             StopServer();
             StopProcess(_commandProcess);
         }
@@ -268,6 +274,173 @@ namespace Note2Launcher
         {
             StopServer();
             StartNoteServerProcess();
+        }
+
+        private void rebuildToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // UIスレッドをブロックしないよう別スレッドで実行する。
+            Task.Run(() => RebuildAndRestart());
+        }
+
+        // 制御チャンネル（ローカルのみ）を開始する。
+        // リポジトリ直下の制御ファイル(.note2-control)を監視し、そこに書かれた
+        // コマンド("rebuild"/"restart")を実行する。HTTP/ソケットより軽量。
+        // 例: echo rebuild > .note2-control
+        // 実行結果は .note2-control.result に書き出す。
+        private void StartControlWatcher()
+        {
+            try
+            {
+                _controlWatcher = new FileSystemWatcher(_repoRoot, ControlFileName)
+                {
+                    NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite,
+                };
+                _controlWatcher.Created += OnControlFileChanged;
+                _controlWatcher.Changed += OnControlFileChanged;
+                _controlWatcher.EnableRaisingEvents = true;
+                AppendLog($"Control watcher watching {ControlFileName} (write 'rebuild' or 'restart')");
+            }
+            catch (Exception e)
+            {
+                AppendLog($"Control watcher failed to start: {e.Message}");
+            }
+        }
+
+        private void OnControlFileChanged(object sender, FileSystemEventArgs e)
+        {
+            // Created/Changed が重複発火するため、実行中は無視する。
+            if (Interlocked.CompareExchange(ref _controlBusy, 1, 0) != 0) return;
+            Task.Run(() =>
+            {
+                try { ProcessControlFile(e.FullPath); }
+                catch (Exception ex) { AppendLog($"Control error: {ex.Message}"); }
+                finally { Interlocked.Exchange(ref _controlBusy, 0); }
+            });
+        }
+
+        private void ProcessControlFile(string path)
+        {
+            var command = ReadAndDeleteControlFile(path).Trim().ToLowerInvariant();
+            if (command.Length == 0) return;
+            AppendLog($"Control: '{command}' requested");
+
+            string result;
+            if (command == "rebuild")
+            {
+                var (code, output) = RebuildAndRestart();
+                var tail = output.Length > 4000 ? output[^4000..] : output;
+                result = (code == 0 ? "rebuild ok\n" : $"rebuild failed (exit {code})\n") + tail;
+            }
+            else if (command == "restart")
+            {
+                Invoke(() =>
+                {
+                    StopServer();
+                    StartNoteServerProcess();
+                });
+                result = "restart ok";
+            }
+            else
+            {
+                result = $"unknown command: {command}";
+            }
+
+            try { File.WriteAllText(path + ".result", result); } catch { }
+        }
+
+        // 制御ファイルを読み取って削除する。書き込み直後は空/ロックのことがあるので
+        // 内容が入るまで少し待つ。
+        private static string ReadAndDeleteControlFile(string path)
+        {
+            var text = "";
+            for (var i = 0; i < 40; i++)
+            {
+                try
+                {
+                    text = File.ReadAllText(path);
+                }
+                catch (FileNotFoundException)
+                {
+                    return "";
+                }
+                catch (IOException)
+                {
+                    Thread.Sleep(50);
+                    continue;
+                }
+                if (text.Trim().Length > 0) break;
+                Thread.Sleep(50);
+            }
+            try { File.Delete(path); } catch { }
+            return text;
+        }
+
+        // 再ビルドし、成功したらサーバーを再起動する。
+        // ビルド中は旧ビルドのサーバーを動かしたままにし、成功時のみ差し替える
+        // （ビルド失敗時はアプリを落とさない）。
+        private (int code, string output) RebuildAndRestart()
+        {
+            Invoke(() =>
+            {
+                updateToolStripMenuItem.Enabled = false;
+                restartToolStripMenuItem.Enabled = false;
+                rebuildToolStripMenuItem.Enabled = false;
+            });
+
+            var result = RunAndWait("npm run build");
+
+            Invoke(() =>
+            {
+                if (result.code == 0)
+                {
+                    StopServer();
+                    StartNoteServerProcess();
+                }
+                updateToolStripMenuItem.Enabled = true;
+                restartToolStripMenuItem.Enabled = true;
+                rebuildToolStripMenuItem.Enabled = true;
+            });
+            return result;
+        }
+
+        // コマンドを同期実行し、終了コードと出力（ログにも転記）を返す。
+        private (int code, string output) RunAndWait(string command)
+        {
+            var sb = new StringBuilder();
+            using var proc = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "cmd.exe",
+                    Arguments = $"/d /s /c \"chcp 65001 > nul && {command}\"",
+                    WorkingDirectory = _repoRoot,
+                    CreateNoWindow = true,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    StandardOutputEncoding = Encoding.UTF8,
+                    StandardErrorEncoding = Encoding.UTF8,
+                },
+            };
+            proc.StartInfo.Environment["NO_COLOR"] = "1";
+            proc.StartInfo.Environment["FORCE_COLOR"] = "0";
+            proc.OutputDataReceived += (_, e) =>
+            {
+                if (e.Data == null) return;
+                sb.AppendLine(e.Data);
+                AppendLog(e.Data);
+            };
+            proc.ErrorDataReceived += (_, e) =>
+            {
+                if (e.Data == null) return;
+                sb.AppendLine(e.Data);
+                AppendLog(e.Data);
+            };
+            proc.Start();
+            proc.BeginOutputReadLine();
+            proc.BeginErrorReadLine();
+            proc.WaitForExit();
+            return (proc.ExitCode, sb.ToString());
         }
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
