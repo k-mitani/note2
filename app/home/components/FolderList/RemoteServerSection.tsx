@@ -163,8 +163,8 @@ export function RemoteServerSection({server}: { server: RemoteServer }) {
       {/*セクションヘッダー*/}
       <button
         className={classNames(
-          "w-full text-start text-sm md:text-base h-7 flex items-center px-1 rounded select-none",
-          isActive ? "bg-gray-500 dark:bg-gray-700" : "hover:bg-gray-600",
+          "w-full text-start text-sm md:text-base h-7 flex items-center px-1 rounded select-none hover:bg-gray-600",
+          isActive && "font-bold",
         )}
         onDoubleClick={onHeaderDoubleClick}
       >

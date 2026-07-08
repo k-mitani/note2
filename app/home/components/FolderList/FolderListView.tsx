@@ -119,8 +119,8 @@ export default function FolderListView({forceVisible = false}: {
         {hasServers && (
           <button
             className={classNames(
-              "w-full text-start text-sm md:text-base h-7 flex items-center px-1 rounded select-none",
-              activeServer == null ? "bg-gray-500 dark:bg-gray-700" : "hover:bg-gray-600",
+              "w-full text-start text-sm md:text-base h-7 flex items-center px-1 rounded select-none hover:bg-gray-600",
+              activeServer == null && "font-bold",
             )}
             onDoubleClick={() => setLocalExpanded(!localExpanded)}
           >
