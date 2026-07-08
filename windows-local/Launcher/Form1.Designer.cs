@@ -76,6 +76,7 @@
             // 
             // textBox1
             // 
+            textBox1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             textBox1.Location = new Point(12, 12);
             textBox1.Multiline = true;
             textBox1.Name = "textBox1";
@@ -90,7 +91,8 @@
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(337, 219);
             Controls.Add(textBox1);
-            FormBorderStyle = FormBorderStyle.FixedToolWindow;
+            FormBorderStyle = FormBorderStyle.SizableToolWindow;
+            MinimumSize = new Size(250, 150);
             MaximizeBox = false;
             Name = "Form1";
             ShowInTaskbar = false;
