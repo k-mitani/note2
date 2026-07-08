@@ -2,7 +2,8 @@ import {useEffect} from "react";
 import {useNote} from "@/app/home/state";
 import {useLocalPrefs} from "@/app/home/useLocalPrefs";
 import classNames from "classnames";
-import {useFoldersAll, useOnDropToFolder} from "@/app/home/hooks";
+import {useFoldersAllFor, useOnDropToFolder} from "@/app/home/hooks";
+import {RemoteServerSection} from "@/app/home/components/FolderList/RemoteServerSection";
 import {Folder, FolderCommonProps, FolderAndChild} from "@/app/home/components/FolderList/Folder";
 import useSWR from "swr";
 import type {Note} from "@/app/generated/prisma/browser";
@@ -11,7 +12,7 @@ import {findFolderById} from "@/lib/folderTree";
 import {SHORTCUTS_FOLDING_KEY} from "@/app/home/constants";
 import * as utils from "@/app/utils";
 import {useSearch, useSearchStore} from "@/app/home/search";
-import {useApi} from "@/app/home/remote";
+import {useRemoteServers, useRemoteStore} from "@/app/home/remote";
 
 /**
  * フォルダーやノートを表示する。
@@ -19,11 +20,14 @@ import {useApi} from "@/app/home/remote";
 export default function FolderListView({forceVisible = false}: {
   forceVisible?: boolean,
 }) {
-  // フォルダーとゴミ箱
-  const {folders = [], trash = null} = useFoldersAll().data ?? {};
-  // ブックマーク一覧
-  const apiPath = useApi();
-  const {data: bookmarks = []} = useSWR<Note[]>(apiPath('/api/bookmarks'), utils.jsonFetcher);
+  // フォルダーとゴミ箱（サイドバー上部は常にローカルのツリーを表示する）
+  const {folders = [], trash = null} = useFoldersAllFor(null).data ?? {};
+  // ブックマーク一覧（ローカル）
+  const {data: bookmarks = []} = useSWR<Note[]>('/api/bookmarks', utils.jsonFetcher);
+  // 登録済みリモートサーバー（ゴミ箱の下にセクションとして表示する）
+  const {data: remoteServers} = useRemoteServers();
+  const activeServer = useRemoteStore(state => state.activeServer);
+  const setActiveServer = useRemoteStore(state => state.setActiveServer);
   // 選択中のフォルダー
   const selectedFolder = useNote(state => state.selectedFolder);
   const setSelectedFolder = useNote(state => state.setSelectedFolder);
@@ -47,8 +51,28 @@ export default function FolderListView({forceVisible = false}: {
     if (!searchActive && viewingResults) setViewingResults(false);
   }, [searchActive, viewingResults, setViewingResults]);
 
+  // リモートサーバー表示中なら確認のうえローカル表示に戻す。キャンセルしたらfalseを返す。
+  const switchToLocal = (): boolean => {
+    if (activeServer == null) return true;
+    const {changedNotes, clearChangedNotes, setSelectedNote} = useNote.getState();
+    if (changedNotes.size > 0 &&
+      !window.confirm("未保存の変更があります。破棄してサーバーを切り替えますか?")) {
+      return false;
+    }
+    clearChangedNotes();
+    setSelectedNote(null);
+    const search = useSearchStore.getState();
+    search.setInput("");
+    search.setQuery("");
+    search.setViewingResults(false);
+    setActiveServer(null);
+    return true;
+  };
+
   // フォルダーを選択したら検索結果ビューを抜けて通常のフォルダー表示に戻す。
-  const selectFolder = (folder: FolderAndChild) => {
+  // リモートサーバー表示中はローカルに切り替える。
+  const selectFolder = (folder: FolderAndChild): boolean | void => {
+    if (!switchToLocal()) return false;
     setViewingResults(false);
     setSelectedFolder(folder as any);
   };
@@ -56,11 +80,11 @@ export default function FolderListView({forceVisible = false}: {
   const common: FolderCommonProps = {
     onDrop: onDropToFolder,
     allFolders: folders,
-    selectedFolder: viewingResults ? undefined : (selectedFolder as any),
+    selectedFolder: (viewingResults || activeServer != null) ? undefined : (selectedFolder as any),
     setSelectedFolder: selectFolder,
     isFolding: (id: number) => foldingDict[id] ?? true,
     setFolding: setFolding,
-    searchActive,
+    searchActive: searchActive && activeServer == null,
     searchCounts: folderCounts,
   };
 
@@ -93,6 +117,7 @@ export default function FolderListView({forceVisible = false}: {
                 <button
                   className="hover:bg-gray-600 w-full text-start text-xs md:text-sm px-2 py-1 truncate"
                   onClick={() => {
+                    if (!switchToLocal()) return;
                     setViewingResults(false);
                     setSelectedNote(note);
                     if (note.folderId) {
@@ -148,6 +173,10 @@ export default function FolderListView({forceVisible = false}: {
             </li>
           </ul>
         )}
+        {/*リモートサーバー: 登録済みサーバーごとのセクション。ダブルクリックで接続・展開する。*/}
+        {(remoteServers?.servers ?? []).map(server => (
+          <RemoteServerSection key={server.id} server={server}/>
+        ))}
       </div>
     </div>
   );

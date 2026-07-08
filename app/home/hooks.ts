@@ -3,7 +3,7 @@ import type {Folder, Note} from "@/app/generated/prisma/browser";
 import {useNote} from "@/app/home/state";
 import * as utils from "@/app/utils";
 import {useCallback, useMemo} from "react";
-import {api, useApi} from "@/app/home/remote";
+import {api, apiFor, useApi} from "@/app/home/remote";
 
 type FolderAndChild = Folder & { childFolders: FolderAndChild[] };
 
@@ -13,6 +13,17 @@ export function useFoldersAll() {
     folders: FolderAndChild[],
     trash: FolderAndChild
   }>(apiPath('/api/rpc/getFoldersAll'), utils.jsonFetcher);
+}
+
+/**
+ * 指定サーバーのフォルダーツリーを取得する（nullならローカル）。
+ * enabledがfalseの間は取得しない（未接続のリモートサーバー用）。
+ */
+export function useFoldersAllFor(serverId: string | null, enabled: boolean = true) {
+  return useSWR<{
+    folders: FolderAndChild[],
+    trash: FolderAndChild
+  }>(enabled ? apiFor(serverId, '/api/rpc/getFoldersAll') : null, utils.jsonFetcher);
 }
 
 function folderUrl(folderId: number | undefined) {

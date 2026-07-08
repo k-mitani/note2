@@ -76,6 +76,9 @@ function HomeInternal() {
   // 一定間隔でサーバー判定済みの見えるフォルダー一覧を再取得する。
   useEffect(() => {
     const id = window.setInterval(() => {
+      // ローカルのツリーはサイドバーに常時表示されるため、アクティブサーバーに関わらず再取得する。
+      mutate('/api/rpc/getFoldersAll');
+      mutate('/api/bookmarks');
       mutate(api('/api/rpc/getFoldersAll'));
       mutate(api('/api/bookmarks'));
     }, FOLDER_LOCK_REVALIDATE_INTERVAL_MS);

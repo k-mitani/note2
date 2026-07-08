@@ -6,7 +6,6 @@ import {useCallback, useEffect} from "react";
 import {useOnCreateNewNote, useSaveChanges} from "@/app/home/hooks";
 import {useSetting} from "@/app/home/components/Setting/state";
 import {SEARCH_MIN_LENGTH, useSearchStore} from "@/app/home/search";
-import {ServerSwitcher} from "@/app/home/components/ServerSwitcher";
 
 export function Header() {
   const openSetting = useSetting(state => state.open);
@@ -78,8 +77,6 @@ export function Header() {
         <FaFolderClosed className="m-auto"/>
       </button>
 
-      {/*サーバー切替（ローカル/リモート）*/}
-      <ServerSwitcher/>
 
       <button className="ms-6 md:ms-[4rem] rounded bg-gray-500 dark:bg-gray-700 p-2 w-20 md:w-24 hover:bg-gray-400"
               onClick={onCreateNewNote}>

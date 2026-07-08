@@ -31,6 +31,12 @@ export function api(path: string): string {
   return `/api/remote/${server.id}${path}`;
 }
 
+/** APIパスを指定サーバー向けに変換する。nullならローカル。 */
+export function apiFor(serverId: string | null, path: string): string {
+  if (serverId == null) return path;
+  return `/api/remote/${serverId}${path}`;
+}
+
 /**
  * api() のフック版。サーバー切替で関数の同一性が変わるため、
  * SWRキーの構築に使うとキーが切り替わり再取得される。

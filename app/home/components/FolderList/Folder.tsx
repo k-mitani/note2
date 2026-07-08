@@ -13,7 +13,8 @@ export type FolderCommonProps = {
   onDrop: (ev: { target: Folder, notes: Note[] | null, folders: Folder[] | null }) => void,
   allFolders: FolderAndChild[],
   selectedFolder: FolderAndChild | undefined,
-  setSelectedFolder: (folder: FolderAndChild) => void,
+  // 選択できなかった場合（サーバー切替のキャンセルなど）はfalseを返す。
+  setSelectedFolder: (folder: FolderAndChild) => boolean | void,
   isFolding: (id: number) => boolean,
   setFolding: (id: number, expand: boolean) => void,
   // 全フォルダー横断検索が有効なときは、フォルダーごとの件数を検索ヒット数に置き換える。
@@ -63,6 +64,7 @@ export function Folder({folder, indent, common}: {
     const [first, second] = [ev.touches[0], ev.touches[1]];
     ev.preventDefault();
     ev.stopPropagation();
+    if (setSelectedFolder(folder) === false) return;
     setMenuPos({
       x: (first.clientX + second.clientX) / 2,
       y: (first.clientY + second.clientY) / 2,
@@ -143,6 +145,9 @@ export function Folder({folder, indent, common}: {
         }}
         onContextMenu={(ev) => {
           ev.preventDefault();
+          // メニュー操作は表示対象サーバーのAPIに対して行われるため、
+          // 先にこのフォルダーを選択して対象サーバーを一致させる。
+          if (setSelectedFolder(folder) === false) return;
           setMenuPos({x: ev.clientX, y: ev.clientY});
         }}
         onTouchStart={openMenuFromTwoFingerTap}

@@ -3,17 +3,18 @@ import * as utils from "@/app/utils";
 import {mutate} from "swr";
 import {useLocalPrefs} from "@/app/home/useLocalPrefs";
 import {useState} from "react";
-import {useApi, useRemoteStore, useRemoteServers} from "@/app/home/remote";
+import {apiFor, useRemoteStore, useRemoteServers} from "@/app/home/remote";
 
 export function SettingView() {
   const autoSave = useLocalPrefs(state => state.autoSave);
   const setAutoSave = useLocalPrefs(state => state.setAutoSave);
   const isOpen = useSetting(state => state.isOpen);
   const close = useSetting(state => state.close);
-  const api = useApi();
   const activeServer = useRemoteStore(state => state.activeServer);
   const {data: remoteServers, mutate: mutateRemoteServers} = useRemoteServers();
 
+  // ロック解除の対象サーバー（""ならローカル）。表示中のサーバーを初期値にする。
+  const [unlockTarget, setUnlockTarget] = useState<string>(activeServer?.id ?? "");
   const [key, setKey] = useState("");
   const [expiration, setExpiration] = useState(600);
   const [message, setMessage] = useState("");
@@ -31,24 +32,33 @@ export function SettingView() {
       <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-200 rounded-lg p-6 pt-3 w-11/12 max-w-2xl max-h-[90vh] overflow-y-auto">
         <h1 className="text-2xl">Settings</h1>
 
-        {/* フォルダーロック（リモートサーバー表示中はリモート側のロックを解除する） */}
+        {/* フォルダーロック（対象サーバーを選んで解除できる） */}
         <form className="mt-4" onSubmit={async (ev) => {
           ev.preventDefault();
           setMessage("sending...");
-          const res = await utils.putJson(api("/api/rpc/setFolderKey"), {key, expiration});
+          const targetId = unlockTarget === "" ? null : unlockTarget;
+          const res = await utils.putJson(apiFor(targetId, "/api/rpc/setFolderKey"), {key, expiration});
           setMessage(await res.text());
           setKey("");
           await Promise.all([
-            mutate(api('/api/rpc/getFoldersAll')),
-            mutate(api('/api/bookmarks')),
+            mutate(apiFor(targetId, '/api/rpc/getFoldersAll')),
+            mutate(apiFor(targetId, '/api/bookmarks')),
             mutateRemoteServers(),
           ]);
         }}>
-          <h2 className="text-lg pb-2">
-            Folder Unlock
-            {activeServer != null &&
-              <span className="ml-2 text-sm text-orange-500">（リモート: {activeServer.name}）</span>}
-          </h2>
+          <h2 className="text-lg pb-2">Folder Unlock</h2>
+          <label className="flex items-center mb-2">
+            <span className="w-20">Server</span>
+            <select
+              className="border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-200 rounded-md ml-2 p-1 w-80"
+              value={unlockTarget}
+              onChange={ev => setUnlockTarget(ev.target.value)}>
+              <option value="">ローカル</option>
+              {(remoteServers?.servers ?? []).map(server => (
+                <option key={server.id} value={server.id}>{server.name}</option>
+              ))}
+            </select>
+          </label>
           <label className="flex items-center mb-2">
             <span className="w-20">Key</span>
             <input type="password" name="password" autoComplete="current-password"
