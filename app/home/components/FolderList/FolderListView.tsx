@@ -136,7 +136,7 @@ export default function FolderListView({forceVisible = false}: {
         )}
       </div>
 
-      <div className='pt-0.5 flex-col overflow-y-auto'>
+      <div id="folder-list" className='pt-0.5 flex-col overflow-y-auto'>
         {/*フォルダー一覧*/}
         <ul className=''>
           {folders.map(folder => {

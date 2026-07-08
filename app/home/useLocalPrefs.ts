@@ -13,6 +13,13 @@ interface LocalPreferencesStore {
 
   folderFoldingStateDict: { [key: number]: boolean };
   setFolderFoldingState: (id: number, fold: boolean) => void;
+
+  // リモートサーバーセクションの展開状態（リロード時に自動再接続する）
+  remoteExpandedDict: { [serverId: string]: boolean };
+  setRemoteExpanded: (serverId: string, expanded: boolean) => void;
+  // リモートサーバーのフォルダー開閉状態（キーは "<serverId>:<folderId>"）
+  remoteFoldingDict: { [key: string]: boolean };
+  setRemoteFolding: (key: string, fold: boolean) => void;
 }
 
 export const useLocalPrefs = create<LocalPreferencesStore>()(
@@ -39,6 +46,20 @@ export const useLocalPrefs = create<LocalPreferencesStore>()(
       setFolderFoldingState: (id: number, fold: boolean) => {
         const val = get().folderFoldingStateDict;
         set({folderFoldingStateDict: {...val, [id]: fold}});
+      },
+
+      // リモートサーバーセクションの展開状態
+      remoteExpandedDict: {},
+      setRemoteExpanded: (serverId: string, expanded: boolean) => {
+        const val = get().remoteExpandedDict;
+        set({remoteExpandedDict: {...val, [serverId]: expanded}});
+      },
+
+      // リモートサーバーのフォルダー開閉状態
+      remoteFoldingDict: {},
+      setRemoteFolding: (key: string, fold: boolean) => {
+        const val = get().remoteFoldingDict;
+        set({remoteFoldingDict: {...val, [key]: fold}});
       },
     }),
     {

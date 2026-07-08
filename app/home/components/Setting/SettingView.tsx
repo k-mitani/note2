@@ -2,7 +2,7 @@ import {useSetting} from "@/app/home/components/Setting/state";
 import * as utils from "@/app/utils";
 import {mutate} from "swr";
 import {useLocalPrefs} from "@/app/home/useLocalPrefs";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {apiFor, useRemoteStore, useRemoteServers} from "@/app/home/remote";
 
 export function SettingView() {
@@ -13,8 +13,13 @@ export function SettingView() {
   const activeServer = useRemoteStore(state => state.activeServer);
   const {data: remoteServers, mutate: mutateRemoteServers} = useRemoteServers();
 
-  // ロック解除の対象サーバー（""ならローカル）。表示中のサーバーを初期値にする。
-  const [unlockTarget, setUnlockTarget] = useState<string>(activeServer?.id ?? "");
+  // ロック解除の対象サーバー（""ならローカル）。
+  const [unlockTarget, setUnlockTarget] = useState<string>("");
+  // ダイアログを開いた時点で表示中のサーバーを対象の初期値にする。
+  useEffect(() => {
+    if (isOpen) setUnlockTarget(activeServer?.id ?? "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
   const [key, setKey] = useState("");
   const [expiration, setExpiration] = useState(600);
   const [message, setMessage] = useState("");

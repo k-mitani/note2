@@ -138,6 +138,31 @@ html {
   background: #4b5563;
 }
 
+/* フォルダー一覧: サイドバー背景色（bg-gray-700 / dark:bg-gray-950）に合わせる */
+#folder-list {
+  scrollbar-color: #6b7280 #374151;
+}
+
+#folder-list::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+#folder-list::-webkit-scrollbar-thumb {
+  background: #6b7280;
+}
+
+.dark #folder-list {
+  scrollbar-color: #4b5563 #030712;
+}
+
+.dark #folder-list::-webkit-scrollbar-track {
+  background: #030712;
+}
+
+.dark #folder-list::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
 #NoteEditor-ContentEditable h1
 , #NoteEditor-ContentEditable h2
 , #NoteEditor-ContentEditable h3

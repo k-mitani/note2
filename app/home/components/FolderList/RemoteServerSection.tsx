@@ -1,10 +1,11 @@
-import {useCallback, useState} from "react";
+import {useCallback, useEffect, useRef, useState} from "react";
 import classNames from "classnames";
 import {FaServer} from "react-icons/fa6";
 import {RemoteServer, getRemoteAuth, setRemoteAuth, useRemoteStore} from "@/app/home/remote";
 import {useNote} from "@/app/home/state";
 import {useSearch, useSearchStore} from "@/app/home/search";
 import {useFoldersAllFor, useOnDropToFolder} from "@/app/home/hooks";
+import {useLocalPrefs} from "@/app/home/useLocalPrefs";
 import {Folder, FolderAndChild, FolderCommonProps} from "@/app/home/components/FolderList/Folder";
 import * as utils from "@/app/utils";
 
@@ -20,7 +21,11 @@ export function RemoteServerSection({server}: { server: RemoteServer }) {
   const isActive = activeServer?.id === server.id;
 
   const [connected, setConnected] = useState(false);
-  const [expanded, setExpanded] = useState(false);
+  // 展開状態はローカル設定に永続化し、リロード後に自動再接続して復元する。
+  const expanded = useLocalPrefs(state => state.remoteExpandedDict[server.id] ?? false);
+  const setRemoteExpanded = useLocalPrefs(state => state.setRemoteExpanded);
+  const setExpanded = useCallback((value: boolean) =>
+    setRemoteExpanded(server.id, value), [server.id, setRemoteExpanded]);
   const [authOpen, setAuthOpen] = useState(false);
   const [authUser, setAuthUser] = useState("");
   const [authPassword, setAuthPassword] = useState("");
@@ -37,8 +42,9 @@ export function RemoteServerSection({server}: { server: RemoteServer }) {
   const {active: searchActive, folderCounts} = useSearch();
   const setViewingResults = useSearchStore(state => state.setViewingResults);
 
-  // フォルダー開閉状態。ローカルのフォルダーIDと衝突しないようセクション内で保持する。
-  const [foldingDict, setFoldingDict] = useState<{ [id: number]: boolean }>({});
+  // フォルダー開閉状態。ローカルのフォルダーIDと衝突しないようサーバーIDで名前空間を分けて永続化する。
+  const remoteFoldingDict = useLocalPrefs(state => state.remoteFoldingDict);
+  const setRemoteFolding = useLocalPrefs(state => state.setRemoteFolding);
 
   // 接続確認。401ならBASIC認証入力へ、成功なら展開する。
   const connect = useCallback(async () => {
@@ -64,7 +70,16 @@ export function RemoteServerSection({server}: { server: RemoteServer }) {
     setAuthPassword("");
     setConnected(true);
     setExpanded(true);
-  }, [server.id]);
+  }, [server.id, setExpanded]);
+
+  // リロード後、展開状態が保存されていたら自動で再接続する。
+  // （BASIC認証情報はsessionStorageにあるためリロードでは失われない。）
+  const autoConnectTried = useRef(false);
+  useEffect(() => {
+    if (!expanded || connected || autoConnectTried.current) return;
+    autoConnectTried.current = true;
+    connect();
+  }, [expanded, connected, connect]);
 
   const onHeaderDoubleClick = useCallback(() => {
     if (expanded) {
@@ -112,9 +127,9 @@ export function RemoteServerSection({server}: { server: RemoteServer }) {
     allFolders: folders,
     selectedFolder: isActive ? (selectedFolder as any) : undefined,
     setSelectedFolder: selectFolder,
-    isFolding: (id: number) => foldingDict[id] ?? true,
+    isFolding: (id: number) => remoteFoldingDict[`${server.id}:${id}`] ?? true,
     setFolding: (id: number, fold: boolean) =>
-      setFoldingDict(dict => ({...dict, [id]: fold})),
+      setRemoteFolding(`${server.id}:${id}`, fold),
     searchActive: isActive && searchActive,
     searchCounts: folderCounts,
   };
@@ -131,8 +146,8 @@ export function RemoteServerSection({server}: { server: RemoteServer }) {
         onDoubleClick={onHeaderDoubleClick}
       >
         <FaServer className="inline mr-1 text-gray-400"/>
-        <span className="line-clamp-1 flex-1">{server.name}</span>
-        <span className="text-gray-500 w-5 ml-1 ps-0.5 pe-0.5">
+        <span className="line-clamp-1">{server.name}</span>
+        <span className="text-gray-500 ml-1">
           {expanded ? "▼" : "▶"}
         </span>
       </button>
@@ -163,14 +178,14 @@ export function RemoteServerSection({server}: { server: RemoteServer }) {
           <ul>
             {folders.map(folder => (
               <li key={folder.id}>
-                <Folder folder={folder} indent={1} common={common}/>
+                <Folder folder={folder} indent={0} common={common}/>
               </li>
             ))}
           </ul>
           {trash && (
             <ul>
               <li key={trash.id}>
-                <Folder folder={trash} indent={1} common={common}/>
+                <Folder folder={trash} indent={0} common={common}/>
               </li>
             </ul>
           )}
