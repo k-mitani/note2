@@ -166,7 +166,6 @@ export function RemoteServerSection({server}: { server: RemoteServer }) {
           "w-full text-start text-sm md:text-base h-7 flex items-center px-1 rounded select-none",
           isActive ? "bg-gray-500 dark:bg-gray-700" : "hover:bg-gray-600",
         )}
-        title={`${server.name}（ダブルクリックで${expanded ? "折りたたみ" : "接続/展開"}）`}
         onDoubleClick={onHeaderDoubleClick}
       >
         <FaServer className="inline mr-1 text-gray-400"/>

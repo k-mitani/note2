@@ -122,11 +122,10 @@ export default function FolderListView({forceVisible = false}: {
               "w-full text-start text-sm md:text-base h-7 flex items-center px-1 rounded select-none",
               activeServer == null ? "bg-gray-500 dark:bg-gray-700" : "hover:bg-gray-600",
             )}
-            title={`ローカル（ダブルクリックで${localExpanded ? "折りたたみ" : "展開"}）`}
             onDoubleClick={() => setLocalExpanded(!localExpanded)}
           >
             <FaHouse className="inline mr-1 text-gray-400"/>
-            <span className="line-clamp-1">ローカル</span>
+            <span className="line-clamp-1">Home</span>
             <span className="text-gray-500 ml-1">
               {localExpanded ? "▼" : "▶"}
             </span>
