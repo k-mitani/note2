@@ -22,7 +22,7 @@ export function archiveUrl(url: string) {
   fetch(new URL("/api/snapshots", ARCHIVE_API_URL), {
     method: "POST",
     headers,
-    body: JSON.stringify({url}),
+    body: JSON.stringify({url, tags: ["note2"]}),
   })
     .then(async (res) => {
       if (res.ok) {
