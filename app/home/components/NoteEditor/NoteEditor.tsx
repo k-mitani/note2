@@ -13,6 +13,7 @@ import {NoteRefTooltipPopup} from "@/app/home/components/NoteEditor/noteRef/Note
 import {useNoteRefCompletion} from "@/app/home/components/NoteEditor/noteRef/useNoteRefCompletion";
 import {useNoteRefTooltip} from "@/app/home/components/NoteEditor/noteRef/useNoteRefTooltip";
 import {onPaste} from "@/app/home/components/NoteEditor/pasteHandlers";
+import {defineLinkCard} from "@/app/home/components/NoteEditor/linkCard";
 import {useEnableImageResize} from "@/app/home/components/NoteEditor/useEnableImageResize";
 import {useShowingImePopup} from "@/app/home/components/NoteEditor/useShowingImePopup";
 import {useLocalPrefs} from "@/app/home/useLocalPrefs";
@@ -38,6 +39,11 @@ function useExecCommandHotkey(key: string, args: [string, boolean?, string?]) {
 }
 
 export default function NoteEditor() {
+  // <link-card> 等のカスタム要素はノート表示前に定義しておく
+  useEffect(() => {
+    defineLinkCard();
+  }, []);
+
   const note = useNote(state => state.selectedNote);
   const setNote = useNote(state => state.setSelectedNote);
 

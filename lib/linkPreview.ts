@@ -391,6 +391,36 @@ export function renderLinkPreviewCardHtml(
   );
 }
 
+export type LinkCardData = {
+  url: string;
+  site?: string;
+  title?: string;
+  desc?: string;
+  img?: string;
+  archiveId?: number | null;
+  quote?: { site?: string, url?: string, title?: string, desc?: string } | null;
+};
+
+/**
+ * <link-card> タグを生成する。描画はクライアント側のカスタム要素
+ * (app/home/components/NoteEditor/linkCard.ts) が Shadow DOM 内で行うため、
+ * ここでは意味データの属性とフォールバックの <a> だけを埋め込む。
+ */
+export function renderLinkCardHtml(data: LinkCardData): string {
+  const href = toSafeHref(data.url);
+  const attrs = [
+    `url="${escapeHtml(data.url)}"`,
+    data.site ? `site="${escapeHtml(data.site)}"` : null,
+    data.title ? `card-title="${escapeHtml(data.title)}"` : null,
+    data.desc ? `desc="${escapeHtml(data.desc)}"` : null,
+    data.img ? `img="${escapeHtml(data.img)}"` : null,
+    data.archiveId != null ? `archive="${data.archiveId}"` : null,
+    data.quote != null ? `quote="${escapeHtml(JSON.stringify(data.quote))}"` : null,
+  ].filter((a): a is string => a != null);
+  const fallback = `<a href="${href}" rel="noreferrer">${escapeHtml(data.title || data.url)}</a>`;
+  return `<link-card contenteditable="false" ${attrs.join(" ")}>${fallback}</link-card>`;
+}
+
 export async function buildLinkPreviewCardHtml(
   url: string,
   options?: { timeoutMs?: number; archiveHref?: string | null }
