@@ -256,6 +256,39 @@ async function fetchXOEmbed(url: string): Promise<XOEmbed> {
   throw lastError instanceof Error ? lastError : new Error("X oEmbed failed");
 }
 
+const NON_HTML_TYPE_LABELS: Record<string, string> = {
+  "application/pdf": "PDF",
+};
+
+function formatBytes(n: number): string {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  if (n < 1024 ** 3) return `${(n / 1024 / 1024).toFixed(1)} MB`;
+  return `${(n / 1024 ** 3).toFixed(1)} GB`;
+}
+
+/** HTML 以外の URL について content-type とサイズをヘッダーから取得する。 */
+async function fetchFileInfo(url: string): Promise<{ contentType: string; bytes?: number } | null> {
+  for (const method of ["HEAD", "GET"] as const) {
+    try {
+      const res = await fetch(url, {
+        method,
+        redirect: "follow",
+        headers: {"user-agent": "note2-link-preview/1.0"},
+      });
+      res.body?.cancel().catch(() => {});
+      if (!res.ok) continue;
+      const contentType = (res.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
+      if (contentType === "") continue;
+      const len = Number(res.headers.get("content-length"));
+      return {contentType, bytes: Number.isFinite(len) && len > 0 ? len : undefined};
+    } catch {
+      // HEAD 非対応サーバー等。GET にフォールバック
+    }
+  }
+  return null;
+}
+
 async function fetchOg(url: string): Promise<Og> {
   const parsedUrl = new URL(url);
   const fallbackOg: Og = {
@@ -274,6 +307,16 @@ async function fetchOg(url: string): Promise<Og> {
       description: result.description,
     };
   } catch (e: any) {
+    // unfurl は HTML 以外 (PDF 等) に対して content type エラーを投げるため、
+    // その場合はエラー表示ではなくファイル種別とサイズのカードにする
+    if (/wrong content type/i.test(e?.message ?? "")) {
+      const info = await fetchFileInfo(url);
+      const label = info == null
+        ? "ファイル"
+        : `${NON_HTML_TYPE_LABELS[info.contentType] ?? info.contentType} ファイル`;
+      const size = info?.bytes != null ? ` (${formatBytes(info.bytes)})` : "";
+      return {...fallbackOg, description: label + size};
+    }
     console.error("unfurl error", e);
     return {...fallbackOg, description: "Error: " + e.message};
   }
