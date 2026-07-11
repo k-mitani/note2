@@ -16,8 +16,8 @@ export default async function Page(
   }
   console.log("unfurl url", url);
 
-  archiveUrl(url);
+  const archiveHref = await archiveUrl(url);
 
-  const html = await buildLinkPreviewCardHtml(url);
+  const html = await buildLinkPreviewCardHtml(url, {archiveHref});
   return <div dangerouslySetInnerHTML={{__html: html}}/>;
 }

@@ -117,9 +117,10 @@ export async function GET(
   // URLが抽出できればOGカード形式で保存、失敗時は従来形式にフォールバック。
   const url = extractUrl(expanded);
   let snippet: string | null = null;
+  const archiveHref = url ? await archiveUrl(url) : null;
   if (url) {
     try {
-      const card = await buildLinkPreviewCardHtml(url, {timeoutMs: LINK_PREVIEW_TIMEOUT_MS});
+      const card = await buildLinkPreviewCardHtml(url, {timeoutMs: LINK_PREVIEW_TIMEOUT_MS, archiveHref});
       const extras: string[] = [];
       if (expanded.title?.trim()) extras.push(escapeHtml(expanded.title));
       if (expanded.text?.trim() && expanded.text.trim() !== url) extras.push(escapeHtml(expanded.text));
@@ -137,11 +138,6 @@ export async function GET(
     where: {id: inbox.id},
     data: {content: newContent, summary: toSummary(newContent)},
   });
-
-  // URLが含まれていればarchiveboxへ保存
-  if (url) {
-    archiveUrl(url);
-  }
 
   return new NextResponse("<script>window.close();</script>", {
     headers: {"content-type": "text/html"}

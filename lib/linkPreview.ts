@@ -274,7 +274,8 @@ async function fetchFileInfo(url: string): Promise<{ contentType: string; bytes?
       const res = await fetch(url, {
         method,
         redirect: "follow",
-        headers: {"user-agent": "note2-link-preview/1.0"},
+        // 圧縮転送だと content-length が返らないため identity を指定する
+        headers: {"user-agent": "note2-link-preview/1.0", "accept-encoding": "identity"},
       });
       res.body?.cancel().catch(() => {});
       if (!res.ok) continue;
@@ -355,11 +356,21 @@ function renderQuotedXPostHtml(og: Og): string {
   );
 }
 
-export function renderLinkPreviewCardHtml(og: Og, imageUrls: string[], extraHtml = ""): string {
+export function renderLinkPreviewCardHtml(
+  og: Og,
+  imageUrls: string[],
+  extraHtml = "",
+  archiveHref?: string | null
+): string {
   const siteName = escapeHtml(og.site_name ?? "(no site name)");
   const title = escapeHtml(og.title ?? og.url);
   const description = escapeHtml(og.description ?? "");
   const href = toSafeHref(og.url);
+  // archiveHref は note2 内のリダイレクトパス (/archive/{id}) のみ許可する
+  const archiveHtml =
+    archiveHref != null && /^\/archive\/\d+$/.test(archiveHref)
+      ? ` <a href="${escapeHtml(archiveHref)}" rel="noreferrer" style="font-size:0.85em;color:#777">(archive)</a>`
+      : "";
   const imagesHtml = imageUrls
     .map(
       (u) =>
@@ -369,7 +380,7 @@ export function renderLinkPreviewCardHtml(og: Og, imageUrls: string[], extraHtml
   return (
     `<section class="link-preview" style="max-width:50em;margin:0.1em;padding:0.3em;border:1px solid #777">` +
     `<div style="font-size:0.9em;color:#777">${siteName}</div>` +
-    `<div><a href="${href}" rel="noreferrer">${title}</a></div>` +
+    `<div><a href="${href}" rel="noreferrer">${title}</a>${archiveHtml}</div>` +
     `<div style="border-bottom:1px solid #ccc;margin:0.5em -0.3em"></div>` +
     `<div style="display:flex;align-items:center">` +
     `<div style="flex:1;min-width:0;white-space:pre-wrap">${description}</div>` +
@@ -382,9 +393,10 @@ export function renderLinkPreviewCardHtml(og: Og, imageUrls: string[], extraHtml
 
 export async function buildLinkPreviewCardHtml(
   url: string,
-  options?: { timeoutMs?: number }
+  options?: { timeoutMs?: number; archiveHref?: string | null }
 ): Promise<string> {
   const timeoutMs = options?.timeoutMs;
+  const archiveHref = options?.archiveHref;
   if ((await assertPublicHttpUrl(url)) == null) {
     return `<section class="link-preview" style="max-width:50em;margin:0.1em;padding:0.3em;border:1px solid #777">` +
       `<div style="color:#777">プレビューできないURLです: ${escapeHtml(url)}</div>` +
@@ -407,14 +419,14 @@ export async function buildLinkPreviewCardHtml(
             })
           )
         ).join("");
-        return renderLinkPreviewCardHtml(og, imageUrls, quotedHtml);
+        return renderLinkPreviewCardHtml(og, imageUrls, quotedHtml, archiveHref);
       } catch (e) {
         console.error("X oEmbed error", e);
       }
     }
     const og = await fetchOg(url);
     const imageUrls = await saveOgImages(og);
-    return renderLinkPreviewCardHtml(og, imageUrls);
+    return renderLinkPreviewCardHtml(og, imageUrls, "", archiveHref);
   };
   if (timeoutMs == null) return run();
   return await Promise.race([
