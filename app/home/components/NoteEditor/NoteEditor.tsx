@@ -310,7 +310,8 @@ export default function NoteEditor() {
       console.log("text", rawCard);
       const tmp = document.createElement("div");
       tmp.innerHTML = rawCard;
-      const card = tmp.querySelector(".link-preview")!;
+      // 通常は link-card、エラー表示 (プレビューできないURL等) は .link-preview
+      const card = tmp.querySelector("link-card, .link-preview")!;
       if (card == null) return;
       range.insertNode(card);
       range.collapse();

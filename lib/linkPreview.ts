@@ -342,55 +342,6 @@ async function saveOgImages(og: Og): Promise<string[]> {
   return imageUrls;
 }
 
-function renderQuotedXPostHtml(og: Og): string {
-  const siteName = escapeHtml(og.site_name ?? "X");
-  const title = escapeHtml(og.title ?? og.url);
-  const description = escapeHtml(og.description ?? "");
-  const href = toSafeHref(og.url);
-  return (
-    `<div style="margin-top:0.6em;padding:0.45em;border:1px solid #bbb;background:#fafafa">` +
-    `<div style="font-size:0.85em;color:#777">引用 / ${siteName}</div>` +
-    `<div><a href="${href}" rel="noreferrer">${title}</a></div>` +
-    `<div style="margin-top:0.35em;white-space:pre-wrap">${description}</div>` +
-    `</div>`
-  );
-}
-
-export function renderLinkPreviewCardHtml(
-  og: Og,
-  imageUrls: string[],
-  extraHtml = "",
-  archiveHref?: string | null
-): string {
-  const siteName = escapeHtml(og.site_name ?? "(no site name)");
-  const title = escapeHtml(og.title ?? og.url);
-  const description = escapeHtml(og.description ?? "");
-  const href = toSafeHref(og.url);
-  // archiveHref は note2 内のリダイレクトパス (/archive/{id}) のみ許可する
-  const archiveHtml =
-    archiveHref != null && /^\/archive\/\d+$/.test(archiveHref)
-      ? ` <a href="${escapeHtml(archiveHref)}" rel="noreferrer" style="font-size:0.85em;color:#777">(archive)</a>`
-      : "";
-  const imagesHtml = imageUrls
-    .map(
-      (u) =>
-        `<div style="width:80px;height:80px;margin-left:0.3em;display:flex;align-items:center;justify-content:flex-end;flex:0 0 80px"><img src="${escapeHtml(u)}" alt="" referrerpolicy="no-referrer" style="max-width:80px;max-height:80px;width:auto;height:auto;object-fit:contain"/></div>`
-    )
-    .join("");
-  return (
-    `<section class="link-preview" style="max-width:50em;margin:0.1em;padding:0.3em;border:1px solid #777">` +
-    `<div style="font-size:0.9em;color:#777">${siteName}</div>` +
-    `<div><a href="${href}" rel="noreferrer">${title}</a>${archiveHtml}</div>` +
-    `<div style="border-bottom:1px solid #ccc;margin:0.5em -0.3em"></div>` +
-    `<div style="display:flex;align-items:center">` +
-    `<div style="flex:1;min-width:0;white-space:pre-wrap">${description}</div>` +
-    imagesHtml +
-    `</div>` +
-    extraHtml +
-    `</section>`
-  );
-}
-
 export type LinkCardData = {
   url: string;
   site?: string;
@@ -421,6 +372,12 @@ export function renderLinkCardHtml(data: LinkCardData): string {
   return `<link-card contenteditable="false" ${attrs.join(" ")}>${fallback}</link-card>`;
 }
 
+/** archiveUrl が返すリダイレクトパス (/archive/{id}) からスナップショット ID を取り出す。 */
+function archiveHrefToId(archiveHref: string | null | undefined): number | null {
+  const m = archiveHref?.match(/^\/archive\/(\d+)$/);
+  return m != null ? Number(m[1]) : null;
+}
+
 export async function buildLinkPreviewCardHtml(
   url: string,
   options?: { timeoutMs?: number; archiveHref?: string | null }
@@ -432,6 +389,7 @@ export async function buildLinkPreviewCardHtml(
       `<div style="color:#777">プレビューできないURLです: ${escapeHtml(url)}</div>` +
       `</section>`;
   }
+  const archiveId = archiveHrefToId(archiveHref);
   const run = async () => {
     if (getXStatusRef(url) != null) {
       try {
@@ -441,22 +399,38 @@ export async function buildLinkPreviewCardHtml(
         og.images = fallbackOg.images ?? [];
         const imageUrls = await saveOgImages(og);
         const quotedUrls = await findQuotedXStatusUrls(embed.html, og.url);
-        const quotedHtml = (
-          await Promise.all(
-            quotedUrls.slice(0, 1).map(async (quotedUrl) => {
-              const quotedEmbed = await fetchXOEmbed(quotedUrl);
-              return renderQuotedXPostHtml(xOEmbedToOg(quotedEmbed, quotedUrl));
-            })
-          )
-        ).join("");
-        return renderLinkPreviewCardHtml(og, imageUrls, quotedHtml, archiveHref);
+        let quote: LinkCardData["quote"] = null;
+        if (quotedUrls.length > 0) {
+          try {
+            const quotedOg = xOEmbedToOg(await fetchXOEmbed(quotedUrls[0]), quotedUrls[0]);
+            quote = {site: quotedOg.site_name, url: quotedOg.url, title: quotedOg.title, desc: quotedOg.description};
+          } catch (e) {
+            console.error("X quoted oEmbed error", e);
+          }
+        }
+        return renderLinkCardHtml({
+          url: og.url,
+          site: og.site_name,
+          title: og.title,
+          desc: og.description,
+          img: imageUrls[0],
+          archiveId,
+          quote,
+        });
       } catch (e) {
         console.error("X oEmbed error", e);
       }
     }
     const og = await fetchOg(url);
     const imageUrls = await saveOgImages(og);
-    return renderLinkPreviewCardHtml(og, imageUrls, "", archiveHref);
+    return renderLinkCardHtml({
+      url: og.url,
+      site: og.site_name,
+      title: og.title,
+      desc: og.description,
+      img: imageUrls[0],
+      archiveId,
+    });
   };
   if (timeoutMs == null) return run();
   return await Promise.race([
