@@ -72,17 +72,47 @@ const STYLE = `
     padding: 0.3em;
     border: 1px solid #777;
   }
-  .site { font-size: 0.9em; color: #777; }
-  .archive { font-size: 0.85em; color: #777; }
+  .site-row { display: flex; align-items: baseline; gap: 0.5em; }
+  .site {
+    flex: 1; min-width: 0;
+    font-size: 0.9em; color: #777;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .archive { flex: none; font-size: 0.85em; color: #777; }
+  .title-row { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .divider { border-bottom: 1px solid #ccc; margin: 0.5em -0.3em; }
   .body { display: flex; align-items: center; }
-  .desc { flex: 1; min-width: 0; white-space: pre-wrap; min-height: 1.2em; cursor: text; }
+  .desc {
+    flex: 1; min-width: 0;
+    line-height: 1.5;
+    height: 4.5em; /* 3行ぶんの固定高さ */
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    white-space: pre-wrap;
+    cursor: text;
+  }
+  /* 展開時・編集中はクランプを外して全文を表示する */
+  .desc.expanded, .desc:focus {
+    display: block;
+    height: auto;
+    min-height: 4.5em;
+    -webkit-line-clamp: unset;
+  }
   .desc:focus { outline: 1px dashed #999; outline-offset: 2px; }
   .thumb {
     width: 80px; height: 80px; margin-left: 0.3em; flex: 0 0 80px;
     display: flex; align-items: center; justify-content: flex-end;
   }
   .thumb img { max-width: 80px; max-height: 80px; width: auto; height: auto; object-fit: contain; }
+  .expand-row { display: none; }
+  .expand-row.visible { display: block; text-align: right; }
+  .expand-row button {
+    border: none; background: none; padding: 0;
+    font: inherit; font-size: 0.8em; color: #777; cursor: pointer;
+  }
+  .expand-row button:hover { text-decoration: underline; }
   .quote { margin-top: 0.6em; padding: 0.45em; border: 1px solid #bbb; background: #fafafa; color: #222; }
   .q-site { font-size: 0.85em; color: #777; }
   .q-desc { margin-top: 0.35em; white-space: pre-wrap; }
@@ -110,6 +140,29 @@ export function defineLinkCard() {
     private syncingDesc = false;
     private healAttempts = 0;
     private healTimer: ReturnType<typeof setTimeout> | null = null;
+    // 概要の展開状態（表示上の状態で、保存はしない）
+    private descExpanded = false;
+
+    // 概要が3行を超えるときだけ展開ボタンを出す
+    private updateExpandUi() {
+      const shadow = this.shadowRoot;
+      if (shadow == null) return;
+      requestAnimationFrame(() => {
+        const desc = shadow.querySelector<HTMLElement>(".desc");
+        const row = shadow.querySelector<HTMLElement>(".expand-row");
+        const button = row?.querySelector("button");
+        if (desc == null || row == null || button == null) return;
+        const overflowing = desc.scrollHeight > desc.clientHeight + 1;
+        row.classList.toggle("visible", overflowing || this.descExpanded);
+        button.textContent = this.descExpanded ? "▲ 折りたたむ" : "▼ 展開";
+      });
+    }
+
+    private toggleExpanded() {
+      this.descExpanded = !this.descExpanded;
+      this.shadowRoot?.querySelector(".desc")?.classList.toggle("expanded", this.descExpanded);
+      this.updateExpandUi();
+    }
 
     connectedCallback() {
       // エディタ内でアトミックな1ブロックとして扱わせる（カード内部は編集不可）
@@ -122,6 +175,11 @@ export function defineLinkCard() {
         // クリックは本文側ハンドラ (linkHandlers) からも見えないため、ここで別タブで開く
         shadow.addEventListener("click", (ev) => {
           if (!(ev.target instanceof Element)) return;
+          if (ev.target.closest("button.expand-toggle") != null) {
+            ev.preventDefault();
+            this.toggleExpanded();
+            return;
+          }
           const href = ev.target.closest("a")?.getAttribute("href");
           if (!href) return;
           ev.preventDefault();
@@ -138,6 +196,7 @@ export function defineLinkCard() {
           if (text === "") this.removeAttribute("desc");
           else this.setAttribute("desc", text);
           this.syncingDesc = false;
+          this.updateExpandUi();
         });
       }
       this.render();
@@ -227,14 +286,16 @@ export function defineLinkCard() {
       this.shadowRoot!.innerHTML =
         `<style>${STYLE}</style>` +
         `<div class="card">` +
-        `<div class="site">${escapeHtml(site)}</div>` +
-        `<div>${titleHtml}${archiveHtml}</div>` +
+        `<div class="site-row"><span class="site" title="${escapeHtml(site)}">${escapeHtml(site)}</span>${archiveHtml}</div>` +
+        `<div class="title-row" title="${escapeHtml(title)}">${titleHtml}</div>` +
         `<div class="divider"></div>` +
         `<div class="body">` +
-        `<div class="desc" contenteditable="${descEditableMode}" spellcheck="false">${escapeHtml(desc)}</div>` +
+        `<div class="desc${this.descExpanded ? " expanded" : ""}" contenteditable="${descEditableMode}" spellcheck="false">${escapeHtml(desc)}</div>` +
         `${imgHtml}</div>` +
+        `<div class="expand-row"><button type="button" class="expand-toggle">▼ 展開</button></div>` +
         quoteHtml +
         `</div>`;
+      this.updateExpandUi();
     }
   }
 
