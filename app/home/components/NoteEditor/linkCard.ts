@@ -79,7 +79,13 @@ const STYLE = `
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .archive { flex: none; font-size: 0.85em; color: #777; }
-  .title-row { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .title-row { display: flex; align-items: baseline; gap: 0.5em; }
+  .title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .expand-toggle {
+    flex: none; border: none; background: none; padding: 0;
+    font: inherit; font-size: 0.8em; color: #777; cursor: pointer;
+  }
+  .expand-toggle:hover { text-decoration: underline; }
   .divider { border-bottom: 1px solid #ccc; margin: 0.5em -0.3em; }
   .body { display: flex; align-items: center; }
   .desc {
@@ -94,7 +100,7 @@ const STYLE = `
     cursor: text;
   }
   /* 展開時・編集中はクランプを外して全文を表示する */
-  .desc.expanded, .desc:focus {
+  .card.expanded .desc, .desc:focus {
     display: block;
     height: auto;
     min-height: 4.5em;
@@ -106,14 +112,9 @@ const STYLE = `
     display: flex; align-items: center; justify-content: flex-end;
   }
   .thumb img { max-width: 80px; max-height: 80px; width: auto; height: auto; object-fit: contain; }
-  .expand-row { display: none; }
-  .expand-row.visible { display: block; text-align: right; }
-  .expand-row button {
-    border: none; background: none; padding: 0;
-    font: inherit; font-size: 0.8em; color: #777; cursor: pointer;
-  }
-  .expand-row button:hover { text-decoration: underline; }
-  .quote { margin-top: 0.6em; padding: 0.45em; border: 1px solid #bbb; background: #fafafa; color: #222; }
+  /* 引用ブロックは折りたたみ時は隠し、展開時のみ表示する */
+  .quote { display: none; margin-top: 0.6em; padding: 0.45em; border: 1px solid #bbb; background: #fafafa; color: #222; }
+  .card.expanded .quote { display: block; }
   .q-site { font-size: 0.85em; color: #777; }
   .q-desc { margin-top: 0.35em; white-space: pre-wrap; }
 `;
@@ -143,24 +144,24 @@ export function defineLinkCard() {
     // 概要の展開状態（表示上の状態で、保存はしない）
     private descExpanded = false;
 
-    // 概要が3行を超えるときだけ展開ボタンを出す
+    // 概要が3行を超えるか、引用ブロックがあるときだけ展開ボタンを出す
     private updateExpandUi() {
       const shadow = this.shadowRoot;
       if (shadow == null) return;
       requestAnimationFrame(() => {
         const desc = shadow.querySelector<HTMLElement>(".desc");
-        const row = shadow.querySelector<HTMLElement>(".expand-row");
-        const button = row?.querySelector("button");
-        if (desc == null || row == null || button == null) return;
+        const button = shadow.querySelector<HTMLButtonElement>("button.expand-toggle");
+        if (desc == null || button == null) return;
         const overflowing = desc.scrollHeight > desc.clientHeight + 1;
-        row.classList.toggle("visible", overflowing || this.descExpanded);
+        const hasQuote = shadow.querySelector(".quote") != null;
+        button.hidden = !(overflowing || hasQuote || this.descExpanded);
         button.textContent = this.descExpanded ? "▲ 折りたたむ" : "▼ 展開";
       });
     }
 
     private toggleExpanded() {
       this.descExpanded = !this.descExpanded;
-      this.shadowRoot?.querySelector(".desc")?.classList.toggle("expanded", this.descExpanded);
+      this.shadowRoot?.querySelector(".card")?.classList.toggle("expanded", this.descExpanded);
       this.updateExpandUi();
     }
 
@@ -285,14 +286,16 @@ export function defineLinkCard() {
 
       this.shadowRoot!.innerHTML =
         `<style>${STYLE}</style>` +
-        `<div class="card">` +
+        `<div class="card${this.descExpanded ? " expanded" : ""}">` +
         `<div class="site-row"><span class="site" title="${escapeHtml(site)}">${escapeHtml(site)}</span>${archiveHtml}</div>` +
-        `<div class="title-row" title="${escapeHtml(title)}">${titleHtml}</div>` +
+        `<div class="title-row">` +
+        `<span class="title" title="${escapeHtml(title)}">${titleHtml}</span>` +
+        `<button type="button" class="expand-toggle" hidden>▼ 展開</button>` +
+        `</div>` +
         `<div class="divider"></div>` +
         `<div class="body">` +
-        `<div class="desc${this.descExpanded ? " expanded" : ""}" contenteditable="${descEditableMode}" spellcheck="false">${escapeHtml(desc)}</div>` +
+        `<div class="desc" contenteditable="${descEditableMode}" spellcheck="false">${escapeHtml(desc)}</div>` +
         `${imgHtml}</div>` +
-        `<div class="expand-row"><button type="button" class="expand-toggle">▼ 展開</button></div>` +
         quoteHtml +
         `</div>`;
       this.updateExpandUi();
