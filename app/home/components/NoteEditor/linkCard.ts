@@ -93,8 +93,10 @@ const STYLE = `
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
     white-space: pre-wrap;
-    cursor: text;
+    cursor: pointer; /* クリックで展開/折りたたみ */
   }
+  .desc[contenteditable="plaintext-only"], .desc[contenteditable="true"] { cursor: text; }
+  .quote { cursor: pointer; }
   /* 展開時・編集中はクランプを外して全文を表示する */
   .card.expanded .desc, .desc:focus {
     display: block;
@@ -140,10 +142,31 @@ export function defineLinkCard() {
     private healTimer: ReturnType<typeof setTimeout> | null = null;
     // 概要の展開状態（表示上の状態で、保存はしない）
     private descExpanded = false;
+    // シングルクリック(展開)とダブルクリック(編集開始)を区別するための遅延タイマー
+    private clickTimer: ReturnType<typeof setTimeout> | null = null;
 
     private toggleExpanded() {
       this.descExpanded = !this.descExpanded;
       this.shadowRoot?.querySelector(".card")?.classList.toggle("expanded", this.descExpanded);
+    }
+
+    private cancelPendingToggle() {
+      if (this.clickTimer != null) {
+        clearTimeout(this.clickTimer);
+        this.clickTimer = null;
+      }
+    }
+
+    // ダブルクリックで概要の編集を開始する（編集終了は focusout）
+    private startEditingDesc(desc: HTMLElement) {
+      desc.setAttribute("contenteditable", descEditableMode);
+      desc.focus();
+      const range = document.createRange();
+      range.selectNodeContents(desc);
+      range.collapse(false);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
     }
 
     connectedCallback() {
@@ -158,16 +181,40 @@ export function defineLinkCard() {
         shadow.addEventListener("click", (ev) => {
           if (!(ev.target instanceof Element)) return;
           const href = ev.target.closest("a")?.getAttribute("href");
-          if (!href) return;
-          ev.preventDefault();
-          ev.stopPropagation();
-          window.open(href, "_blank", "noopener,noreferrer");
+          if (href) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            window.open(href, "_blank", "noopener,noreferrer");
+            return;
+          }
+          // 本文 (概要・引用) のクリックで展開/折りたたみ。ダブルクリック（編集開始）と
+          // 区別するため少し遅延させ、ダブルクリックが来たら取り消す
+          const zone = ev.target.closest<HTMLElement>(".desc, .quote");
+          if (zone == null) return;
+          if (zone.classList.contains("desc") && zone.isContentEditable) return; // 編集中は通常のクリック
+          this.cancelPendingToggle();
+          this.clickTimer = setTimeout(() => {
+            this.clickTimer = null;
+            this.toggleExpanded();
+          }, 250);
         });
-        // 本文 (概要・引用) のダブルクリックで展開/折りたたみを切り替える
+        // 概要のダブルクリックで編集を開始する
         shadow.addEventListener("dblclick", (ev) => {
           if (!(ev.target instanceof Element)) return;
-          if (ev.target.closest(".desc, .quote") == null) return;
-          this.toggleExpanded();
+          this.cancelPendingToggle();
+          const desc = ev.target.closest<HTMLElement>(".desc");
+          if (desc != null && !desc.isContentEditable) {
+            this.startEditingDesc(desc);
+            return;
+          }
+          if (desc == null && ev.target.closest(".quote") != null) this.toggleExpanded();
+        });
+        // 編集終了 (フォーカスが外れたら編集不可に戻す)
+        shadow.addEventListener("focusout", (ev) => {
+          const target = ev.target;
+          if (target instanceof HTMLElement && target.classList.contains("desc")) {
+            target.setAttribute("contenteditable", "false");
+          }
         });
         // 概要欄の編集内容を desc 属性に反映する。input イベントは composed なので
         // このあと外側の ContentEditable にも届き、通常の変更検知・保存フローに乗る
@@ -190,6 +237,7 @@ export function defineLinkCard() {
         clearTimeout(this.healTimer);
         this.healTimer = null;
       }
+      this.cancelPendingToggle();
     }
 
     attributeChangedCallback() {
@@ -274,7 +322,7 @@ export function defineLinkCard() {
         `</div>` +
         `<div class="divider"></div>` +
         `<div class="body">` +
-        `<div class="desc" contenteditable="${descEditableMode}" spellcheck="false">${escapeHtml(desc)}</div>` +
+        `<div class="desc" contenteditable="false" spellcheck="false">${escapeHtml(desc)}</div>` +
         `${imgHtml}</div>` +
         quoteHtml +
         `</div>`;
