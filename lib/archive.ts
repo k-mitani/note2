@@ -12,6 +12,23 @@ const ARCHIVE_API_BASIC_PASSWORD = process.env.ARCHIVE_API_BASIC_PASSWORD;
 
 const REQUEST_TIMEOUT_MS = 5000;
 
+/** アーカイブサービス API を呼ぶ（BASIC 認証・タイムアウト込み）。未設定なら null。 */
+export async function archiveApiFetch(path: string, init?: RequestInit): Promise<Response | null> {
+  if (!ARCHIVE_API_URL) return null;
+  const headers: Record<string, string> = {
+    ...(init?.headers as Record<string, string> | undefined),
+  };
+  if (ARCHIVE_API_BASIC_USER) {
+    const cred = `${ARCHIVE_API_BASIC_USER}:${ARCHIVE_API_BASIC_PASSWORD ?? ""}`;
+    headers["authorization"] = "Basic " + Buffer.from(cred).toString("base64");
+  }
+  return fetch(new URL(path, ARCHIVE_API_URL), {
+    ...init,
+    headers,
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  });
+}
+
 export async function archiveUrl(url: string): Promise<string | null> {
   if (!ARCHIVE_API_URL) return null;
   // http/https のみ許可（javascript: 等の混入を防ぐ）
@@ -19,19 +36,14 @@ export async function archiveUrl(url: string): Promise<string | null> {
     console.warn("archive skipped: invalid URL scheme", url);
     return null;
   }
-  const headers: Record<string, string> = {"content-type": "application/json"};
-  if (ARCHIVE_API_BASIC_USER) {
-    const cred = `${ARCHIVE_API_BASIC_USER}:${ARCHIVE_API_BASIC_PASSWORD ?? ""}`;
-    headers["authorization"] = "Basic " + Buffer.from(cred).toString("base64");
-  }
   // 登録はキュー投入のみで即応答するが、呼び出し元を塞がないようタイムアウトを設ける
   try {
-    const res = await fetch(new URL("/api/snapshots", ARCHIVE_API_URL), {
+    const res = await archiveApiFetch("/api/snapshots", {
       method: "POST",
-      headers,
+      headers: {"content-type": "application/json"},
       body: JSON.stringify({url, tags: ["note2"]}),
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
+    if (res == null) return null;
     if (!res.ok) {
       console.error("archive error", res.status, await res.text());
       return null;

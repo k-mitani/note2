@@ -36,6 +36,34 @@ function safeHttpUrl(url: string | null): string | null {
 // 装飾は :host でなく内側の .card に当てる。ホスト要素は light DOM 側にいるため
 // ページの CSS (Tailwind プリフライトの `* { border: 0 }` 等) に上書きされるが、
 // Shadow DOM 内部の要素には外側のスタイルが届かない。
+// OGP を取得できなかったカードの説明欄の値。これらはアーカイブ側の
+// メタデータ (/api/archiveMeta) で自己修復を試みる
+function isFallbackDesc(desc: string | null): boolean {
+  return desc == null || desc === "" || desc === "（データなし）" || desc.startsWith("Error:");
+}
+
+type ArchiveMeta = { ready: boolean, title?: string | null, site?: string | null, desc?: string | null };
+
+// ready になった結果だけキャッシュする（処理中は再試行したいため）
+const archiveMetaCache = new Map<string, ArchiveMeta>();
+
+async function fetchArchiveMeta(archiveId: string): Promise<ArchiveMeta | null> {
+  const cached = archiveMetaCache.get(archiveId);
+  if (cached != null) return cached;
+  try {
+    const res = await fetch(`/api/archiveMeta/${archiveId}`);
+    if (!res.ok) return null;
+    const data = (await res.json()) as ArchiveMeta | null;
+    if (data?.ready === true) archiveMetaCache.set(archiveId, data);
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+const HEAL_RETRY_MS = 15_000;
+const HEAL_MAX_ATTEMPTS = 5;
+
 const STYLE = `
   :host { display: block; }
   .card {
@@ -80,6 +108,8 @@ export function defineLinkCard() {
 
     // 概要欄の編集を desc 属性へ同期している間は再描画しない（キャレットが消えるため）
     private syncingDesc = false;
+    private healAttempts = 0;
+    private healTimer: ReturnType<typeof setTimeout> | null = null;
 
     connectedCallback() {
       // エディタ内でアトミックな1ブロックとして扱わせる（カード内部は編集不可）
@@ -111,11 +141,45 @@ export function defineLinkCard() {
         });
       }
       this.render();
+      this.maybeHeal();
+    }
+
+    disconnectedCallback() {
+      if (this.healTimer != null) {
+        clearTimeout(this.healTimer);
+        this.healTimer = null;
+      }
     }
 
     attributeChangedCallback() {
       if (this.syncingDesc) return;
       if (this.shadowRoot != null) this.render();
+    }
+
+    // OGP 取得に失敗したカードを、アーカイブ側のメタデータで自動修復する。
+    // アーカイブ処理中 (ready=false) はしばらく再試行する
+    private async maybeHeal() {
+      if (!isFallbackDesc(this.getAttribute("desc"))) return;
+      const archiveId = this.getAttribute("archive")?.match(/^\d+$/)?.[0];
+      if (archiveId == null || this.healAttempts >= HEAL_MAX_ATTEMPTS) return;
+      this.healAttempts++;
+      const meta = await fetchArchiveMeta(archiveId);
+      if (!this.isConnected) return;
+      if (meta?.ready === true) {
+        // アーカイブ側もブロックページ等で説明文が取れていない場合は何もしない
+        // （ブロックページのタイトルでカードを上書きしてしまうのを防ぐ）
+        if (!meta.desc) return;
+        if (meta.title) this.setAttribute("card-title", meta.title);
+        if (meta.site) this.setAttribute("site", meta.site);
+        this.setAttribute("desc", meta.desc);
+        // 修復結果をノート本文の変更として通常の保存フローに乗せる
+        this.dispatchEvent(new Event("input", {bubbles: true, composed: true}));
+      } else if (meta?.ready === false) {
+        this.healTimer = setTimeout(() => {
+          this.healTimer = null;
+          this.maybeHeal();
+        }, HEAL_RETRY_MS);
+      }
     }
 
     private render() {
