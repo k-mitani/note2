@@ -102,12 +102,13 @@ const STYLE = `
     min-height: 4.5em;
     -webkit-line-clamp: unset;
   }
-  .desc:focus { outline: 1px dashed #999; outline-offset: 2px; }
+  .desc:focus { outline: none; }
+  /* 画像は3行ぶんの高さの中央に置き、展開しても位置を変えない */
   .thumb {
-    width: 80px; height: 80px; margin-left: 0.3em; flex: 0 0 80px;
-    display: flex; align-items: flex-start; justify-content: flex-end;
+    width: 80px; height: 4.5em; margin-left: 0.3em; flex: 0 0 80px;
+    display: flex; align-items: center; justify-content: flex-end;
   }
-  .thumb img { max-width: 80px; max-height: 80px; width: auto; height: auto; object-fit: contain; }
+  .thumb img { max-width: 80px; max-height: 100%; width: auto; height: auto; object-fit: contain; }
   /* 引用ブロックは折りたたみ時は隠し、展開時のみ表示する */
   .quote { display: none; margin-top: 0.6em; padding: 0.45em; border: 1px solid #bbb; background: #fafafa; color: #222; }
   .card.expanded .quote { display: block; }
