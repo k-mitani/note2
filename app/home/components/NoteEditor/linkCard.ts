@@ -81,13 +81,9 @@ const STYLE = `
   .archive { flex: none; font-size: 0.85em; color: #777; }
   .title-row { display: flex; align-items: baseline; gap: 0.5em; }
   .title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .expand-toggle {
-    flex: none; border: none; background: none; padding: 0;
-    font: inherit; font-size: 0.8em; color: #777; cursor: pointer;
-  }
-  .expand-toggle:hover { text-decoration: underline; }
   .divider { border-bottom: 1px solid #ccc; margin: 0.5em -0.3em; }
-  .body { display: flex; align-items: center; }
+  /* 上寄せ: 展開時に概要・画像の位置が動かないようにする */
+  .body { display: flex; align-items: flex-start; }
   .desc {
     flex: 1; min-width: 0;
     line-height: 1.5;
@@ -109,7 +105,7 @@ const STYLE = `
   .desc:focus { outline: 1px dashed #999; outline-offset: 2px; }
   .thumb {
     width: 80px; height: 80px; margin-left: 0.3em; flex: 0 0 80px;
-    display: flex; align-items: center; justify-content: flex-end;
+    display: flex; align-items: flex-start; justify-content: flex-end;
   }
   .thumb img { max-width: 80px; max-height: 80px; width: auto; height: auto; object-fit: contain; }
   /* 引用ブロックは折りたたみ時は隠し、展開時のみ表示する */
@@ -144,25 +140,9 @@ export function defineLinkCard() {
     // 概要の展開状態（表示上の状態で、保存はしない）
     private descExpanded = false;
 
-    // 概要が3行を超えるか、引用ブロックがあるときだけ展開ボタンを出す
-    private updateExpandUi() {
-      const shadow = this.shadowRoot;
-      if (shadow == null) return;
-      requestAnimationFrame(() => {
-        const desc = shadow.querySelector<HTMLElement>(".desc");
-        const button = shadow.querySelector<HTMLButtonElement>("button.expand-toggle");
-        if (desc == null || button == null) return;
-        const overflowing = desc.scrollHeight > desc.clientHeight + 1;
-        const hasQuote = shadow.querySelector(".quote") != null;
-        button.hidden = !(overflowing || hasQuote || this.descExpanded);
-        button.textContent = this.descExpanded ? "▲ 折りたたむ" : "▼ 展開";
-      });
-    }
-
     private toggleExpanded() {
       this.descExpanded = !this.descExpanded;
       this.shadowRoot?.querySelector(".card")?.classList.toggle("expanded", this.descExpanded);
-      this.updateExpandUi();
     }
 
     connectedCallback() {
@@ -176,16 +156,17 @@ export function defineLinkCard() {
         // クリックは本文側ハンドラ (linkHandlers) からも見えないため、ここで別タブで開く
         shadow.addEventListener("click", (ev) => {
           if (!(ev.target instanceof Element)) return;
-          if (ev.target.closest("button.expand-toggle") != null) {
-            ev.preventDefault();
-            this.toggleExpanded();
-            return;
-          }
           const href = ev.target.closest("a")?.getAttribute("href");
           if (!href) return;
           ev.preventDefault();
           ev.stopPropagation();
           window.open(href, "_blank", "noopener,noreferrer");
+        });
+        // 本文 (概要・引用) のダブルクリックで展開/折りたたみを切り替える
+        shadow.addEventListener("dblclick", (ev) => {
+          if (!(ev.target instanceof Element)) return;
+          if (ev.target.closest(".desc, .quote") == null) return;
+          this.toggleExpanded();
         });
         // 概要欄の編集内容を desc 属性に反映する。input イベントは composed なので
         // このあと外側の ContentEditable にも届き、通常の変更検知・保存フローに乗る
@@ -197,7 +178,6 @@ export function defineLinkCard() {
           if (text === "") this.removeAttribute("desc");
           else this.setAttribute("desc", text);
           this.syncingDesc = false;
-          this.updateExpandUi();
         });
       }
       this.render();
@@ -290,7 +270,6 @@ export function defineLinkCard() {
         `<div class="site-row"><span class="site" title="${escapeHtml(site)}">${escapeHtml(site)}</span>${archiveHtml}</div>` +
         `<div class="title-row">` +
         `<span class="title" title="${escapeHtml(title)}">${titleHtml}</span>` +
-        `<button type="button" class="expand-toggle" hidden>▼ 展開</button>` +
         `</div>` +
         `<div class="divider"></div>` +
         `<div class="body">` +
@@ -298,7 +277,6 @@ export function defineLinkCard() {
         `${imgHtml}</div>` +
         quoteHtml +
         `</div>`;
-      this.updateExpandUi();
     }
   }
 
