@@ -77,7 +77,7 @@ export function defineNoteRef() {
             anchor.classList.add("missing");
             anchor.textContent = `@${noteId}（削除済み）`;
           } else {
-            anchor.textContent = preview.title;
+            anchor.textContent = `@${noteId} ${preview.title}`;
           }
         })
         .catch(() => {
