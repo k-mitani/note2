@@ -37,6 +37,17 @@ html {
   text-decoration: none;
 }
 
+/* note-ref カスタム要素の配色。CSS 変数は Shadow DOM 内へ継承される */
+note-ref {
+  --note-ref-bg: rgb(37 99 235 / 0.08);
+  --note-ref-color: #1d4ed8;
+}
+
+.dark note-ref {
+  --note-ref-bg: rgb(14 165 233 / 0.14);
+  --note-ref-color: #38bdf8;
+}
+
 .ncf-20260403 {
   border: 1px solid #aaa;
   border-radius: 4px;

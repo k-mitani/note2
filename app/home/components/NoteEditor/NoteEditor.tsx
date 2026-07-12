@@ -14,6 +14,7 @@ import {useNoteRefCompletion} from "@/app/home/components/NoteEditor/noteRef/use
 import {useNoteRefTooltip} from "@/app/home/components/NoteEditor/noteRef/useNoteRefTooltip";
 import {onPaste} from "@/app/home/components/NoteEditor/pasteHandlers";
 import {defineLinkCard} from "@/app/home/components/NoteEditor/linkCard";
+import {defineNoteRef} from "@/app/home/components/NoteEditor/noteRef/noteRefElement";
 import {useEnableImageResize} from "@/app/home/components/NoteEditor/useEnableImageResize";
 import {useShowingImePopup} from "@/app/home/components/NoteEditor/useShowingImePopup";
 import {useLocalPrefs} from "@/app/home/useLocalPrefs";
@@ -42,6 +43,7 @@ export default function NoteEditor() {
   // <link-card> 等のカスタム要素はノート表示前に定義しておく
   useEffect(() => {
     defineLinkCard();
+    defineNoteRef();
   }, []);
 
   const note = useNote(state => state.selectedNote);

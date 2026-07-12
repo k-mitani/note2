@@ -69,17 +69,18 @@ export function getRangePopupPosition(range: Range): { x: number, y: number } {
 }
 
 export function insertNoteRefAnchor(range: Range, noteId: number) {
-  const anchor = document.createElement("a");
-  anchor.href = `/home/${noteId}`;
-  anchor.dataset.noteId = String(noteId);
-  anchor.className = "note-ref";
-  anchor.textContent = `@${noteId}`;
+  // <note-ref> カスタム要素として挿入する。子テキスト (@id) はフォールバック表示・
+  // summary・検索用で、実際の表示は要素が最新タイトルを取得して描画する
+  const ref = document.createElement("note-ref");
+  ref.setAttribute("note", String(noteId));
+  ref.setAttribute("contenteditable", "false");
+  ref.textContent = `@${noteId}`;
 
   range.deleteContents();
-  range.insertNode(anchor);
+  range.insertNode(ref);
 
   const newRange = document.createRange();
-  newRange.setStartAfter(anchor);
+  newRange.setStartAfter(ref);
   newRange.collapse(true);
   const selection = document.getSelection();
   selection?.removeAllRanges();
@@ -103,11 +104,22 @@ export function getNoteRefIdFromAnchor(anchor: HTMLAnchorElement): number | null
   return parsePositiveInt(match?.[1]);
 }
 
-export function getNoteRefAnchor(target: EventTarget | null): HTMLAnchorElement | null {
+/** note-ref 要素または旧形式アンカーからノート ID を取り出す。 */
+export function getNoteRefIdFromElement(el: HTMLElement): number | null {
+  if (el.tagName === "NOTE-REF") return parsePositiveInt(el.getAttribute("note"));
+  if (el instanceof HTMLAnchorElement) return getNoteRefIdFromAnchor(el);
+  return null;
+}
+
+/**
+ * イベントターゲットからノート参照要素 (<note-ref> または旧形式の <a>) を探す。
+ * Shadow DOM 内のクリック等はホストの <note-ref> に retarget されて届く。
+ */
+export function getNoteRefAnchor(target: EventTarget | null): HTMLElement | null {
   if (!(target instanceof HTMLElement)) return null;
-  const anchor = target.closest("a") as HTMLAnchorElement | null;
-  if (anchor == null) return null;
-  return getNoteRefIdFromAnchor(anchor) == null ? null : anchor;
+  const el = target.closest("note-ref, a") as HTMLElement | null;
+  if (el == null) return null;
+  return getNoteRefIdFromElement(el) == null ? null : el;
 }
 
 export function navigateToNote(noteId: number) {
