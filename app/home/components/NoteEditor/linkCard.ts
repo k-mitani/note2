@@ -48,7 +48,8 @@ const STYLE = `
   .archive { font-size: 0.85em; color: #777; }
   .divider { border-bottom: 1px solid #ccc; margin: 0.5em -0.3em; }
   .body { display: flex; align-items: center; }
-  .desc { flex: 1; min-width: 0; white-space: pre-wrap; }
+  .desc { flex: 1; min-width: 0; white-space: pre-wrap; min-height: 1.2em; cursor: text; }
+  .desc:focus { outline: 1px dashed #999; outline-offset: 2px; }
   .thumb {
     width: 80px; height: 80px; margin-left: 0.3em; flex: 0 0 80px;
     display: flex; align-items: center; justify-content: flex-end;
@@ -63,8 +64,22 @@ const STYLE = `
 export function defineLinkCard() {
   if (typeof window === "undefined" || customElements.get("link-card") != null) return;
 
+  // 概要欄はプレーンテキストとして編集させる（未対応ブラウザは通常の編集にフォールバック）
+  const descEditableMode = (() => {
+    const div = document.createElement("div");
+    try {
+      div.contentEditable = "plaintext-only";
+      return "plaintext-only";
+    } catch {
+      return "true";
+    }
+  })();
+
   class LinkCardElement extends HTMLElement {
     static observedAttributes = ["url", "site", "card-title", "desc", "img", "archive", "quote"];
+
+    // 概要欄の編集を desc 属性へ同期している間は再描画しない（キャレットが消えるため）
+    private syncingDesc = false;
 
     connectedCallback() {
       // エディタ内でアトミックな1ブロックとして扱わせる（カード内部は編集不可）
@@ -83,11 +98,23 @@ export function defineLinkCard() {
           ev.stopPropagation();
           window.open(href, "_blank", "noopener,noreferrer");
         });
+        // 概要欄の編集内容を desc 属性に反映する。input イベントは composed なので
+        // このあと外側の ContentEditable にも届き、通常の変更検知・保存フローに乗る
+        shadow.addEventListener("input", () => {
+          const desc = shadow.querySelector<HTMLElement>(".desc");
+          if (desc == null) return;
+          this.syncingDesc = true;
+          const text = desc.innerText.replace(/\n$/, "");
+          if (text === "") this.removeAttribute("desc");
+          else this.setAttribute("desc", text);
+          this.syncingDesc = false;
+        });
       }
       this.render();
     }
 
     attributeChangedCallback() {
+      if (this.syncingDesc) return;
       if (this.shadowRoot != null) this.render();
     }
 
@@ -139,7 +166,9 @@ export function defineLinkCard() {
         `<div class="site">${escapeHtml(site)}</div>` +
         `<div>${titleHtml}${archiveHtml}</div>` +
         `<div class="divider"></div>` +
-        `<div class="body"><div class="desc">${escapeHtml(desc)}</div>${imgHtml}</div>` +
+        `<div class="body">` +
+        `<div class="desc" contenteditable="${descEditableMode}" spellcheck="false">${escapeHtml(desc)}</div>` +
+        `${imgHtml}</div>` +
         quoteHtml +
         `</div>`;
     }
