@@ -1,4 +1,5 @@
 import type {NoteRefCompletionTrigger, NoteRefToken} from "@/app/home/components/NoteEditor/noteRef/types";
+import {useRemoteStore} from "@/app/home/remote";
 
 function parsePositiveInt(value: string | null | undefined): number | null {
   if (value == null || !/^\d+$/.test(value)) return null;
@@ -124,7 +125,9 @@ export function getNoteRefAnchor(target: EventTarget | null): HTMLElement | null
 
 export function navigateToNote(noteId: number) {
   const url = new URL(window.location.href);
-  url.pathname = `/home/${noteId}`;
+  // 表示中サーバーに追従する（リモートのノート参照はそのサーバー内でたどる）。
+  const serverId = useRemoteStore.getState().activeServer?.id ?? null;
+  url.pathname = serverId == null ? `/home/${noteId}` : `/home/r/${serverId}/${noteId}`;
   url.search = "";
   url.hash = "";
   window.history.pushState(null, "", url);
