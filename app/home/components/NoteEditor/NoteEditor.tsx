@@ -307,7 +307,9 @@ export default function NoteEditor() {
     setTimeout(async () => {
       const range = document.getSelection()!.getRangeAt(0);
       // URLの場合は、選択位置の次の場所にカードを挿入する。
-      const res = await fetch("/getLinkPreview?url=" + url);
+      // リモートサーバーのノートなら、アーカイブもそのサーバーで行わせる
+      // （アーカイブIDは各サーバーのアーカイブ設定に紐づくため）。
+      const res = await utils.apiFetch(api("/getLinkPreview?url=" + url));
       const rawCard = await res.text();
       console.log("text", rawCard);
       const tmp = document.createElement("div");

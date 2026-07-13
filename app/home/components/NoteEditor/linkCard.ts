@@ -12,6 +12,9 @@
 // </link-card>
 // ※ title でなく card-title なのは、グローバル属性 title のツールチップを避けるため
 
+import {api, useRemoteStore} from "@/app/home/remote";
+import * as utils from "@/app/utils";
+
 type QuoteData = { site?: string, url?: string, title?: string, desc?: string };
 
 function escapeHtml(s: string): string {
@@ -48,13 +51,18 @@ type ArchiveMeta = { ready: boolean, title?: string | null, site?: string | null
 const archiveMetaCache = new Map<string, ArchiveMeta>();
 
 async function fetchArchiveMeta(archiveId: string): Promise<ArchiveMeta | null> {
-  const cached = archiveMetaCache.get(archiveId);
+  // アーカイブIDは各サーバーのアーカイブ設定に紐づくため、リモートノートの
+  // カードはそのサーバーへ問い合わせる。キャッシュもサーバー単位で分ける
+  // （別サーバー間でIDが衝突しても取り違えない）。
+  const serverId = useRemoteStore.getState().activeServer?.id ?? "local";
+  const cacheKey = `${serverId}:${archiveId}`;
+  const cached = archiveMetaCache.get(cacheKey);
   if (cached != null) return cached;
   try {
-    const res = await fetch(`/api/archiveMeta/${archiveId}`);
+    const res = await utils.apiFetch(api(`/api/archiveMeta/${archiveId}`));
     if (!res.ok) return null;
     const data = (await res.json()) as ArchiveMeta | null;
-    if (data?.ready === true) archiveMetaCache.set(archiveId, data);
+    if (data?.ready === true) archiveMetaCache.set(cacheKey, data);
     return data;
   } catch {
     return null;

@@ -26,8 +26,9 @@ async function proxy(req: NextRequest, {params}: { params: Promise<Params> }) {
   }
 
   const targetPath = path.join("/");
-  // note2のAPIと画像配信のみ中継する。
-  if (!targetPath.startsWith("api/") && !targetPath.startsWith("objects/")) {
+  // note2のAPI・画像配信・リンクプレビュー(=アーカイブ)生成のみ中継する。
+  if (!targetPath.startsWith("api/") && !targetPath.startsWith("objects/") &&
+      targetPath !== "getLinkPreview") {
     return NextResponse.json({error: "path not allowed"}, {status: 400});
   }
   const base = server.url.endsWith("/") ? server.url : server.url + "/";
